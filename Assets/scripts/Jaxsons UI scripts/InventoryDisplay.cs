@@ -4,7 +4,7 @@ using UnityEngine;
 
 public abstract class InventoryDisplay : MonoBehaviour
 {
-    [SerializeField] MouseItemData mouseItemData;
+    [SerializeField] MouseItemData mouseInventoryItem;
     protected InventorySystem inventorySystem;
 
     protected Dictionary<InventorySlot_UI, InventorySlot> slotDictionary;
@@ -13,6 +13,11 @@ public abstract class InventoryDisplay : MonoBehaviour
     public Dictionary<InventorySlot_UI, InventorySlot> SlotDictionary => slotDictionary;
 
     public abstract void AssignSlot(InventorySystem invToDisplay);
+
+    public virtual void Start()
+    {
+
+    }
 
     protected virtual void UpdateSlots(InventorySlot updatedSlot)
     {
@@ -25,8 +30,23 @@ public abstract class InventoryDisplay : MonoBehaviour
         }
     }
 
-    public void SlotClicked(InventorySlot_UI clickedSlot)
+    public void SlotClicked(InventorySlot_UI clickedUISlot)
     {
-        Debug.Log("Slot Clicked");
+        //clicked slot has item mouse does not have item - pick up item 
+
+        if(clickedUISlot.AssignedInventorySlot.ItemData != null && mouseInventoryItem.AssignedInventorySlot.ItemData == null)
+        {
+            mouseInventoryItem.UpdateMouseSlot(clickedUISlot.AssignedInventorySlot);
+            clickedUISlot.clearSlot();
+            return;
+        }
+
+        //clicked slot doesnt have item but mouse does - place mouse item in slot 
+
+        //both slots have item - decide what to do 
+
+        //if items are same combine stack if mouse stack + stack is less then stack max 
+
+        //if different items then swap items 
     }
 }

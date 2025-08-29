@@ -6,7 +6,7 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Refs")]
     private CharacterController cc;
-    [SerializeField] private Transform cameraHolder; // Assign in Inspector (your Camera's parent or the camera itself)
+    [SerializeField] private Transform cameraHolder;
 
     [Header("Input")]
     private float moveInput;
@@ -25,20 +25,31 @@ public class PlayerMovement : MonoBehaviour
     private float speed;
     private float verticalLookRotation = 0f;
 
+   
+    private bool uiMode = false;
+
     private void Start()
     {
         cc = GetComponent<CharacterController>();
-
-        // Lock cursor
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        SetGameplayMode(); // start locked & hidden
     }
 
     private void Update()
     {
-        inputManager();
-        Movement();
-        CameraLook();
+        // Toggle UI mode with Tab
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            uiMode = !uiMode;
+            if (uiMode) SetUIMode();
+            else SetGameplayMode();
+        }
+
+        if (!uiMode)
+        {
+            inputManager();
+            Movement();
+            CameraLook();
+        }
     }
 
     private void inputManager()
@@ -69,8 +80,6 @@ public class PlayerMovement : MonoBehaviour
         }
 
         move *= speed;
-        
-            
 
         // Apply gravity BEFORE moving
         move.y = verticalForceCalculator();
@@ -106,5 +115,18 @@ public class PlayerMovement : MonoBehaviour
         }
 
         return verticalVelocity;
+    }
+
+   
+    private void SetUIMode()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void SetGameplayMode()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 }

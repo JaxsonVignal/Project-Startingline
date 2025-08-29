@@ -18,7 +18,7 @@ public class InventorySlot_UI : MonoBehaviour
     private void Awake()
     {
         clearSlot();
-        Button.GetComponent<Button>();
+        Button = GetComponent<Button>();
         Button?.onClick.AddListener(onUISlotClick);
 
         ParentDisplay = transform.parent.GetComponent<InventoryDisplay>();
