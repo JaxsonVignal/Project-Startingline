@@ -44,6 +44,7 @@ public class MouseItemData : MonoBehaviour
         ItemCount.text = "";
         ItemCount.color = Color.clear;
         ItemSprite.sprite=null;
+        ItemSprite.color= Color.clear;
     }
 
     public static bool IsPointerOverUIObject()

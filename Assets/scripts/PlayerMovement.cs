@@ -28,6 +28,7 @@ public class PlayerMovement : MonoBehaviour
    
     private bool uiMode = false;
 
+    [SerializeField] private Interactor interactor;
     private void Start()
     {
         cc = GetComponent<CharacterController>();
@@ -44,8 +45,14 @@ public class PlayerMovement : MonoBehaviour
             else SetGameplayMode();
         }
 
-        if (!uiMode)
+        // Handle interaction mode separately
+        if (interactor.isInteracting)
         {
+            SetUIMode(); // unlock mouse when interacting
+        }
+        else if (!uiMode) // only if not in UI mode
+        {
+            SetGameplayMode(); // lock mouse back
             inputManager();
             Movement();
             CameraLook();
