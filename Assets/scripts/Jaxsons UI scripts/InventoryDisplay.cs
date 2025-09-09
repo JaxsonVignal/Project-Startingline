@@ -1,6 +1,7 @@
 using UnityEngine.Events;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public abstract class InventoryDisplay : MonoBehaviour
 {
@@ -33,12 +34,27 @@ public abstract class InventoryDisplay : MonoBehaviour
     public void SlotClicked(InventorySlot_UI clickedUISlot)
     {
         //clicked slot has item mouse does not have item - pick up item 
+        bool isShiftPressed = Keyboard.current.leftShiftKey.isPressed;
+
 
         if(clickedUISlot.AssignedInventorySlot.ItemData != null && mouseInventoryItem.AssignedInventorySlot.ItemData == null)
         {
-            mouseInventoryItem.UpdateMouseSlot(clickedUISlot.AssignedInventorySlot);
-            clickedUISlot.clearSlot();
-            return;
+
+            if (isShiftPressed && clickedUISlot.AssignedInventorySlot.SplitStack(out InventorySlot halfStackSlot))
+            {
+                mouseInventoryItem.UpdateMouseSlot(halfStackSlot);
+                clickedUISlot.UpdateUISlot();
+                return;
+            }
+
+            else 
+            {
+                mouseInventoryItem.UpdateMouseSlot(clickedUISlot.AssignedInventorySlot);
+                clickedUISlot.clearSlot();
+                return;
+
+            }
+                
         }
 
         //clicked slot doesnt have item but mouse does - place mouse item in slot 
@@ -47,7 +63,7 @@ public abstract class InventoryDisplay : MonoBehaviour
             clickedUISlot.AssignedInventorySlot.AssignItem(mouseInventoryItem.AssignedInventorySlot);
             clickedUISlot.UpdateUISlot();
             mouseInventoryItem.ClearSlot();
-         
+            return;
         }
         //both slots have item - decide what to do 
 
