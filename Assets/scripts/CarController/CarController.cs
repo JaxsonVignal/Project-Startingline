@@ -52,6 +52,7 @@ public class CarController : MonoBehaviour
     {
         Move();
         Steer();
+        Brake();
     }
 
     void GetInputs()
@@ -80,6 +81,27 @@ public class CarController : MonoBehaviour
             }
         }
     }
+
+    void Brake()
+    {
+     if (Input.GetKey(KeyCode.Space))
+     {
+       foreach (var wheel in wheels)
+       {
+         wheel.wheelCollider.brakeTorque = 300 * brakeAcceleration * Time.deltaTime;
+       }
+     }
+      else
+      {
+       foreach (var wheel in wheels)
+       {
+                wheel.wheelCollider.brakeTorque = 0;
+       }
+      }
+
+
+    }
+
 
     void Animationwheels()
     {
