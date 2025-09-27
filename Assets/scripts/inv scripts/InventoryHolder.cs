@@ -17,3 +17,6 @@ public class InventoryHolder : MonoBehaviour
         inventorySystem = new InventorySystem(inventorySize);
     }
 }
+
+
+

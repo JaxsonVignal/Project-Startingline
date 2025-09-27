@@ -1,18 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
-public class ReadOnlyDraw : MonoBehaviour
+[CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
+public class ReadOnlyDraw : PropertyDrawer
 {
-    // Start is called before the first frame update
-    void Start()
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        var previousGUIState = GUI.enabled;
+        GUI.enabled = false;
+        EditorGUI.PropertyField(position, property, label);
+        GUI.enabled = previousGUIState;
     }
 }
