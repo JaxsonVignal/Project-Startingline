@@ -48,11 +48,11 @@ public class ItemPickup : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        var inventory = other.GetComponent<InventoryHolder>();
+        var inventory = other.GetComponent<PlayerInventoryHolder>();
 
         if(!inventory) return;
 
-        if(inventory.InventorySystem.AddToInventory(ItemData, 1))
+        if(inventory.AddToInventory(ItemData, 1))
         {
             SaveGameManager.data.collectedItems.Add(id);
             Destroy(this.gameObject);
