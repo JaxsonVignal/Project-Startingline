@@ -18,6 +18,8 @@ public static class SaveLoad
 
         string dir = Application.persistentDataPath + directory;
 
+        GUIUtility.systemCopyBuffer = dir;
+
         if(!Directory.Exists(dir))
         {
             Directory.CreateDirectory(dir);
@@ -49,4 +51,14 @@ public static class SaveLoad
         }
         return data;
     } 
+
+    public static void DeleteSaveData()
+    {
+        string fullPath = Application.persistentDataPath + directory + fileName;
+
+        if(File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+        }
+    }
 }
