@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class InventoryItemData : ScriptableObject
 {
-    public int ID;
+    public int ID = -1;
     public string Name;
     [TextArea (4,4)]
     public string Description;
