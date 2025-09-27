@@ -20,12 +20,12 @@ public class DialogueTrigger : MonoBehaviour
 
     private void Update()
     {
-        if (playerInRange)
+        if (playerInRange && !DialogueManager.GetInstance().dialogueIsPlaying)
         {
             visualCue.SetActive(true); // Show the visual cue when the player is in range
             if (Input.GetKeyDown(KeyCode.E)) // Check for interaction key press
             {
-                Debug.Log(inkJSON.text);
+                DialogueManager.GetInstance().EnterDialogueMode(inkJSON); // Start the dialogue
             }
         }
         else
