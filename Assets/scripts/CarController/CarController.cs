@@ -18,6 +18,8 @@ public class CarController : MonoBehaviour
         public GameObject wheelModel;
         public WheelCollider wheelCollider;
         public Axel axel;
+        public GameObject wheelEffectObj;
+        public ParticleSystem smokeParticle; 
     }
 
     public float maxAcceleration = 30.0f;
@@ -46,6 +48,7 @@ public class CarController : MonoBehaviour
     {
         GetInputs();
         Animationwheels();
+        WheelEffects();
     }
 
     void LateUpdate()
@@ -88,21 +91,17 @@ public class CarController : MonoBehaviour
      {
        foreach (var wheel in wheels)
        {
-         wheel.wheelCollider.brakeTorque = 300 * brakeAcceleration * Time.deltaTime;
+         wheel.wheelCollider.brakeTorque = 900 * brakeAcceleration * Time.deltaTime;
        }
      }
-      else
+     else
+     {
+      foreach (var wheel in wheels)
       {
-       foreach (var wheel in wheels)
-       {
-                wheel.wheelCollider.brakeTorque = 0;
-       }
+        wheel.wheelCollider.brakeTorque = 0;
       }
-
-
+     }
     }
-
-
     void Animationwheels()
     {
         foreach (var wheel in wheels)
@@ -115,5 +114,20 @@ public class CarController : MonoBehaviour
         }
     }
 
+    void WheelEffects()
+    {
+        foreach(var wheel in wheels)
+        {
+            if (Input.GetKey(KeyCode.Space) && wheel.axel == Axel.Rear && wheel.wheelCollider.isGrounded == true && carRB.velocity.magnitude >= 10f)
+            {
+                wheel.wheelEffectObj.GetComponentInChildren<TrailRenderer>().emitting = true;
+                wheel.smokeParticle.Emit(1);
+            }
+            else
+            {
+                wheel.wheelEffectObj.GetComponentInChildren<TrailRenderer>().emitting = false;
+            }
+        }
+    }
 }
 

@@ -265,6 +265,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ItemSprite: {fileID: 6078630666112646270}
   ItemCount: {fileID: 819013284085256081}
+  AssignedInventorySlot:
+    itemData: {fileID: 0}
+    stackSize: -1
 --- !u!114 &4035001515428826351
 MonoBehaviour:
   m_ObjectHideFlags: 0
