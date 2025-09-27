@@ -553,6 +553,7 @@ GameObject:
   - component: {fileID: 61484989}
   - component: {fileID: 61484994}
   - component: {fileID: 61484995}
+  - component: {fileID: 61484996}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -573,13 +574,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraHolder: {fileID: 1358792301}
+  inputHandler: {fileID: 61484996}
+  interactor: {fileID: 61484994}
   walkSpeed: 5
-  mouseSensitivity: 2
+  mouseSensitivity: 10
+  sensitivityModifier: 0.1
   Gravity: 9.8
   jumpHeight: 1.5
   sprintSpeed: 7
   sprintTransitionSpeed: 1
-  interactor: {fileID: 61484994}
 --- !u!143 &61484990
 CharacterController:
   m_ObjectHideFlags: 0
@@ -679,6 +682,18 @@ MonoBehaviour:
   inventorySize: 30
   primaryInventorySystem:
     inventorySlots: []
+--- !u!114 &61484996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 61484988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c363467e09a54e42a4e7052b7d4c3ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &61782842
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10087,6 +10102,7 @@ MonoBehaviour:
   ItemCount: {fileID: 1087839607}
   AssignedInventorySlot:
     itemData: {fileID: 0}
+    _itemID: -1
     stackSize: -1
 --- !u!4 &1446744243 stripped
 Transform:
