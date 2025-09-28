@@ -13,4 +13,10 @@ public class InventoryItemData : ScriptableObject
     public Sprite Icon;
     public int maxStackSize;
 
+
+    public virtual void UseItem()
+    {
+        Debug.Log("using item"); //we will be making weapons that extend off this class to give functionality
+    }
 }
+

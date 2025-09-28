@@ -554,6 +554,7 @@ GameObject:
   - component: {fileID: 61484994}
   - component: {fileID: 61484995}
   - component: {fileID: 61484996}
+  - component: {fileID: 61484997}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -625,6 +626,8 @@ Transform:
   - {fileID: 284442423}
   - {fileID: 1358792301}
   - {fileID: 2057139812}
+  - {fileID: 448150005}
+  - {fileID: 770844133}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &61484993
@@ -694,6 +697,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c363467e09a54e42a4e7052b7d4c3ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &61484997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 61484988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6e5d7a5802c503418c27e7481a78cfa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  firePoint: {fileID: 448150005}
+  bulletPrefab: {fileID: 129983120201611521, guid: 38887158d053e304395e6e102e2f3b35, type: 3}
+  playerCamera: {fileID: 963194227}
 --- !u!1001 &61782842
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3875,6 +3893,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 45374165b7b045b498462bc2d3987a31, type: 3}
+--- !u!1 &448150004
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 448150005}
+  m_Layer: 0
+  m_Name: firepoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &448150005
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 448150004}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.551, y: 0.261, z: 1.276}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 61484991}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &449214966
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5526,6 +5575,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 107e21d49b4ce0043a91771c91ae6c8c, type: 3}
+--- !u!1 &770844132
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 770844133}
+  m_Layer: 0
+  m_Name: weapon holder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &770844133
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 770844132}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.451, y: 0.291, z: 0.676}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 61484991}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &781192463 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4162025915171580, guid: 9cb5b35ecfd548b4d87e1c513764ef5b, type: 3}
@@ -6316,7 +6396,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pickUpRadius: 1
-  ItemData: {fileID: 11400000, guid: ba7a76dd4b8a9f140b4896fadc359ec1, type: 2}
+  ItemData: {fileID: 11400000, guid: 266d8364e37bef9499596b041f2acadd, type: 2}
   itemSaveData:
     ItemData: {fileID: 0}
     position: {x: 0, y: 0, z: 0}
@@ -11357,6 +11437,7 @@ GameObject:
   - component: {fileID: 1674911641}
   - component: {fileID: 1674911640}
   - component: {fileID: 1674911644}
+  - component: {fileID: 1674911645}
   m_Layer: 5
   m_Name: playerHotbar
   m_TagString: Untagged
@@ -11496,6 +11577,33 @@ MonoBehaviour:
   - {fileID: 1409446893}
   - {fileID: 1510153460}
   - {fileID: 1648822724}
+--- !u!114 &1674911645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1674911638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd0221307aa001e43a3a6029ff3e8eec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mouseInventoryItem: {fileID: 1445114958}
+  inventoryHolder: {fileID: 61484995}
+  slots:
+  - {fileID: 6380450627740523247}
+  - {fileID: 713479253}
+  - {fileID: 313314573}
+  - {fileID: 1755742192}
+  - {fileID: 805096659}
+  - {fileID: 1843050774}
+  - {fileID: 923381552}
+  - {fileID: 1409446893}
+  - {fileID: 1510153460}
+  - {fileID: 1648822724}
+  weaponHolder: {fileID: 770844133}
+  firePoint: {fileID: 0}
 --- !u!1001 &1677850431
 PrefabInstance:
   m_ObjectHideFlags: 0
