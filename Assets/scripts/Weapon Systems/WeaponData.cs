@@ -31,6 +31,7 @@ public class WeaponData : InventoryItemData
     public AudioClip shootSound;
     public AudioClip reloadSound;
     public GameObject muzzleFlashPrefab;
+    public float ShootingSoundDelay;
 
     public override void UseItem()
     {
