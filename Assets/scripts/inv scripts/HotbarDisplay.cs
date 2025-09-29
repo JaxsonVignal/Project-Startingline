@@ -271,6 +271,7 @@ public class HotbarDisplay : StaticInventoryDisplay
 
             PlayerShooting.Instance.firePoint = currentWeapon.transform.Find("FirePoint");
 
+
             // --- Initialize ammo count ---
             currentAmmo = weapon.magazineSize;
         }
