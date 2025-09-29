@@ -29,3 +29,4 @@ MonoBehaviour:
   shootSound: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
   reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
   muzzleFlashPrefab: {fileID: 0}
+  ShootingSoundDelay: 0.07

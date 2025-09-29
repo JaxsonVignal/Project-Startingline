@@ -26,6 +26,7 @@ MonoBehaviour:
   recoilAmount: 1.5
   spread: 0.05
   weaponPrefab: {fileID: 6416730846052406606, guid: 4b8d6abcc484ebf4a83fa3bcfd929fe5, type: 3}
-  shootSound: {fileID: 0}
-  reloadSound: {fileID: 0}
+  shootSound: {fileID: 8300000, guid: 2f7f3e00e8c06d24fa20a985522f9674, type: 3}
+  reloadSound: {fileID: 8300000, guid: df83a498bcc386c499d904dcac82ba54, type: 3}
   muzzleFlashPrefab: {fileID: 0}
+  ShootingSoundDelay: 0.5
