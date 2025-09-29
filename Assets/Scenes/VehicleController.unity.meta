@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Ink/Demos/Basic Demo/Basic Demo.unity.meta
+guid: 75c7db79b4f78814481a943dbe6726ee
+========
 guid: 067050a76685ea646862044bd81f1153
+>>>>>>>> main:Assets/Scenes/VehicleController.unity.meta
 DefaultImporter:
   externalObjects: {}
   userData: 
