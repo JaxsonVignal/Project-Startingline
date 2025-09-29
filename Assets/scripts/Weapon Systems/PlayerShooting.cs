@@ -19,50 +19,12 @@ public class PlayerShooting : MonoBehaviour
 
     private AudioSource weaponAudio;
 
-    public void EquipWeapon(WeaponData weapon)
-    {
-        currentWeapon = weapon;
-
-        if (weapon == null) return;
-
-        // Get or add AudioSource from the weapon prefab
-        if (PlayerShooting.Instance.firePoint != null)
-        {
-            weaponAudio = PlayerShooting.Instance.firePoint.GetComponent<AudioSource>();
-            if (weaponAudio == null)
-                weaponAudio = PlayerShooting.Instance.firePoint.gameObject.AddComponent<AudioSource>();
-
-            weaponAudio.clip = weapon.shootSound;
-            weaponAudio.loop = weapon.fireMode == FireMode.FullAuto; // only loop for auto
-            weaponAudio.playOnAwake = false;
-            weaponAudio.spatialBlend = 1f;
-        }
-
-        currentAmmo = weapon.magazineSize;
-    }
-
-    public void StartFiring()
-    {
-        if (currentWeapon == null) return;
-
-        if (currentWeapon.fireMode == FireMode.SemiAuto)
-            Fire(); // single shot immediately
-        else
-            isFiring = true;
-    }
-
-    public void StopFiring()
-    {
-        isFiring = false;
-
-        if (weaponAudio != null && currentWeapon != null && currentWeapon.fireMode == FireMode.FullAuto)
-        {
-            // Only full-auto needs delayed stopping
-            StartCoroutine(StopWeaponAudioDelayed(currentWeapon.ShootingSoundDelay));
-        }
-    }
-
     private bool isFiring;
+
+    [Header("Recoil Settings")]
+    [SerializeField] private float recoilRecoverySpeed = 6f;
+    private Vector3 currentRecoil;
+    private Vector3 targetRecoil;
 
     private void Update()
     {
@@ -75,9 +37,55 @@ public class PlayerShooting : MonoBehaviour
                 if (currentWeapon.fireMode == FireMode.FullAuto)
                     nextFireTime = Time.time + currentWeapon.fireRate;
                 else
-                    isFiring = false; // stop firing for semi-auto
+                    isFiring = false;
             }
         }
+
+        // Smoothly recover camera from recoil
+        currentRecoil = Vector3.Lerp(currentRecoil, Vector3.zero, recoilRecoverySpeed * Time.deltaTime);
+
+        if (playerCamera != null)
+        {
+            playerCamera.transform.localRotation = Quaternion.Euler(currentRecoil);
+        }
+    }
+
+    public void EquipWeapon(WeaponData weapon)
+    {
+        currentWeapon = weapon;
+        if (weapon == null) return;
+
+        if (firePoint != null)
+        {
+            weaponAudio = firePoint.GetComponent<AudioSource>();
+            if (weaponAudio == null)
+                weaponAudio = firePoint.gameObject.AddComponent<AudioSource>();
+
+            weaponAudio.clip = weapon.shootSound;
+            weaponAudio.loop = weapon.fireMode == FireMode.FullAuto;
+            weaponAudio.playOnAwake = false;
+            weaponAudio.spatialBlend = 1f;
+        }
+
+        currentAmmo = weapon.magazineSize;
+    }
+
+    public void StartFiring()
+    {
+        if (currentWeapon == null) return;
+
+        if (currentWeapon.fireMode == FireMode.SemiAuto)
+            Fire();
+        else
+            isFiring = true;
+    }
+
+    public void StopFiring()
+    {
+        isFiring = false;
+
+        if (weaponAudio != null && currentWeapon != null && currentWeapon.fireMode == FireMode.FullAuto)
+            StartCoroutine(StopWeaponAudioDelayed(currentWeapon.ShootingSoundDelay));
     }
 
     private void Fire()
@@ -95,22 +103,22 @@ public class PlayerShooting : MonoBehaviour
         {
             if (currentWeapon.fireMode == FireMode.FullAuto)
             {
-                // Looping for auto
                 if (!weaponAudio.isPlaying)
                     weaponAudio.Play();
             }
             else
-            {
-                // Semi-auto: always play over current sound
                 weaponAudio.PlayOneShot(currentWeapon.shootSound);
-            }
         }
 
         // Spawn bullet
         if (bulletPrefab && firePoint && playerCamera)
         {
             GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-            Vector3 shootDirection = playerCamera.transform.forward;
+
+            float horizontalSpread = Random.Range(-currentWeapon.spread, currentWeapon.spread);
+            Vector3 shootDirection = playerCamera.transform.forward + playerCamera.transform.right * horizontalSpread;
+            shootDirection.Normalize();
+
             bulletObj.transform.forward = shootDirection;
 
             Bullet bullet = bulletObj.GetComponent<Bullet>();
@@ -122,15 +130,19 @@ public class PlayerShooting : MonoBehaviour
 
             Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
             if (rb != null)
-                rb.AddForce(shootDirection * 50f, ForceMode.Impulse);
+                rb.AddForce(shootDirection * currentWeapon.bulletSpeed, ForceMode.Impulse);
         }
 
         if (currentWeapon.muzzleFlashPrefab)
             Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
 
-        Debug.Log($"Fired {currentWeapon.Name}, Ammo left: {currentAmmo}");
-    }
+        // --- RELATIVE CAMERA RECOIL ---
+        float verticalRecoil = Random.Range(currentWeapon.recoilAmount * 0.5f, currentWeapon.recoilAmount);
+        float horizontalRecoil = Random.Range(-currentWeapon.spread, currentWeapon.spread);
 
+        targetRecoil += new Vector3(-verticalRecoil, horizontalRecoil, 0f); // only relative
+        currentRecoil += targetRecoil;
+    }
 
     public void Reload()
     {
@@ -159,7 +171,7 @@ public class PlayerShooting : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
 
-        if (weaponAudio != null && !isFiring) // still not firing
+        if (weaponAudio != null && !isFiring)
             weaponAudio.Stop();
     }
 }

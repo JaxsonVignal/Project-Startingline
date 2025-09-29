@@ -23,7 +23,7 @@ MonoBehaviour:
   magazineSize: 30
   bulletSpeed: 50
   fireMode: 1
-  recoilAmount: 1.5
+  recoilAmount: 0.01
   spread: 0.05
   weaponPrefab: {fileID: 2641351572177420201, guid: 70beeaeaec2b98d4aadce0c3a9baf04d, type: 3}
   shootSound: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}

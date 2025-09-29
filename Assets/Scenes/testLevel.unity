@@ -711,6 +711,7 @@ MonoBehaviour:
   firePoint: {fileID: 448150005}
   bulletPrefab: {fileID: 129983120201611521, guid: 38887158d053e304395e6e102e2f3b35, type: 3}
   playerCamera: {fileID: 963194227}
+  recoilRecoverySpeed: 6
 --- !u!1001 &61782842
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6587,6 +6588,10 @@ PrefabInstance:
     - target: {fileID: 3453178918251373843, guid: 70beeaeaec2b98d4aadce0c3a9baf04d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9105111595224323197, guid: 70beeaeaec2b98d4aadce0c3a9baf04d, type: 3}
+      propertyPath: m_Volume
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9105111595224323197, guid: 70beeaeaec2b98d4aadce0c3a9baf04d, type: 3}
       propertyPath: m_audioClip
