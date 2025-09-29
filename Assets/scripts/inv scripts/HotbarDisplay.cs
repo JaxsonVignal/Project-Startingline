@@ -12,6 +12,8 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     private bool isFiring;
     private float nextFireTime;
+    private int currentAmmo;
+    private bool isReloading;
 
     private GameInput _gameInput;
 
@@ -53,7 +55,7 @@ public class HotbarDisplay : StaticInventoryDisplay
         _gameInput.Player.Hotbar8.performed += Hotbar8;
         _gameInput.Player.Hotbar9.performed += Hotbar9;
         _gameInput.Player.Hotbar10.performed += Hotbar10;
-
+        _gameInput.Player.Reload.performed += ctx => ReloadCurrentWeapon();
         _gameInput.Player.useItem.performed += UseItem;
     }
 
@@ -76,7 +78,7 @@ public class HotbarDisplay : StaticInventoryDisplay
         _gameInput.Player.Hotbar8.performed -= Hotbar8;
         _gameInput.Player.Hotbar9.performed -= Hotbar9;
         _gameInput.Player.Hotbar10.performed-= Hotbar10;
-
+        _gameInput.Player.Reload.performed -= ctx => ReloadCurrentWeapon();
         _gameInput.Player.useItem.performed -= UseItem;
     }
 
@@ -150,18 +152,12 @@ public class HotbarDisplay : StaticInventoryDisplay
             {
                 if (Time.time >= nextFireTime)
                 {
-                    FireWeapon(weapon);
+                    FireWeapon(weapon); 
 
-                    // Only advance nextFireTime if the weapon is full-auto
                     if (weapon.fireMode == FireMode.FullAuto)
-                    {
                         nextFireTime = Time.time + weapon.fireRate;
-                    }
                     else
-                    {
-                        // Semi-auto fires only once per button press
-                        isFiring = false;
-                    }
+                        isFiring = false; // Semi-auto stops after one shot
                 }
             }
         }
@@ -179,7 +175,7 @@ public class HotbarDisplay : StaticInventoryDisplay
         // 1) If it's a weapon, handle shooting
         if (item is WeaponData weapon)
         {
-            FireWeapon(weapon);
+            return;
         }
         // 2) Otherwise, just use it normally (consumables, tools, etc.)
         else
@@ -190,23 +186,19 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     private void FireWeapon(WeaponData weapon)
     {
+        if (currentAmmo <= 0)
+        {
+            Debug.Log("Out of ammo! Must reload before firing.");
+            return;
+        }
+
+        // Consume ONE round
+        currentAmmo--;
+
         Debug.Log($"PEW PEW! Fired {weapon.Name} | Damage: {weapon.damage}");
-
-        //call shooting script from player
-
         PlayerShooting.Instance.Fire(weapon);
 
-        if (weapon.muzzleFlashPrefab != null)
-        {
-            // Example: Spawn muzzle flash at your weapon's fire point
-            // Instantiate(weapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
-        }
-
-        if (weapon.shootSound != null)
-        {
-            // Example: Play sound
-            // AudioSource.PlayClipAtPoint(weapon.shootSound, transform.position);
-        }
+        Debug.Log($"Ammo left: {currentAmmo}");
     }
 
 
@@ -265,13 +257,12 @@ public class HotbarDisplay : StaticInventoryDisplay
 
         if (weapon.weaponPrefab != null)
         {
-            // Spawn new weapon prefab
             Debug.Log("weapon spawned");
             currentWeapon = Instantiate(weapon.weaponPrefab, weaponHolder);
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
 
-
+            // Add follow behaviour
             var follow = currentWeapon.AddComponent<WeaponFollow>();
             follow.cameraTransform = Camera.main.transform;
             follow.smoothSpeed = 10f;
@@ -279,6 +270,33 @@ public class HotbarDisplay : StaticInventoryDisplay
             follow.swaySmooth = 4f;
 
             PlayerShooting.Instance.firePoint = currentWeapon.transform.Find("FirePoint");
+
+            // --- Initialize ammo count ---
+            currentAmmo = weapon.magazineSize;
         }
+    }
+
+    public void ReloadCurrentWeapon()
+    {
+        var currentSlot = slots[_currentIndex];
+        if (!(currentSlot.AssignedInventorySlot.ItemData is WeaponData weapon)) return;
+
+        if (isReloading || currentAmmo == weapon.magazineSize)
+            return; // already reloading or full
+
+        StartCoroutine(ReloadCoroutine(weapon));
+    }
+
+    private IEnumerator ReloadCoroutine(WeaponData weapon)
+    {
+        isReloading = true;
+        Debug.Log("Reloading...");
+
+        yield return new WaitForSeconds(weapon.reloadTime);
+
+        currentAmmo = weapon.magazineSize;
+        Debug.Log($"Reloaded! Ammo full: {currentAmmo}");
+
+        isReloading = false;
     }
 }

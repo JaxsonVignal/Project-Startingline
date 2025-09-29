@@ -22,7 +22,7 @@ MonoBehaviour:
   reloadTime: 2.5
   magazineSize: 30
   bulletSpeed: 50
-  fireMode: 0
+  fireMode: 1
   recoilAmount: 1.5
   spread: 0.05
   weaponPrefab: {fileID: 2641351572177420201, guid: 70beeaeaec2b98d4aadce0c3a9baf04d, type: 3}
