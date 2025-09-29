@@ -29,24 +29,31 @@ public class WeaponFollow : MonoBehaviour
     {
         if (cameraTransform == null) return;
 
-        // ---- 1. Weapon tilt with camera pitch ----
-        float pitch = cameraTransform.eulerAngles.x;
-        if (pitch > 180) pitch -= 360;
+       
+        Quaternion targetRotation = cameraTransform.rotation * Quaternion.Inverse(cameraTransform.parent.rotation) * initialLocalRotation;
 
-        Quaternion targetRotation = Quaternion.Euler(pitch, 0, 0) * initialLocalRotation;
+        
+        transform.localRotation = Quaternion.Slerp(
+            transform.localRotation,
+            targetRotation,
+            Time.deltaTime * smoothSpeed
+        );
 
-        transform.localRotation = Quaternion.Lerp(transform.localRotation, targetRotation, Time.deltaTime * smoothSpeed);
-
-        // ---- 2. Weapon sway based on camera movement ----
+        
         Vector3 deltaEuler = cameraTransform.eulerAngles - lastCameraEuler;
 
-        // Convert large jumps due to 0-360 wraparound
+        
         if (deltaEuler.x > 180) deltaEuler.x -= 360;
         if (deltaEuler.y > 180) deltaEuler.y -= 360;
         if (deltaEuler.z > 180) deltaEuler.z -= 360;
 
         Vector3 swayTarget = new Vector3(-deltaEuler.x, -deltaEuler.y, 0) * swayAmount;
-        transform.localPosition = Vector3.SmoothDamp(transform.localPosition, initialLocalPosition + swayTarget, ref swayVelocity, 1 / swaySmooth);
+        transform.localPosition = Vector3.SmoothDamp(
+            transform.localPosition,
+            initialLocalPosition + swayTarget,
+            ref swayVelocity,
+            1 / swaySmooth
+        );
 
         lastCameraEuler = cameraTransform.eulerAngles;
     }
