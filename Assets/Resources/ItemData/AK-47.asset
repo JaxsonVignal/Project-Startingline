@@ -21,10 +21,10 @@ MonoBehaviour:
   fireRate: 0.1
   reloadTime: 2.5
   magazineSize: 30
-  bulletSpeed: 50
+  bulletSpeed: 100
   fireMode: 1
-  recoilAmount: 0.01
-  spread: 0.05
+  recoilAmount: 3
+  spread: 0.01
   weaponPrefab: {fileID: 2641351572177420201, guid: 70beeaeaec2b98d4aadce0c3a9baf04d, type: 3}
   shootSound: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
   reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
