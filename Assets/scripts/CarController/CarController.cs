@@ -1,15 +1,19 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
+using System;
+using System.Collections.Generic;
 
 public class CarController : MonoBehaviour
 {
-    public enum Axel 
+    public enum ControlMode
+    {
+        Keyboard,
+        Buttons
+    };
+
+    public enum Axel
     {
         Front,
-        Rear    
+        Rear
     }
 
     [Serializable]
@@ -17,8 +21,12 @@ public class CarController : MonoBehaviour
     {
         public GameObject wheelModel;
         public WheelCollider wheelCollider;
+        public GameObject wheelEffectObj;
+        public ParticleSystem smokeParticle;
         public Axel axel;
     }
+
+    public ControlMode control;
 
     public float maxAcceleration = 30.0f;
     public float brakeAcceleration = 50.0f;
@@ -33,19 +41,23 @@ public class CarController : MonoBehaviour
     float moveInput;
     float steerInput;
 
-    private Rigidbody carRB;
+    private Rigidbody carRb;
 
+    private CarLights carLights;
 
-    private void Start()
+    void Start()
     {
-        carRB = GetComponent<Rigidbody>();
-        carRB.centerOfMass = _centerOfMass;
+        carRb = GetComponent<Rigidbody>();
+        carRb.centerOfMass = _centerOfMass;
+
+        carLights = GetComponent<CarLights>();
     }
 
     void Update()
     {
         GetInputs();
-        Animationwheels();
+        AnimateWheels();
+        WheelEffects();
     }
 
     void LateUpdate()
@@ -55,28 +67,40 @@ public class CarController : MonoBehaviour
         Brake();
     }
 
+    public void MoveInput(float input)
+    {
+        moveInput = input;
+    }
+
+    public void SteerInput(float input)
+    {
+        steerInput = input;
+    }
+
     void GetInputs()
     {
-        moveInput = Input.GetAxis("Vertical");
-        steerInput = Input.GetAxis("Horizontal");
+        if (control == ControlMode.Keyboard)
+        {
+            moveInput = Input.GetAxis("Vertical");
+            steerInput = Input.GetAxis("Horizontal");
+        }
     }
 
-    
-    void Move() 
+    void Move()
     {
-     foreach(var wheel in wheels)
-     {
-      wheel.wheelCollider.motorTorque = moveInput * 600 * maxAcceleration * Time.deltaTime;
-     }    
+        foreach (var wheel in wheels)
+        {
+            wheel.wheelCollider.motorTorque = moveInput * 600 * maxAcceleration * Time.deltaTime;
+        }
     }
 
-    void Steer() 
-    { 
-      foreach(var wheel in wheels)
+    void Steer()
+    {
+        foreach (var wheel in wheels)
         {
             if (wheel.axel == Axel.Front)
             {
-               var _steerAngle = steerInput * turnSensitivity * maxSteerAngle;
+                var _steerAngle = steerInput * turnSensitivity * maxSteerAngle;
                 wheel.wheelCollider.steerAngle = Mathf.Lerp(wheel.wheelCollider.steerAngle, _steerAngle, 0.6f);
             }
         }
@@ -84,26 +108,29 @@ public class CarController : MonoBehaviour
 
     void Brake()
     {
-     if (Input.GetKey(KeyCode.Space))
-     {
-       foreach (var wheel in wheels)
-       {
-         wheel.wheelCollider.brakeTorque = 300 * brakeAcceleration * Time.deltaTime;
-       }
-     }
-      else
-      {
-       foreach (var wheel in wheels)
-       {
+        if (Input.GetKey(KeyCode.Space) || moveInput == 0)
+        {
+            foreach (var wheel in wheels)
+            {
+                wheel.wheelCollider.brakeTorque = 300 * brakeAcceleration * Time.deltaTime;
+            }
+
+            carLights.isBackLightOn = true;
+            carLights.OperateBackLights();
+        }
+        else
+        {
+            foreach (var wheel in wheels)
+            {
                 wheel.wheelCollider.brakeTorque = 0;
-       }
-      }
+            }
 
-
+            carLights.isBackLightOn = false;
+            carLights.OperateBackLights();
+        }
     }
 
-
-    void Animationwheels()
+    void AnimateWheels()
     {
         foreach (var wheel in wheels)
         {
@@ -115,5 +142,21 @@ public class CarController : MonoBehaviour
         }
     }
 
-}
+    void WheelEffects()
+    {
+        foreach (var wheel in wheels)
+        {
+            //var dirtParticleMainSettings = wheel.smokeParticle.main;
 
+            if (Input.GetKey(KeyCode.Space) && wheel.axel == Axel.Rear && wheel.wheelCollider.isGrounded == true && carRb.velocity.magnitude >= 10.0f)
+            {
+                wheel.wheelEffectObj.GetComponentInChildren<TrailRenderer>().emitting = true;
+                wheel.smokeParticle.Emit(1);
+            }
+            else
+            {
+                wheel.wheelEffectObj.GetComponentInChildren<TrailRenderer>().emitting = false;
+            }
+        }
+    }
+}
