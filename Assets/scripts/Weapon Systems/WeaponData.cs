@@ -33,6 +33,7 @@ public class WeaponData : InventoryItemData
     public GameObject muzzleFlashPrefab;
     public float ShootingSoundDelay;
 
+
     public override void UseItem()
     {
         Debug.Log($"Firing {Name}!");
