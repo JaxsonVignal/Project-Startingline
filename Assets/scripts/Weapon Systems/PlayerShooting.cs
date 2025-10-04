@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayerShooting : MonoBehaviour
 {
     public static PlayerShooting Instance;
-
+    public Recoil recoilScript;
     private void Awake() => Instance = this;
 
     public Transform firePoint;
@@ -20,14 +20,13 @@ public class PlayerShooting : MonoBehaviour
     private AudioSource weaponAudio;
     private bool isFiring;
 
-    [Header("Recoil Settings")]
-    [SerializeField] private float recoilRecoverySpeed = 10f; // how fast camera moves to target recoil while firing
-    [SerializeField] private float recoilResetSpeed = 6f;     // how fast recoil resets after stopping fire
-    private Vector3 currentRecoil; // what the camera is currently at
-    private Vector3 recoilOffset;  // total accumulated recoil target
+    private Recoil recoil;
+
+    
 
     private void Update()
     {
+        recoil = transform.Find("cameraHolder/CameraRecoil").GetComponent<Recoil>();
         if (isFiring && currentWeapon != null)
         {
             if (Time.time >= nextFireTime)
@@ -39,18 +38,6 @@ public class PlayerShooting : MonoBehaviour
                 else
                     isFiring = false;
             }
-        }
-
-        // Smoothly move the camera toward the accumulated recoil offset
-        currentRecoil = Vector3.Lerp(currentRecoil, recoilOffset, recoilRecoverySpeed * Time.deltaTime);
-
-        if (playerCamera != null)
-            playerCamera.transform.localRotation = Quaternion.Euler(currentRecoil);
-
-        // If not firing, slowly reset recoil offset to zero
-        if (!isFiring)
-        {
-            recoilOffset = Vector3.Lerp(recoilOffset, Vector3.zero, recoilResetSpeed * Time.deltaTime);
         }
     }
 
@@ -72,8 +59,9 @@ public class PlayerShooting : MonoBehaviour
         }
 
         currentAmmo = weapon.magazineSize;
-        recoilOffset = Vector3.zero;
-        currentRecoil = Vector3.zero;
+
+        if (recoilScript != null)
+            recoilScript.SetWeaponData(weapon);
     }
 
     public void StartFiring()
@@ -144,12 +132,8 @@ public class PlayerShooting : MonoBehaviour
         if (currentWeapon.muzzleFlashPrefab)
             Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
 
-        // --- CUMULATIVE RECOIL ---
-        float verticalRecoil = Random.Range(currentWeapon.recoilAmount * 0.5f, currentWeapon.recoilAmount);
-        float horizontalRecoil = Random.Range(-currentWeapon.spread, currentWeapon.spread);
 
-        // Add recoil to total offset (keeps stacking while holding fire)
-        recoilOffset += new Vector3(-verticalRecoil, horizontalRecoil, 0f);
+        recoil.RecoilFire();
     }
 
     public void Reload()
