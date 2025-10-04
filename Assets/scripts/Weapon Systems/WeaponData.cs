@@ -21,7 +21,9 @@ public class WeaponData : InventoryItemData
     public FireMode fireMode = FireMode.SemiAuto;  // <--- Add this
 
     [Header("Recoil & Accuracy")]
-    public float recoilAmount = 1.5f;
+    public float recoilX = 1.5f;
+    public float recoilY = 1.5f;
+    public float recoilZ = 1.5f;
     public float spread = 0.05f;
 
     [Header("3D Model")]
