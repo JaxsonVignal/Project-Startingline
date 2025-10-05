@@ -11,7 +11,8 @@ public class PlayerShooting : MonoBehaviour
     public GameObject bulletPrefab;
     public Camera playerCamera;
 
-    // Current weapon info
+    public Recoil recoilScript;
+
     private WeaponData currentWeapon;
     private int currentAmmo;
     private bool isReloading;
@@ -20,37 +21,23 @@ public class PlayerShooting : MonoBehaviour
     private AudioSource weaponAudio;
     private bool isFiring;
 
-    [Header("Recoil Settings")]
-    [SerializeField] private float recoilRecoverySpeed = 10f; // how fast camera moves to target recoil while firing
-    [SerializeField] private float recoilResetSpeed = 6f;     // how fast recoil resets after stopping fire
-    private Vector3 currentRecoil; // what the camera is currently at
-    private Vector3 recoilOffset;  // total accumulated recoil target
+    private Recoil recoil;
 
     private void Update()
     {
+        recoil = transform.Find("cameraHolder/CameraRecoil").GetComponent<Recoil>();
+
         if (isFiring && currentWeapon != null)
         {
             if (Time.time >= nextFireTime)
             {
                 Fire();
 
-                if (currentWeapon.fireMode == FireMode.FullAuto)
-                    nextFireTime = Time.time + currentWeapon.fireRate;
-                else
+                nextFireTime = Time.time + currentWeapon.fireRate;
+
+                if (currentWeapon.fireMode != FireMode.FullAuto)
                     isFiring = false;
             }
-        }
-
-        // Smoothly move the camera toward the accumulated recoil offset
-        currentRecoil = Vector3.Lerp(currentRecoil, recoilOffset, recoilRecoverySpeed * Time.deltaTime);
-
-        if (playerCamera != null)
-            playerCamera.transform.localRotation = Quaternion.Euler(currentRecoil);
-
-        // If not firing, slowly reset recoil offset to zero
-        if (!isFiring)
-        {
-            recoilOffset = Vector3.Lerp(recoilOffset, Vector3.zero, recoilResetSpeed * Time.deltaTime);
         }
     }
 
@@ -72,18 +59,26 @@ public class PlayerShooting : MonoBehaviour
         }
 
         currentAmmo = weapon.magazineSize;
-        recoilOffset = Vector3.zero;
-        currentRecoil = Vector3.zero;
+
+        if (recoilScript != null)
+            recoilScript.SetWeaponData(weapon);
     }
 
     public void StartFiring()
     {
         if (currentWeapon == null) return;
 
-        if (currentWeapon.fireMode == FireMode.SemiAuto)
+        if (Time.time < nextFireTime) return;
+
+        if (currentWeapon.fireMode == FireMode.SemiAuto || currentWeapon.fireMode == FireMode.Shotgun)
+        {
             Fire();
+            nextFireTime = Time.time + currentWeapon.fireRate;
+        }
         else
+        {
             isFiring = true;
+        }
     }
 
     public void StopFiring()
@@ -118,38 +113,50 @@ public class PlayerShooting : MonoBehaviour
             }
         }
 
-        // Spawn bullet
-        if (bulletPrefab && firePoint && playerCamera)
+        // Determine number of bullets to fire
+        int pellets = currentWeapon.fireMode == FireMode.Shotgun ? currentWeapon.pelletsPerShot : 1;
+
+        for (int i = 0; i < pellets; i++)
         {
-            GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-
-            float horizontalSpread = Random.Range(-currentWeapon.spread, currentWeapon.spread);
-            Vector3 shootDirection = playerCamera.transform.forward + playerCamera.transform.right * horizontalSpread;
-            shootDirection.Normalize();
-
-            bulletObj.transform.forward = shootDirection;
-
-            Bullet bullet = bulletObj.GetComponent<Bullet>();
-            if (bullet != null)
+            if (bulletPrefab && firePoint && playerCamera)
             {
-                bullet.damage = currentWeapon.damage;
-                bullet.speed = currentWeapon.bulletSpeed;
-            }
+                GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
-            Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
-            if (rb != null)
-                rb.AddForce(shootDirection * currentWeapon.bulletSpeed, ForceMode.Impulse);
+                Vector3 shootDirection = playerCamera.transform.forward;
+
+                if (currentWeapon.fireMode == FireMode.Shotgun)
+                {
+                    float spreadX = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
+                    float spreadY = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
+                    Quaternion spreadRot = Quaternion.Euler(spreadY, spreadX, 0);
+                    shootDirection = spreadRot * shootDirection;
+                }
+                else
+                {
+                    float horizontalSpread = Random.Range(-currentWeapon.spread, currentWeapon.spread);
+                    shootDirection += playerCamera.transform.right * horizontalSpread;
+                }
+
+                shootDirection.Normalize();
+                bulletObj.transform.forward = shootDirection;
+
+                Bullet bullet = bulletObj.GetComponent<Bullet>();
+                if (bullet != null)
+                {
+                    bullet.damage = currentWeapon.damage;
+                    bullet.speed = currentWeapon.bulletSpeed;
+                }
+
+                Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
+                if (rb != null)
+                    rb.AddForce(shootDirection * currentWeapon.bulletSpeed, ForceMode.Impulse);
+            }
         }
 
         if (currentWeapon.muzzleFlashPrefab)
             Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
 
-        // --- CUMULATIVE RECOIL ---
-        float verticalRecoil = Random.Range(currentWeapon.recoilAmount * 0.5f, currentWeapon.recoilAmount);
-        float horizontalRecoil = Random.Range(-currentWeapon.spread, currentWeapon.spread);
-
-        // Add recoil to total offset (keeps stacking while holding fire)
-        recoilOffset += new Vector3(-verticalRecoil, horizontalRecoil, 0f);
+        recoil.RecoilFire();
     }
 
     public void Reload()

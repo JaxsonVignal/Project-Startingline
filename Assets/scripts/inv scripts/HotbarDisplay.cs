@@ -6,7 +6,7 @@ public class HotbarDisplay : StaticInventoryDisplay
 {
     private int _maxIndexSize = 9;
     private int _currentIndex = 0;
-
+    
     private GameInput _gameInput;
 
     [SerializeField] private Transform weaponHolder;
@@ -123,6 +123,8 @@ public class HotbarDisplay : StaticInventoryDisplay
 
             // Equip weapon in PlayerShooting
             PlayerShooting.Instance.EquipWeapon(weapon);
+
+            
         }
     }
 

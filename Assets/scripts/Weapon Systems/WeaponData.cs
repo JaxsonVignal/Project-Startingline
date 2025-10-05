@@ -4,7 +4,8 @@ public enum FireMode
 {
     SemiAuto,
     FullAuto,
-    Burst
+    Burst,
+    Shotgun
 }
 
 [CreateAssetMenu(menuName = "Inventory System/Weapon")]
@@ -17,11 +18,17 @@ public class WeaponData : InventoryItemData
     public int magazineSize = 30;
     public int bulletSpeed = 50;
 
+    [Header("Shotgun Settings")]
+    public int pelletsPerShot = 8; // Number of bullets fired per shot
+    public float spreadAngle = 5f; // How wide the shotgun spread is
+
     [Header("Fire Settings")]
     public FireMode fireMode = FireMode.SemiAuto;  // <--- Add this
 
     [Header("Recoil & Accuracy")]
-    public float recoilAmount = 1.5f;
+    public float recoilX = 1.5f;
+    public float recoilY = 1.5f;
+    public float recoilZ = 1.5f;
     public float spread = 0.05f;
 
     [Header("3D Model")]
