@@ -4,14 +4,15 @@ using UnityEngine;
 public class PlayerShooting : MonoBehaviour
 {
     public static PlayerShooting Instance;
-    public Recoil recoilScript;
+
     private void Awake() => Instance = this;
 
     public Transform firePoint;
     public GameObject bulletPrefab;
     public Camera playerCamera;
 
-    // Current weapon info
+    public Recoil recoilScript;
+
     private WeaponData currentWeapon;
     private int currentAmmo;
     private bool isReloading;
@@ -22,20 +23,19 @@ public class PlayerShooting : MonoBehaviour
 
     private Recoil recoil;
 
-    
-
     private void Update()
     {
         recoil = transform.Find("cameraHolder/CameraRecoil").GetComponent<Recoil>();
+
         if (isFiring && currentWeapon != null)
         {
             if (Time.time >= nextFireTime)
             {
                 Fire();
 
-                if (currentWeapon.fireMode == FireMode.FullAuto)
-                    nextFireTime = Time.time + currentWeapon.fireRate;
-                else
+                nextFireTime = Time.time + currentWeapon.fireRate;
+
+                if (currentWeapon.fireMode != FireMode.FullAuto)
                     isFiring = false;
             }
         }
@@ -68,10 +68,17 @@ public class PlayerShooting : MonoBehaviour
     {
         if (currentWeapon == null) return;
 
-        if (currentWeapon.fireMode == FireMode.SemiAuto)
+        if (Time.time < nextFireTime) return;
+
+        if (currentWeapon.fireMode == FireMode.SemiAuto || currentWeapon.fireMode == FireMode.Shotgun)
+        {
             Fire();
+            nextFireTime = Time.time + currentWeapon.fireRate;
+        }
         else
+        {
             isFiring = true;
+        }
     }
 
     public void StopFiring()
@@ -106,32 +113,48 @@ public class PlayerShooting : MonoBehaviour
             }
         }
 
-        // Spawn bullet
-        if (bulletPrefab && firePoint && playerCamera)
+        // Determine number of bullets to fire
+        int pellets = currentWeapon.fireMode == FireMode.Shotgun ? currentWeapon.pelletsPerShot : 1;
+
+        for (int i = 0; i < pellets; i++)
         {
-            GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-
-            float horizontalSpread = Random.Range(-currentWeapon.spread, currentWeapon.spread);
-            Vector3 shootDirection = playerCamera.transform.forward + playerCamera.transform.right * horizontalSpread;
-            shootDirection.Normalize();
-
-            bulletObj.transform.forward = shootDirection;
-
-            Bullet bullet = bulletObj.GetComponent<Bullet>();
-            if (bullet != null)
+            if (bulletPrefab && firePoint && playerCamera)
             {
-                bullet.damage = currentWeapon.damage;
-                bullet.speed = currentWeapon.bulletSpeed;
-            }
+                GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
-            Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
-            if (rb != null)
-                rb.AddForce(shootDirection * currentWeapon.bulletSpeed, ForceMode.Impulse);
+                Vector3 shootDirection = playerCamera.transform.forward;
+
+                if (currentWeapon.fireMode == FireMode.Shotgun)
+                {
+                    float spreadX = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
+                    float spreadY = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
+                    Quaternion spreadRot = Quaternion.Euler(spreadY, spreadX, 0);
+                    shootDirection = spreadRot * shootDirection;
+                }
+                else
+                {
+                    float horizontalSpread = Random.Range(-currentWeapon.spread, currentWeapon.spread);
+                    shootDirection += playerCamera.transform.right * horizontalSpread;
+                }
+
+                shootDirection.Normalize();
+                bulletObj.transform.forward = shootDirection;
+
+                Bullet bullet = bulletObj.GetComponent<Bullet>();
+                if (bullet != null)
+                {
+                    bullet.damage = currentWeapon.damage;
+                    bullet.speed = currentWeapon.bulletSpeed;
+                }
+
+                Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
+                if (rb != null)
+                    rb.AddForce(shootDirection * currentWeapon.bulletSpeed, ForceMode.Impulse);
+            }
         }
 
         if (currentWeapon.muzzleFlashPrefab)
             Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
-
 
         recoil.RecoilFire();
     }
