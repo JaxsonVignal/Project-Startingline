@@ -14,6 +14,7 @@ public class PlayerShooting : MonoBehaviour
     public Recoil recoilScript;
 
     private WeaponData currentWeapon;
+    private string currentWeaponSlotID;
     private int currentAmmo;
     private bool isReloading;
     private float nextFireTime;
@@ -41,10 +42,28 @@ public class PlayerShooting : MonoBehaviour
         }
     }
 
+    // Overload to accept just WeaponData (for backward compatibility)
     public void EquipWeapon(WeaponData weapon)
     {
+        EquipWeapon(weapon, null);
+    }
+
+    public void EquipWeapon(WeaponData weapon, string slotID)
+    {
+        // Save current weapon's ammo
+        if (currentWeapon != null && !string.IsNullOrEmpty(currentWeaponSlotID))
+        {
+            WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
+        }
+
         currentWeapon = weapon;
-        if (weapon == null) return;
+        currentWeaponSlotID = slotID;
+
+        if (weapon == null)
+        {
+            currentAmmo = 0;
+            return;
+        }
 
         if (firePoint != null)
         {
@@ -58,10 +77,20 @@ public class PlayerShooting : MonoBehaviour
             weaponAudio.spatialBlend = 1f;
         }
 
-        currentAmmo = weapon.magazineSize;
+        // Load ammo for this specific weapon slot
+        if (!string.IsNullOrEmpty(slotID))
+        {
+            currentAmmo = WeaponAmmoTracker.GetAmmo(slotID, weapon.magazineSize);
+        }
+        else
+        {
+            currentAmmo = weapon.magazineSize; // Default to full if no slot ID
+        }
 
         if (recoilScript != null)
             recoilScript.SetWeaponData(weapon);
+
+        Debug.Log($"Equipped {weapon.Name} (Slot: {slotID}) - Ammo: {currentAmmo}/{weapon.magazineSize}");
     }
 
     public void StartFiring()
@@ -98,6 +127,12 @@ public class PlayerShooting : MonoBehaviour
         }
 
         currentAmmo--;
+
+        // Save ammo after each shot
+        if (!string.IsNullOrEmpty(currentWeaponSlotID))
+        {
+            WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
+        }
 
         // Play shooting sound
         if (weaponAudio != null)
@@ -177,6 +212,13 @@ public class PlayerShooting : MonoBehaviour
         yield return new WaitForSeconds(currentWeapon.reloadTime);
 
         currentAmmo = currentWeapon.magazineSize;
+
+        // Save reloaded ammo
+        if (!string.IsNullOrEmpty(currentWeaponSlotID))
+        {
+            WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
+        }
+
         isReloading = false;
 
         Debug.Log($"Reloaded {currentWeapon.Name}, Ammo: {currentAmmo}");
@@ -189,4 +231,7 @@ public class PlayerShooting : MonoBehaviour
         if (weaponAudio != null && !isFiring)
             weaponAudio.Stop();
     }
+
+    public int GetCurrentAmmo() => currentAmmo;
+    public int GetMaxAmmo() => currentWeapon?.magazineSize ?? 0;
 }

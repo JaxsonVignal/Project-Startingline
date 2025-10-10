@@ -6,7 +6,7 @@ public class HotbarDisplay : StaticInventoryDisplay
 {
     private int _maxIndexSize = 9;
     private int _currentIndex = 0;
-    
+
     private GameInput _gameInput;
 
     [SerializeField] private Transform weaponHolder;
@@ -30,12 +30,10 @@ public class HotbarDisplay : StaticInventoryDisplay
         base.OnEnable();
         _gameInput.Enable();
 
-        // Weapon fire/reload
         _gameInput.Player.useItem.performed += StartFiring;
         _gameInput.Player.useItem.canceled += StopFiring;
         _gameInput.Player.Reload.performed += ctx => PlayerShooting.Instance.Reload();
 
-        // Hotbar slots
         _gameInput.Player.Hotbar1.performed += ctx => SetIndex(0);
         _gameInput.Player.Hotbar2.performed += ctx => SetIndex(1);
         _gameInput.Player.Hotbar3.performed += ctx => SetIndex(2);
@@ -84,9 +82,9 @@ public class HotbarDisplay : StaticInventoryDisplay
 
         slots[_currentIndex].ToggleHighlight();
 
-        var item = slots[_currentIndex].AssignedInventorySlot.ItemData;
-        if (item is WeaponData weapon)
-            EquipWeapon(weapon);
+        var slot = slots[_currentIndex].AssignedInventorySlot;
+        if (slot.ItemData is WeaponData weapon)
+            EquipWeapon(weapon, slot.UniqueSlotID);
         else
             UnequipWeapon();
     }
@@ -100,9 +98,8 @@ public class HotbarDisplay : StaticInventoryDisplay
         SetIndex(newIndex);
     }
 
-    private void EquipWeapon(WeaponData weapon)
+    private void EquipWeapon(WeaponData weapon, string slotID)
     {
-        // Destroy previous weapon
         if (currentWeapon != null) Destroy(currentWeapon);
 
         if (weapon.weaponPrefab != null)
@@ -111,20 +108,16 @@ public class HotbarDisplay : StaticInventoryDisplay
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
 
-            // Add follow behaviour
             var follow = currentWeapon.AddComponent<WeaponFollow>();
             follow.cameraTransform = Camera.main.transform;
             follow.smoothSpeed = 10f;
             follow.swayAmount = 0.05f;
             follow.swaySmooth = 4f;
 
-            // Set fire point in PlayerShooting
             PlayerShooting.Instance.firePoint = currentWeapon.transform.Find("FirePoint");
 
-            // Equip weapon in PlayerShooting
-            PlayerShooting.Instance.EquipWeapon(weapon);
-
-            
+            // Pass the slot's unique ID for ammo tracking
+            PlayerShooting.Instance.EquipWeapon(weapon, slotID);
         }
     }
 
@@ -133,7 +126,7 @@ public class HotbarDisplay : StaticInventoryDisplay
         if (currentWeapon != null)
             Destroy(currentWeapon);
 
-        PlayerShooting.Instance.EquipWeapon(null);
+        PlayerShooting.Instance.EquipWeapon(null, null);
     }
 
     private void StartFiring(InputAction.CallbackContext ctx) => PlayerShooting.Instance.StartFiring();
