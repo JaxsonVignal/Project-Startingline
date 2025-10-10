@@ -27,7 +27,7 @@ public static class WeaponAmmoTracker
         ammoDatabase[slotID] = ammo;
     }
 
-    // Optional: Clear ammo data for a slot
+    // Clear ammo data for a slot
     public static void ClearAmmo(string slotID)
     {
         if (string.IsNullOrEmpty(slotID)) return;
@@ -36,7 +36,32 @@ public static class WeaponAmmoTracker
             ammoDatabase.Remove(slotID);
     }
 
-    // Optional: Debug method to see all tracked ammo
+    // NEW: Get all ammo data for saving
+    public static Dictionary<string, int> GetAllAmmoData()
+    {
+        return new Dictionary<string, int>(ammoDatabase);
+    }
+
+    // NEW: Load ammo data from save
+    public static void LoadAmmoData(Dictionary<string, int> loadedData)
+    {
+        ammoDatabase.Clear();
+        if (loadedData != null)
+        {
+            foreach (var kvp in loadedData)
+            {
+                ammoDatabase[kvp.Key] = kvp.Value;
+            }
+        }
+    }
+
+    // NEW: Clear all ammo data (useful for new game)
+    public static void ClearAllAmmo()
+    {
+        ammoDatabase.Clear();
+    }
+
+    // Debug method to see all tracked ammo
     public static void DebugPrintAmmo()
     {
         Debug.Log($"=== Ammo Tracker ({ammoDatabase.Count} weapons tracked) ===");

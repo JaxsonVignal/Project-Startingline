@@ -198,6 +198,7 @@ public class PlayerShooting : MonoBehaviour
     {
         if (currentWeapon == null || isReloading || currentAmmo == currentWeapon.magazineSize) return;
 
+        
         StartCoroutine(ReloadCoroutine());
     }
 
