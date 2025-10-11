@@ -22,6 +22,9 @@ MonoBehaviour:
   reloadTime: 2.5
   magazineSize: 30
   bulletSpeed: 100
+  requiredAmmoType: 1
+  pelletsPerShot: 8
+  spreadAngle: 5
   fireMode: 1
   recoilX: -2
   recoilY: 2
