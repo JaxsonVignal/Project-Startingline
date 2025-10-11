@@ -42,7 +42,6 @@ public class PlayerShooting : MonoBehaviour
         }
     }
 
-    // Overload to accept just WeaponData (for backward compatibility)
     public void EquipWeapon(WeaponData weapon)
     {
         EquipWeapon(weapon, null);
@@ -84,7 +83,7 @@ public class PlayerShooting : MonoBehaviour
         }
         else
         {
-            currentAmmo = weapon.magazineSize; // Default to full if no slot ID
+            currentAmmo = weapon.magazineSize;
         }
 
         if (recoilScript != null)
@@ -196,33 +195,73 @@ public class PlayerShooting : MonoBehaviour
 
     public void Reload()
     {
-        if (currentWeapon == null || isReloading || currentAmmo == currentWeapon.magazineSize) return;
+        if (currentWeapon == null || isReloading) return;
 
-        
+        // Check if magazine is already full
+        if (currentAmmo == currentWeapon.magazineSize)
+        {
+            Debug.Log("Magazine is already full!");
+            return;
+        }
+
         StartCoroutine(ReloadCoroutine());
     }
 
     private IEnumerator ReloadCoroutine()
     {
         isReloading = true;
-        Debug.Log($"Reloading {currentWeapon.Name}...");
+
+        // Get player inventory
+        var playerInventory = FindObjectOfType<PlayerInventoryHolder>();
+        if (playerInventory == null)
+        {
+            Debug.LogError("PlayerInventoryHolder not found!");
+            isReloading = false;
+            yield break;
+        }
+
+        // Calculate how much ammo we need
+        int ammoNeeded = currentWeapon.magazineSize - currentAmmo;
+
+        // Check if player has the required ammo type
+        int availableAmmo = playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType);
+
+        if (availableAmmo <= 0)
+        {
+            Debug.Log($"No {currentWeapon.requiredAmmoType} ammo in inventory!");
+            isReloading = false;
+            yield break;
+        }
+
+        Debug.Log($"Reloading {currentWeapon.Name}... Available ammo: {availableAmmo}");
 
         if (currentWeapon.reloadSound)
             AudioSource.PlayClipAtPoint(currentWeapon.reloadSound, firePoint.position);
 
         yield return new WaitForSeconds(currentWeapon.reloadTime);
 
-        currentAmmo = currentWeapon.magazineSize;
+        // Take the minimum of what we need and what's available
+        int ammoToTake = Mathf.Min(ammoNeeded, availableAmmo);
 
-        // Save reloaded ammo
-        if (!string.IsNullOrEmpty(currentWeaponSlotID))
+        // Consume ammo from inventory
+        if (playerInventory.PrimaryInventorySystem.ConsumeAmmo(currentWeapon.requiredAmmoType, ammoToTake))
         {
-            WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
+            currentAmmo += ammoToTake;
+
+            // Save reloaded ammo
+            if (!string.IsNullOrEmpty(currentWeaponSlotID))
+            {
+                WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
+            }
+
+            Debug.Log($"Reloaded {currentWeapon.Name}, Current Ammo: {currentAmmo}/{currentWeapon.magazineSize}, Remaining in inventory: {playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType)}");
+        }
+        else
+        {
+            Debug.LogError("Failed to consume ammo from inventory!");
         }
 
         isReloading = false;
-
-        Debug.Log($"Reloaded {currentWeapon.Name}, Ammo: {currentAmmo}");
     }
 
     private IEnumerator StopWeaponAudioDelayed(float delay)
@@ -235,4 +274,15 @@ public class PlayerShooting : MonoBehaviour
 
     public int GetCurrentAmmo() => currentAmmo;
     public int GetMaxAmmo() => currentWeapon?.magazineSize ?? 0;
+
+    // NEW: Get remaining ammo in inventory for current weapon
+    public int GetInventoryAmmo()
+    {
+        if (currentWeapon == null) return 0;
+
+        var playerInventory = FindObjectOfType<PlayerInventoryHolder>();
+        if (playerInventory == null) return 0;
+
+        return playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType);
+    }
 }

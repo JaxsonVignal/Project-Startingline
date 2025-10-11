@@ -18,12 +18,15 @@ public class WeaponData : InventoryItemData
     public int magazineSize = 30;
     public int bulletSpeed = 50;
 
+    [Header("Ammo Configuration")]
+    public AmmoType requiredAmmoType; // What ammo type this weapon uses
+
     [Header("Shotgun Settings")]
-    public int pelletsPerShot = 8; // Number of bullets fired per shot
-    public float spreadAngle = 5f; // How wide the shotgun spread is
+    public int pelletsPerShot = 8;
+    public float spreadAngle = 5f;
 
     [Header("Fire Settings")]
-    public FireMode fireMode = FireMode.SemiAuto;  // <--- Add this
+    public FireMode fireMode = FireMode.SemiAuto;
 
     [Header("Recoil & Accuracy")]
     public float recoilX = 1.5f;
@@ -32,14 +35,13 @@ public class WeaponData : InventoryItemData
     public float spread = 0.05f;
 
     [Header("3D Model")]
-    public GameObject weaponPrefab; // drag your gun prefab here
+    public GameObject weaponPrefab;
 
     [Header("Audio & VFX")]
     public AudioClip shootSound;
     public AudioClip reloadSound;
     public GameObject muzzleFlashPrefab;
     public float ShootingSoundDelay;
-
 
     public override void UseItem()
     {
