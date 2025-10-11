@@ -2,9 +2,13 @@ using UnityEngine;
 
 public enum AmmoType
 {
-    Pistol,
-    Rifle,
-    Shotgun,
+    Pistol_9mm,
+    Pistol_45,
+    Pistol_50cal,
+    Rifle_762,
+    Rifle_556,
+    Shotgun_Slug,
+    Shotgun_Buck,
     Sniper,
     SMG,
     

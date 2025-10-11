@@ -17,4 +17,4 @@ MonoBehaviour:
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 30
-  ammoType: 1
+  ammoType: 3

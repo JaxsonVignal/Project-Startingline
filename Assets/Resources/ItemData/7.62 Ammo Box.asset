@@ -9,11 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 04565d049c2c9464b98641a4f309a7a3, type: 3}
-  m_Name: Test Item 2
+  m_Script: {fileID: 11500000, guid: f79f944a179857040ab849c45959f93e, type: 3}
+  m_Name: 7.62 Ammo Box
   m_EditorClassIdentifier: 
-  ID: -1
+  ID: 4
   Name: 
-  Description: this is a test too
-  Icon: {fileID: 21300000, guid: 541be11420da5444d8ef4957ec87686b, type: 3}
+  Description: 
+  Icon: {fileID: 0}
   maxStackSize: 1
+  ammoToGive: {fileID: 11400000, guid: ed077dd9ead375c489d6604634eb9ba8, type: 2}
+  ammoAmount: 30

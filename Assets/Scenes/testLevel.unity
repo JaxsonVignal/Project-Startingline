@@ -9744,7 +9744,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pickUpRadius: 1
-  ItemData: {fileID: 11400000, guid: ed077dd9ead375c489d6604634eb9ba8, type: 2}
+  ItemData: {fileID: 11400000, guid: 58b0795fefd76ca48b935028f286b354, type: 2}
   itemSaveData:
     ItemData: {fileID: 0}
     position: {x: 0, y: 0, z: 0}
