@@ -23,7 +23,7 @@ MonoBehaviour:
   magazineSize: 5
   bulletSpeed: 20
   pelletsPerShot: 10
-  spreadAngle: 10
+  spreadAngle: 3
   fireMode: 3
   recoilX: -2
   recoilY: 1.5
