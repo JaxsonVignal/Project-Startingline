@@ -107,4 +107,18 @@ public class PlayerMovement : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
+
+
+    public void EnableUIMode()
+    {
+        uiMode = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+    public void EnableGameplayMode()
+    {
+        uiMode = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
 }
