@@ -18,4 +18,4 @@ MonoBehaviour:
   Icon: {fileID: 0}
   maxStackSize: 1
   ammoToGive: {fileID: 11400000, guid: ed077dd9ead375c489d6604634eb9ba8, type: 2}
-  ammoAmount: 30
+  ammoAmount: 100

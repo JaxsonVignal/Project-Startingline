@@ -108,19 +108,26 @@ public class HotbarDisplay : StaticInventoryDisplay
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
 
+            
             var follow = currentWeapon.AddComponent<WeaponFollow>();
             follow.cameraTransform = Camera.main.transform;
             follow.smoothSpeed = 10f;
-            follow.swayAmount = 0.05f;
+            follow.swayAmount = 0f;
             follow.swaySmooth = 4f;
 
-            PlayerShooting.Instance.firePoint = currentWeapon.transform.Find("FirePoint");
+            
 
-            // Pass the slot's unique ID for ammo tracking
+            PlayerShooting.Instance.firePoint = currentWeapon.transform.Find("FirePoint");
             PlayerShooting.Instance.EquipWeapon(weapon, slotID);
+
+            //  Attach ADS system
+            var ads = currentWeapon.AddComponent<ADS>();
+            ads.weaponRoot = currentWeapon.transform;
+            ads.playerCamera = Camera.main;
+            ads.hipPosition = currentWeapon.transform.Find("HipPosition");
+            ads.adsPosition = currentWeapon.transform.Find("ADSPosition");
         }
     }
-
     private void UnequipWeapon()
     {
         if (currentWeapon != null)

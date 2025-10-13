@@ -6,7 +6,7 @@ public class WeaponFollow : MonoBehaviour
 
     [Header("Follow Settings")]
     public float smoothSpeed = 10f;        // How fast weapon rotates to match camera
-    public float swayAmount = 0.05f;       // How much the weapon sways with movement
+    public float swayAmount = 0f;       // How much the weapon sways with movement
     public float swaySmooth = 4f;          // Smoothing for sway
 
     private Quaternion initialLocalRotation;
