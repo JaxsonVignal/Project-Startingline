@@ -17,14 +17,14 @@ public class chestInventory : InventoryHolder, IInteractable
 
     private void Start()
     {
-        var ChestSaveData = new ChestSaveData(inventorySystem, transform.position, transform.rotation);
+        var ChestSaveData = new InventorySaveData(primaryInventorySystem, transform.position, transform.rotation);
 
         SaveGameManager.data.ChestDictionary.Add(GetComponent<UniqueID>().ID, ChestSaveData);
     }
 
     public void Interact(Interactor interactor, out bool interactSuccessful)
     {
-        OnDynamicInventoryDisplayRequested?.Invoke(inventorySystem);
+        OnDynamicInventoryDisplayRequested?.Invoke(primaryInventorySystem, 0);
         interactSuccessful = true;
     }
     public void EndInteraction()
@@ -32,13 +32,13 @@ public class chestInventory : InventoryHolder, IInteractable
        
     }
 
-    private void LoadInventory(SaveData data)
+    protected override void LoadInventory(SaveData data)
     {
         //check save data for this chest 
 
-        if(data.ChestDictionary.TryGetValue(GetComponent<UniqueID>().ID, out ChestSaveData chestData))
+        if(data.ChestDictionary.TryGetValue(GetComponent<UniqueID>().ID, out InventorySaveData chestData))
         {
-            this.inventorySystem = chestData.invSystem;
+            this.primaryInventorySystem = chestData.invSystem;
             this.transform.position = chestData.position;
             this.transform.rotation = chestData.rotation;
         }
@@ -48,18 +48,3 @@ public class chestInventory : InventoryHolder, IInteractable
 
 }
 
-[System.Serializable]
-
-public struct ChestSaveData
-{
-    public InventorySystem invSystem;
-    public Vector3 position;
-    public Quaternion rotation;
-
-    public ChestSaveData(InventorySystem _invSystem, Vector3 _position, Quaternion _rotation)
-    {
-        invSystem = _invSystem;
-        position = _position;
-        rotation = _rotation;
-    }
-}

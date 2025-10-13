@@ -10,6 +10,8 @@ public class InventorySlot_UI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI itemCount;
     [SerializeField] private InventorySlot assignedInvetorySlot;
 
+    [SerializeField] private GameObject _slotHighlight;
+
     private Button Button;
 
     public InventorySlot AssignedInventorySlot => assignedInvetorySlot;
@@ -41,6 +43,11 @@ public class InventorySlot_UI : MonoBehaviour
     {
        assignedInvetorySlot = slot;
         UpdateUISlot(slot); 
+    }
+
+    public void ToggleHighlight()
+    {
+        _slotHighlight.SetActive(!_slotHighlight.activeInHierarchy);
     }
 
     public void UpdateUISlot(InventorySlot slot)
