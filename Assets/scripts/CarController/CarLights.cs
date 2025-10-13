@@ -19,31 +19,36 @@ public class CarLights : MonoBehaviour
     }
 
     [Header("Light States")]
-    public bool isFrontLightOn;
-    public bool isBackLightOn;
+    public bool isFrontLightOn;    // controlled by key (L)
+    public bool isBackLightOn;     // used by CarController to indicate braking when set externally
 
     [Header("Light Colors")]
     public Color frontLightOnColor;
     public Color frontLightOffColor;
-    public Color backLightOnColor;
+    public Color backLightOnColor;   // dim tail light color (headlights on)
     public Color backLightOffColor;
+    public Color brakeLightColor;    // bright color for braking
 
     [Header("Lights")]
     public List<Light> lights;
 
     [Header("Controls")]
-    public KeyCode toggleKey = KeyCode.H; // Key to toggle headlights
+    public KeyCode toggleKey = KeyCode.L; // key to toggle front lights
+
+    // internal state to track braking (derived from isBackLightOn when CarController calls OperateBackLights)
+    private bool isBraking = false;
 
     void Start()
     {
         isFrontLightOn = false;
         isBackLightOn = false;
+        isBraking = false;
         UpdateLights();
     }
 
     void Update()
     {
-        // Toggle headlights on key press
+        // Toggle headlights by key
         if (Input.GetKeyDown(toggleKey))
         {
             ToggleFrontLights();
@@ -53,19 +58,24 @@ public class CarLights : MonoBehaviour
     void ToggleFrontLights()
     {
         isFrontLightOn = !isFrontLightOn;
-        isBackLightOn = isFrontLightOn; // Back lights follow front lights
+
+        // When headlights toggle we do NOT forcibly change isBackLightOn field (that is set by CarController when braking).
+        // But tail lights should be visible whenever front lights are on, so UpdateLights will reflect that.
         UpdateLights();
     }
 
+    // Kept signature so existing CarController calls (carLights.OperateBackLights()) still work.
+    // CarController sets carLights.isBackLightOn = true/false before calling this.
     public void OperateBackLights()
     {
-        // Used by CarController during braking
+        // Interpret external isBackLightOn as "braking" if set by CarController
+        isBraking = isBackLightOn;
         UpdateLights();
     }
 
+    // Kept for compatibility if CarController calls this (or if you want to call it manually)
     public void OperateFrontLights()
     {
-        // Also used by CarController when necessary
         UpdateLights();
     }
 
@@ -75,14 +85,41 @@ public class CarLights : MonoBehaviour
         {
             if (light.side == Side.Front)
             {
+                // Headlights follow isFrontLightOn
                 light.lightObj.SetActive(isFrontLightOn);
                 light.lightMat.color = isFrontLightOn ? frontLightOnColor : frontLightOffColor;
             }
             else if (light.side == Side.Back)
             {
-                light.lightObj.SetActive(isBackLightOn);
-                light.lightMat.color = isBackLightOn ? backLightOnColor : backLightOffColor;
+                // Tail/brake logic:
+                // - Tail lights visible when headlights are on (dim).
+                // - Brake lights visible (bright) when CarController sets isBackLightOn = true and calls OperateBackLights().
+                // - If neither, back lights are off.
+                bool shouldBeOn = isFrontLightOn || isBraking;
+
+                light.lightObj.SetActive(shouldBeOn);
+
+                if (isBraking)
+                {
+                    light.lightMat.color = brakeLightColor;
+                }
+                else if (isFrontLightOn)
+                {
+                    light.lightMat.color = backLightOnColor;
+                }
+                else
+                {
+                    light.lightMat.color = backLightOffColor;
+                }
             }
         }
+    }
+
+    // Optional: allow CarController to directly tell this component braking started/stopped.
+    // If you want to use this instead of setting isBackLightOn property, call carLights.SetBraking(true/false)
+    public void SetBraking(bool braking)
+    {
+        isBraking = braking;
+        UpdateLights();
     }
 }

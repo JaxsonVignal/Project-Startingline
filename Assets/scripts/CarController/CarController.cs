@@ -38,11 +38,10 @@ public class CarController : MonoBehaviour
 
     public List<Wheel> wheels;
 
-    float moveInput;
-    float steerInput;
+    private float moveInput;
+    private float steerInput;
 
     private Rigidbody carRb;
-
     private CarLights carLights;
 
     void Start()
@@ -58,6 +57,17 @@ public class CarController : MonoBehaviour
         GetInputs();
         AnimateWheels();
         WheelEffects();
+
+        // Toggle headlights (front + back) using "L"
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            carLights.isFrontLightOn = !carLights.isFrontLightOn;
+            carLights.OperateFrontLights();
+
+            // Keep back lights permanently synced with front lights
+            carLights.isBackLightOn = carLights.isFrontLightOn;
+            carLights.OperateBackLights();
+        }
     }
 
     void LateUpdate()
@@ -100,31 +110,36 @@ public class CarController : MonoBehaviour
         {
             if (wheel.axel == Axel.Front)
             {
-                var _steerAngle = steerInput * turnSensitivity * maxSteerAngle;
-                wheel.wheelCollider.steerAngle = Mathf.Lerp(wheel.wheelCollider.steerAngle, _steerAngle, 0.6f);
+                float targetSteer = steerInput * turnSensitivity * maxSteerAngle;
+                wheel.wheelCollider.steerAngle = Mathf.Lerp(wheel.wheelCollider.steerAngle, targetSteer, 0.6f);
             }
         }
     }
 
     void Brake()
     {
-        if (Input.GetKey(KeyCode.Space) || moveInput == 0)
-        {
-            foreach (var wheel in wheels)
-            {
-                wheel.wheelCollider.brakeTorque = 300 * brakeAcceleration * Time.deltaTime;
-            }
+        bool isBraking = Input.GetKey(KeyCode.Space) || moveInput == 0;
 
+        foreach (var wheel in wheels)
+        {
+            wheel.wheelCollider.brakeTorque = isBraking ? 300 * brakeAcceleration * Time.deltaTime : 0;
+        }
+
+        // Brake lights only affect brightness — not on/off
+        if (isBraking)
+        {
+            carLights.isBackLightOn = true;
+            carLights.OperateBackLights();
+        }
+        else if (carLights.isFrontLightOn)
+        {
+            // Keep them on if headlights are on
             carLights.isBackLightOn = true;
             carLights.OperateBackLights();
         }
         else
         {
-            foreach (var wheel in wheels)
-            {
-                wheel.wheelCollider.brakeTorque = 0;
-            }
-
+            // Fully off only when headlights are off
             carLights.isBackLightOn = false;
             carLights.OperateBackLights();
         }
@@ -146,9 +161,10 @@ public class CarController : MonoBehaviour
     {
         foreach (var wheel in wheels)
         {
-            //var dirtParticleMainSettings = wheel.smokeParticle.main;
-
-            if (Input.GetKey(KeyCode.Space) && wheel.axel == Axel.Rear && wheel.wheelCollider.isGrounded == true && carRb.velocity.magnitude >= 10.0f)
+            if (Input.GetKey(KeyCode.Space) &&
+                wheel.axel == Axel.Rear &&
+                wheel.wheelCollider.isGrounded &&
+                carRb.velocity.magnitude >= 10.0f)
             {
                 wheel.wheelEffectObj.GetComponentInChildren<TrailRenderer>().emitting = true;
                 wheel.smokeParticle.Emit(1);
