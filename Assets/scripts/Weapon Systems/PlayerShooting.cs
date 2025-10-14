@@ -174,13 +174,14 @@ public class PlayerShooting : MonoBehaviour
                 shootDirection.Normalize();
                 bulletObj.transform.forward = shootDirection;
 
+                //  Assign WeaponData directly (dynamic damage)
                 Bullet bullet = bulletObj.GetComponent<Bullet>();
                 if (bullet != null)
                 {
-                    bullet.damage = currentWeapon.damage;
-                    bullet.speed = currentWeapon.bulletSpeed;
+                    bullet.weaponData = currentWeapon;
                 }
 
+                // Apply speed from WeaponData
                 Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
                 if (rb != null)
                     rb.AddForce(shootDirection * currentWeapon.bulletSpeed, ForceMode.Impulse);
@@ -211,7 +212,6 @@ public class PlayerShooting : MonoBehaviour
     {
         isReloading = true;
 
-        // Get player inventory
         var playerInventory = FindObjectOfType<PlayerInventoryHolder>();
         if (playerInventory == null)
         {
@@ -220,10 +220,7 @@ public class PlayerShooting : MonoBehaviour
             yield break;
         }
 
-        // Calculate how much ammo we need
         int ammoNeeded = currentWeapon.magazineSize - currentAmmo;
-
-        // Check if player has the required ammo type
         int availableAmmo = playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType);
 
         if (availableAmmo <= 0)
@@ -240,15 +237,12 @@ public class PlayerShooting : MonoBehaviour
 
         yield return new WaitForSeconds(currentWeapon.reloadTime);
 
-        // Take the minimum of what we need and what's available
         int ammoToTake = Mathf.Min(ammoNeeded, availableAmmo);
 
-        // Consume ammo from inventory
         if (playerInventory.PrimaryInventorySystem.ConsumeAmmo(currentWeapon.requiredAmmoType, ammoToTake))
         {
             currentAmmo += ammoToTake;
 
-            // Save reloaded ammo
             if (!string.IsNullOrEmpty(currentWeaponSlotID))
             {
                 WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
@@ -275,7 +269,6 @@ public class PlayerShooting : MonoBehaviour
     public int GetCurrentAmmo() => currentAmmo;
     public int GetMaxAmmo() => currentWeapon?.magazineSize ?? 0;
 
-    // NEW: Get remaining ammo in inventory for current weapon
     public int GetInventoryAmmo()
     {
         if (currentWeapon == null) return 0;

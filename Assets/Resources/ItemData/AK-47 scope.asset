@@ -17,16 +17,17 @@ MonoBehaviour:
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 0
-  damage: 30
+  damage: 10
   fireRate: 0.1
   reloadTime: 2.5
   magazineSize: 30
   bulletSpeed: 50
+  FOVChange: 40
   requiredAmmoType: 3
   pelletsPerShot: 8
   spreadAngle: 5
   fireMode: 1
-  recoilX: 1
+  recoilX: -1
   recoilY: 0
   recoilZ: 0
   spread: 0

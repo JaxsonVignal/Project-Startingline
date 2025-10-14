@@ -237,7 +237,7 @@ Transform:
   m_GameObject: {fileID: 324914229040587973}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0.008, y: 0.017, z: -0.0435}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -466,7 +466,7 @@ GameObject:
   - component: {fileID: 1424298438129278067}
   - component: {fileID: 2395507915774954329}
   m_Layer: 0
-  m_Name: AssaultRifle_01_C2
+  m_Name: AK-47(acog)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -538,7 +538,7 @@ Transform:
   m_GameObject: {fileID: 3551112084094222366}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.0053, y: 0.0291, z: -0.091}
+  m_LocalPosition: {x: 0.00531, y: 0.02868, z: -0.0899}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -569,7 +569,7 @@ Transform:
   m_GameObject: {fileID: 7428035848920556108}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.6822, y: 0.0548, z: 0}
+  m_LocalPosition: {x: -0.774, y: 0.0548, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
