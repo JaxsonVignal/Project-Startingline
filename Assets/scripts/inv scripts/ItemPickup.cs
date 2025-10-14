@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(SphereCollider))]
-[RequireComponent (typeof(UniqueID))]
+[RequireComponent(typeof(UniqueID))]
 public class ItemPickup : MonoBehaviour
 {
-    public float pickUpRadius;
+    public float pickUpRadius = 1;
     public InventoryItemData ItemData;
 
     private SphereCollider myCollider;
-
     [SerializeField] private ItemPickUpSaveData itemSaveData;
     private string id;
+
     private void Awake()
     {
         SaveLoad.OnLoadGame += LoadGame;
@@ -21,7 +21,7 @@ public class ItemPickup : MonoBehaviour
         myCollider.radius = pickUpRadius;
 
         id = GetComponent<UniqueID>().ID;
-        itemSaveData = new ItemPickUpSaveData(ItemData, transform.position,transform.rotation);
+        itemSaveData = new ItemPickUpSaveData(ItemData, transform.position, transform.rotation);
     }
 
     private void Start()
@@ -49,14 +49,15 @@ public class ItemPickup : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         var inventory = other.GetComponent<PlayerInventoryHolder>();
+        if (!inventory) return;
 
-        if(!inventory) return;
-
-        if(inventory.AddToInventory(ItemData, 1))
+        if (inventory.AddToInventory(ItemData, 1))
         {
             SaveGameManager.data.collectedItems.Add(id);
             Destroy(this.gameObject);
         }
+
+        Debug.Log("Player detected, attempting to add item: " + ItemData.name);
     }
 }
 
