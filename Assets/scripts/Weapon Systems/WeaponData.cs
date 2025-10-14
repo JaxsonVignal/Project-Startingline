@@ -17,6 +17,7 @@ public class WeaponData : InventoryItemData
     public float reloadTime = 2.5f;
     public int magazineSize = 30;
     public int bulletSpeed = 50;
+    public float FOVChange = 40;
 
     [Header("Ammo Configuration")]
     public AmmoType requiredAmmoType; // What ammo type this weapon uses

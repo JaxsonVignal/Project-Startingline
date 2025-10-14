@@ -10,28 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db121b31bf658f040b07ed4f74155ca0, type: 3}
-  m_Name: AK-47
+  m_Name: AK-47 scope
   m_EditorClassIdentifier: 
-  ID: 0
-  Name: AK-47 base weapon
-  Description: AK-47
-  Icon: {fileID: 21300000, guid: 475a967b2727fd2469ec55b4725ebd08, type: 3}
-  maxStackSize: 1
+  ID: -1
+  Name: 
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 0
   damage: 30
   fireRate: 0.1
   reloadTime: 2.5
   magazineSize: 30
-  bulletSpeed: 100
+  bulletSpeed: 50
   requiredAmmoType: 3
   pelletsPerShot: 8
   spreadAngle: 5
   fireMode: 1
-  recoilX: -2
-  recoilY: 2
-  recoilZ: 0.35
-  spread: 0.01
-  weaponPrefab: {fileID: 2641351572177420201, guid: 70beeaeaec2b98d4aadce0c3a9baf04d, type: 3}
-  shootSound: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
-  reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
+  recoilX: 1
+  recoilY: 0
+  recoilZ: 0
+  spread: 0
+  weaponPrefab: {fileID: 1769861114648495817, guid: 7afb58f9df3800741a1621f3f5f7e8bb, type: 3}
+  shootSound: {fileID: 0}
+  reloadSound: {fileID: 0}
   muzzleFlashPrefab: {fileID: 0}
-  ShootingSoundDelay: 0.07
+  ShootingSoundDelay: 0
