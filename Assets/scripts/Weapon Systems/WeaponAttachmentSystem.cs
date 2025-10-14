@@ -24,10 +24,12 @@ public class WeaponAttachmentSystem : MonoBehaviour
         RecalculateStats();
     }
 
-    public void EquipAttachment(AttachmentData att)
+    // Updated EquipAttachment method with two arguments
+    public void EquipAttachment(AttachmentData att, WeaponAttachmentEntry entry)
     {
-        if (att == null) return;
+        if (att == null || entry == null) return;
 
+        // Remove any existing attachment of same type
         var removed = equippedAttachments.Where(a => a.type == att.type).ToList();
         foreach (var r in removed) DetachById(r.id);
 
@@ -38,9 +40,12 @@ public class WeaponAttachmentSystem : MonoBehaviour
             Transform socket = slotMap.GetSocket(att.type);
             var go = Instantiate(att.prefab, socket ? socket : transform);
             go.name = $"ATT_{att.id}";
-            go.transform.localPosition = att.localPosition;
-            go.transform.localRotation = Quaternion.Euler(att.localEuler);
-            go.transform.localScale = att.localScale;
+
+            // Apply the entry transforms
+            go.transform.localPosition = new Vector3(entry.posX, entry.posY, entry.posZ);
+            go.transform.localRotation = Quaternion.Euler(entry.rotX, entry.rotY, entry.rotZ);
+            go.transform.localScale = new Vector3(entry.scaleX, entry.scaleY, entry.scaleZ);
+
             spawned[att.id] = go;
         }
 

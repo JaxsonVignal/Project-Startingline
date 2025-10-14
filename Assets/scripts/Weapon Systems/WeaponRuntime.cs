@@ -28,14 +28,13 @@ public class WeaponRuntime : MonoBehaviour
         {
             if (attachmentLookup != null && attachmentLookup.TryGetValue(entry.attachmentId, out var att))
             {
-                attachmentSystem.EquipAttachment(att);
+                // Pass both AttachmentData and WeaponAttachmentEntry
+                attachmentSystem.EquipAttachment(att, entry);
             }
             else
             {
                 Debug.LogWarning($"Attachment id {entry.attachmentId} not found in lookup.");
             }
         }
-
-        
     }
 }

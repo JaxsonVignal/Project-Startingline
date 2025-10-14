@@ -20,20 +20,31 @@ public class WeaponInstance
 [Serializable]
 public class WeaponAttachmentEntry
 {
-    public string attachmentId;
+    public string attachmentId;   // matches AttachmentData.id
     public AttachmentType type;
-    public Vector3 localPos;
-    public Vector3 localEuler;
-    public Vector3 localScale = Vector3.one;
+
+    // Transform offsets relative to the weapon
+    public float posX, posY, posZ;
+    public float rotX, rotY, rotZ;
+    public float scaleX = 1f, scaleY = 1f, scaleZ = 1f;
 
     public WeaponAttachmentEntry() { }
 
-    public WeaponAttachmentEntry(string id, AttachmentType t, Vector3 pos, Vector3 euler, Vector3 scale)
+    public WeaponAttachmentEntry(string id, AttachmentType t, Vector3 localPos, Vector3 localRot, Vector3 localScale)
     {
         attachmentId = id;
         type = t;
-        localPos = pos;
-        localEuler = euler;
-        localScale = scale;
+
+        posX = localPos.x;
+        posY = localPos.y;
+        posZ = localPos.z;
+
+        rotX = localRot.x;
+        rotY = localRot.y;
+        rotZ = localRot.z;
+
+        scaleX = localScale.x;
+        scaleY = localScale.y;
+        scaleZ = localScale.z;
     }
 }

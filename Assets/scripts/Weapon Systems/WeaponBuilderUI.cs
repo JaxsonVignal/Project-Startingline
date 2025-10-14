@@ -97,12 +97,14 @@ public class WeaponBuilderUI : MonoBehaviour
         // Remove any existing attachment of the same type
         previewInstance.attachments.RemoveAll(e => e.type == att.type);
 
-        // Add new attachment entry to previewInstance
+        // Create a new WeaponAttachmentEntry
         var entry = new WeaponAttachmentEntry(att.id, att.type, att.localPosition, att.localEuler, att.localScale);
+
+        // Add to preview instance
         previewInstance.attachments.Add(entry);
 
-        // Equip attachment visually
-        previewRuntime.attachmentSystem.EquipAttachment(att);
+        // Equip attachment visually using both arguments
+        previewRuntime.attachmentSystem.EquipAttachment(att, entry);
 
         UpdateSelectedAttachmentsUI();
     }
@@ -159,9 +161,28 @@ public class WeaponBuilderUI : MonoBehaviour
         pickup.ItemData = selectedBase;
         pickup.pickUpRadius = col.radius;
 
-        // Hide preview and UI
+        // Ensure WeaponRuntime and AttachmentSystem exist
+        var runtime = pickupWeapon.GetComponent<WeaponRuntime>();
+        if (runtime == null) runtime = pickupWeapon.AddComponent<WeaponRuntime>();
+
+        var attachSys = pickupWeapon.GetComponent<WeaponAttachmentSystem>();
+        if (attachSys == null) attachSys = pickupWeapon.AddComponent<WeaponAttachmentSystem>();
+        attachSys.weaponData = selectedBase;
+        runtime.attachmentSystem = attachSys;
+
+        // Apply attachments from previewInstance
+        foreach (var entry in previewInstance.attachments)
+        {
+            if (!attachmentLookup.TryGetValue(entry.attachmentId, out var att)) continue;
+            attachSys.EquipAttachment(att, entry);
+        }
+
+        runtime.InitFromInstance(previewInstance, selectedBase, attachmentLookup);
+
+        // Hide builder and preview
         if (previewContainer != null)
             previewContainer.SetActive(false);
         gameObject.SetActive(false);
     }
+
 }
