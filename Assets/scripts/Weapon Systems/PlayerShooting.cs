@@ -19,6 +19,7 @@ public class PlayerShooting : MonoBehaviour
     private int currentAmmo;
     private bool isReloading;
     private float nextFireTime;
+    private bool isUIMode = false;
 
     private AudioSource weaponAudio;
     private bool isFiring;
@@ -103,10 +104,19 @@ public class PlayerShooting : MonoBehaviour
     {
         currentAttachmentSystem = attachmentSystem;
 
-        if (attachmentSystem != null && recoilScript != null)
+        if (recoilScript != null && attachmentSystem != null)
         {
-            // Update recoil with modified values
+            // Update recoil with attachment modifiers
             recoilScript.SetAttachmentSystem(attachmentSystem);
+        }
+    }
+
+    public void SetUIMode(bool uiMode)
+    {
+        isUIMode = uiMode;
+        if (isUIMode)
+        {
+            StopFiring(); // Stop firing if entering UI mode
         }
     }
 
