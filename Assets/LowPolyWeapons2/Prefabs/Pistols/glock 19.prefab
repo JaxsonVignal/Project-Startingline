@@ -137,6 +137,37 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -6106485403771629657, guid: 61cde697b650c3048bc07a4a3d01c430, type: 3}
+--- !u!1 &2718618483815680179
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8335019952251107961}
+  m_Layer: 0
+  m_Name: ASDScopePosition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8335019952251107961
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2718618483815680179}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.0341, z: -0.0904}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5928740529604825076}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2867819604507311845
 GameObject:
   m_ObjectHideFlags: 0
@@ -497,6 +528,8 @@ GameObject:
   - component: {fileID: 5928740529604825076}
   - component: {fileID: 4404933144043013606}
   - component: {fileID: 1155979078294716711}
+  - component: {fileID: 2070746263587983359}
+  - component: {fileID: 3104027232747306309}
   m_Layer: 0
   m_Name: glock 19
   m_TagString: Untagged
@@ -524,6 +557,7 @@ Transform:
   - {fileID: 4511993456470223148}
   - {fileID: 5916192119525794172}
   - {fileID: 99705645325864767}
+  - {fileID: 8335019952251107961}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!82 &4404933144043013606
@@ -637,9 +671,44 @@ MonoBehaviour:
   weaponRoot: {fileID: 5928740529604825076}
   hipPosition: {fileID: 5916192119525794172}
   adsPosition: {fileID: 99705645325864767}
+  scopeAdsPosition: {fileID: 8335019952251107961}
   playerCamera: {fileID: 0}
   aimSpeed: 10
   adsFOV: 45
+  scopeFOV: 20
+--- !u!114 &2070746263587983359
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6416730846052406606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9afa3f2abaa9c174587c64010a5816bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sightSocket: {fileID: 0}
+  barrelSocket: {fileID: 0}
+  gripSocket: {fileID: 0}
+  magazineSocket: {fileID: 0}
+  stockSocket: {fileID: 0}
+  underbarrelSocket: {fileID: 0}
+  sideRailSocket: {fileID: 0}
+--- !u!114 &3104027232747306309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6416730846052406606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f097327b6e62fd84cb3eb3578bc420a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponData: {fileID: 11400000, guid: 0b7cce7eeb15ca444baaec513687a3ba, type: 2}
+  equippedAttachments: []
 --- !u!1 &7203202074156853312
 GameObject:
   m_ObjectHideFlags: 0
