@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Silencer
+  m_Name: ForGrip
   m_EditorClassIdentifier: 
-  id: silence
-  type: 1
-  prefab: {fileID: 919132149155446097, guid: 9cf852a76f5a42b4b8f899aefe530751, type: 3}
+  id: fg
+  type: 6
+  prefab: {fileID: 5776842091292140231, guid: df1ea9a6925dce146b944f5e92c3dc1b, type: 3}
   icon: {fileID: 0}
   description: 
   localPosition: {x: 0, y: 0, z: 0}
@@ -24,8 +24,8 @@ MonoBehaviour:
   fireRateMultiplier: 1
   reloadTimeMultiplier: 1
   spreadMultiplier: 1
-  recoilMultiplier: 1
-  magazineBonus: 60
+  recoilMultiplier: 0.5
+  magazineBonus: 0
   scopePositionOffset: {x: 0, y: 0, z: 0}
   scopeRotationOffset: {x: 0, y: 0, z: 0}
   scopeFOVOverride: 0

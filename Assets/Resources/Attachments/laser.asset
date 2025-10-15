@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Silencer
+  m_Name: laser
   m_EditorClassIdentifier: 
-  id: silence
-  type: 1
-  prefab: {fileID: 919132149155446097, guid: 9cf852a76f5a42b4b8f899aefe530751, type: 3}
+  id: laser
+  type: 7
+  prefab: {fileID: 8930509118748250283, guid: 8533898e85dd3a94d82f821fcf3b0b6e, type: 3}
   icon: {fileID: 0}
   description: 
   localPosition: {x: 0, y: 0, z: 0}
-  localEuler: {x: 0, y: 0, z: 0}
+  localEuler: {x: 0, y: -90, z: 180}
   localScale: {x: 1, y: 1, z: 1}
   damageBonus: 0
   fireRateMultiplier: 1
   reloadTimeMultiplier: 1
   spreadMultiplier: 1
   recoilMultiplier: 1
-  magazineBonus: 60
+  magazineBonus: 0
   scopePositionOffset: {x: 0, y: 0, z: 0}
   scopeRotationOffset: {x: 0, y: 0, z: 0}
   scopeFOVOverride: 0

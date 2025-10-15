@@ -8,6 +8,7 @@ public class AttachmentSlotMap : MonoBehaviour
     public Transform magazineSocket;
     public Transform stockSocket;
     public Transform underbarrelSocket;
+    public Transform sideRailSocket;
 
     public Transform GetSocket(AttachmentType t)
     {
@@ -19,6 +20,7 @@ public class AttachmentSlotMap : MonoBehaviour
             case AttachmentType.Magazine: return magazineSocket;
             case AttachmentType.Stock: return stockSocket;
             case AttachmentType.Underbarrel: return underbarrelSocket;
+            case AttachmentType.SideRail: return sideRailSocket;
             default: return transform;
         }
     }

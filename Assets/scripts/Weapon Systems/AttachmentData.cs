@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel }
+public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel,SideRail}
 
 [CreateAssetMenu(menuName = "Inventory System/Attachment")]
 public class AttachmentData : ScriptableObject
