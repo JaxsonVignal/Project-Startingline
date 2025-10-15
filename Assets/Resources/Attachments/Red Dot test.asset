@@ -17,7 +17,7 @@ MonoBehaviour:
   prefab: {fileID: 8542341081227047507, guid: 61d468946f5b8fb4b9b7adda3cd1b8bd, type: 3}
   icon: {fileID: 0}
   description: 
-  localPosition: {x: 0, y: 0, z: 0}
+  localPosition: {x: 0, y: -0.0048, z: 0.001}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
   damageBonus: 0
@@ -26,3 +26,6 @@ MonoBehaviour:
   spreadMultiplier: 1
   recoilMultiplier: 1
   magazineBonus: 0
+  scopePositionOffset: {x: 0, y: -0.004, z: 0}
+  scopeRotationOffset: {x: 0, y: 0, z: 0}
+  scopeFOVOverride: 30

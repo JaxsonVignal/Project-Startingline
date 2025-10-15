@@ -73,6 +73,7 @@ Transform:
   - {fileID: 2618446098096667657}
   - {fileID: 1099073941580158339}
   - {fileID: 8373652224665685900}
+  - {fileID: 8665309189623870769}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!82 &9105111595224323197
@@ -186,9 +187,11 @@ MonoBehaviour:
   weaponRoot: {fileID: 3453178918251373843}
   hipPosition: {fileID: 2723938818461216991}
   adsPosition: {fileID: 2618446098096667657}
+  scopeAdsPosition: {fileID: 8665309189623870769}
   playerCamera: {fileID: 0}
   aimSpeed: 10
   adsFOV: 45
+  scopeFOV: 20
 --- !u!114 &6551701295127021737
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -358,6 +361,37 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -1370727575090638574, guid: 59a4f863f77ec454db02cef977debcf2, type: 3}
+--- !u!1 &4933973900845879833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8665309189623870769}
+  m_Layer: 0
+  m_Name: ADSScopePosition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8665309189623870769
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4933973900845879833}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.0059999973, y: 0.015999999, z: -0.065}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3453178918251373843}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5658980479541130812
 GameObject:
   m_ObjectHideFlags: 0
