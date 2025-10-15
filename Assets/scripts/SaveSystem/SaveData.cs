@@ -87,9 +87,10 @@ public class SaveData
     public SerializableDictionary<string, ItemPickUpSaveData> activeItems;
     public InventorySaveData playerInventory;
     public SerializableDictionary<string, int> weaponAmmoData;
-
-    // NEW: Store weapon instances with all attachment data per slot
     public SerializableDictionary<string, WeaponInstanceSaveData> weaponInstances;
+
+    // NEW: Store faction reputation data
+    public SerializableDictionary<string, int> factionReputation;
 
     public SaveData()
     {
@@ -98,6 +99,7 @@ public class SaveData
         activeItems = new SerializableDictionary<string, ItemPickUpSaveData>();
         playerInventory = new InventorySaveData();
         weaponAmmoData = new SerializableDictionary<string, int>();
-        weaponInstances = new SerializableDictionary<string, WeaponInstanceSaveData>(); // NEW
+        weaponInstances = new SerializableDictionary<string, WeaponInstanceSaveData>();
+        factionReputation = new SerializableDictionary<string, int>(); // NEW
     }
 }

@@ -4,11 +4,7 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - 5.56
-  - 7.62
-  - Slug
-  - Buckshot
-  - 9mm
+  - Cruds
   layers:
   - Default
   - TransparentFX

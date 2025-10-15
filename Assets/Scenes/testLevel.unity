@@ -7351,7 +7351,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5151322103714716909, guid: 72bdce709e225074e9535f360bb0a12a, type: 3}
       propertyPath: _ID
-      value: 760dcaf3-8b89-4694-b052-303de07f4de3
+      value: c33dda6c-56cd-4b25-8010-4cfec7e0c115
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9882,6 +9882,50 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4497011438508190, guid: 7446a392a730ac14d9cc70d21cf7ace0, type: 3}
   m_PrefabInstance: {fileID: 160487521}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1152719458
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1152719460}
+  - component: {fileID: 1152719459}
+  m_Layer: 0
+  m_Name: FactionManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1152719459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152719458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7167792562c1144a635a004b440c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1152719460
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152719458}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.79940665, y: 7.4482403, z: -13.529919}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1153400167
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12589,7 +12633,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6114305854442344477, guid: f7861cf71e9f7e740b461cc19d92ed8c, type: 3}
       propertyPath: _ID
-      value: 385c35d9-0a74-4c67-9e72-0a3e2a5e5bed
+      value: ef7a6629-dbea-469b-9b5b-f50d6483b617
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -18111,7 +18155,7 @@ GameObject:
   - component: {fileID: 2125603992}
   m_Layer: 0
   m_Name: target dummy
-  m_TagString: Untagged
+  m_TagString: Cruds
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18215,6 +18259,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
+  faction: 0
+  reputationLossPenalty: 100
+  currentHealth: 0
   destroyOnDeath: 1
   deathSound: {fileID: 0}
   hitSound: {fileID: 0}
@@ -18929,7 +18976,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5151322103714716909, guid: 72bdce709e225074e9535f360bb0a12a, type: 3}
       propertyPath: _ID
-      value: 3e99d884-be88-4bfb-91c6-af277c9d3252
+      value: c51e9262-24e5-49a3-ad11-e1836a3be8c9
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -19103,7 +19150,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6114305854442344477, guid: f7861cf71e9f7e740b461cc19d92ed8c, type: 3}
       propertyPath: _ID
-      value: 03d7bc6f-8e3d-452a-9774-60de94bf81ff
+      value: 6a0f93e8-9b1c-4810-a9a0-c6988d041599
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -19147,3 +19194,4 @@ SceneRoots:
   - {fileID: 1723769642}
   - {fileID: 31003540}
   - {fileID: 1758961713}
+  - {fileID: 1152719460}

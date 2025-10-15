@@ -5,7 +5,13 @@ public class EnemyHealth : MonoBehaviour
 {
     [Header("Health Settings")]
     public float maxHealth = 100f;
-    private float currentHealth;
+
+    [Header("Faction")]
+    public Faction faction;
+    public int reputationLossPenalty = 50; // How much rep the player loses when killing this enemy
+
+
+    [HideInInspector]public float currentHealth;
 
     [Header("Optional Settings")]
     public bool destroyOnDeath = true;
@@ -55,6 +61,9 @@ public class EnemyHealth : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
+
+        FactionReputationSystem.Instance.LoseReputation(faction, reputationLossPenalty);
+        Debug.Log($"Enemy from {faction} defeated. Player lost {reputationLossPenalty} reputation.");
 
         if (deathSound)
             audioSource.PlayOneShot(deathSound);
