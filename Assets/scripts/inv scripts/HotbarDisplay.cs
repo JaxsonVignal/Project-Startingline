@@ -126,18 +126,25 @@ public class HotbarDisplay : StaticInventoryDisplay
             ads.adsPosition = currentWeapon.transform.Find("ADSPosition");
 
             // NEW: Apply attachments from WeaponInstance if available
-            ApplyStoredAttachments(currentWeapon, slotID);
+            var attachSys = ApplyStoredAttachments(currentWeapon, slotID);
+
+            // NEW: Set the attachment system on PlayerShooting to apply modifiers
+            if (attachSys != null)
+            {
+                PlayerShooting.Instance.SetAttachmentSystem(attachSys);
+                Debug.Log($"Attachment system set on PlayerShooting - modifiers now active");
+            }
         }
     }
 
-    private void ApplyStoredAttachments(GameObject weaponObject, string slotID)
+    private WeaponAttachmentSystem ApplyStoredAttachments(GameObject weaponObject, string slotID)
     {
         // Get the WeaponInstance stored for this slot
         WeaponInstance storedInstance = WeaponInstanceStorage.GetInstance(slotID);
         if (storedInstance == null || storedInstance.attachments.Count == 0)
         {
             Debug.Log($"No stored attachments found for slot {slotID}");
-            return; // No stored attachments
+            return null; // No stored attachments
         }
 
         // Ensure attachment system exists
@@ -174,6 +181,8 @@ public class HotbarDisplay : StaticInventoryDisplay
         }
 
         Debug.Log($"Successfully applied {storedInstance.attachments.Count} attachments to equipped weapon");
+
+        return attachSys; // Return the attachment system
     }
 
     private InventorySlot FindSlotByID(string slotID)

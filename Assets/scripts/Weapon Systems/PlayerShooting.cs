@@ -14,6 +14,7 @@ public class PlayerShooting : MonoBehaviour
     public Recoil recoilScript;
 
     private WeaponData currentWeapon;
+    private WeaponAttachmentSystem currentAttachmentSystem;
     private string currentWeaponSlotID;
     private int currentAmmo;
     private bool isReloading;
@@ -34,7 +35,11 @@ public class PlayerShooting : MonoBehaviour
             {
                 Fire();
 
-                nextFireTime = Time.time + currentWeapon.fireRate;
+                // Use modified fire rate from attachments
+                float fireRate = currentAttachmentSystem != null
+                    ? currentAttachmentSystem.CurrentFireRate
+                    : currentWeapon.fireRate;
+                nextFireTime = Time.time + fireRate;
 
                 if (currentWeapon.fireMode != FireMode.FullAuto)
                     isFiring = false;
@@ -57,6 +62,7 @@ public class PlayerShooting : MonoBehaviour
 
         currentWeapon = weapon;
         currentWeaponSlotID = slotID;
+        currentAttachmentSystem = null;
 
         if (weapon == null)
         {
@@ -77,19 +83,31 @@ public class PlayerShooting : MonoBehaviour
         }
 
         // Load ammo for this specific weapon slot
+        int maxMagazine = weapon.magazineSize;
         if (!string.IsNullOrEmpty(slotID))
         {
-            currentAmmo = WeaponAmmoTracker.GetAmmo(slotID, weapon.magazineSize);
+            currentAmmo = WeaponAmmoTracker.GetAmmo(slotID, maxMagazine);
         }
         else
         {
-            currentAmmo = weapon.magazineSize;
+            currentAmmo = maxMagazine;
         }
 
         if (recoilScript != null)
             recoilScript.SetWeaponData(weapon);
 
-        Debug.Log($"Equipped {weapon.Name} (Slot: {slotID}) - Ammo: {currentAmmo}/{weapon.magazineSize}");
+        Debug.Log($"Equipped {weapon.Name} (Slot: {slotID}) - Ammo: {currentAmmo}/{maxMagazine}");
+    }
+
+    public void SetAttachmentSystem(WeaponAttachmentSystem attachmentSystem)
+    {
+        currentAttachmentSystem = attachmentSystem;
+
+        if (attachmentSystem != null && recoilScript != null)
+        {
+            // Update recoil with modified values
+            recoilScript.SetAttachmentSystem(attachmentSystem);
+        }
     }
 
     public void StartFiring()
@@ -101,7 +119,10 @@ public class PlayerShooting : MonoBehaviour
         if (currentWeapon.fireMode == FireMode.SemiAuto || currentWeapon.fireMode == FireMode.Shotgun)
         {
             Fire();
-            nextFireTime = Time.time + currentWeapon.fireRate;
+            float fireRate = currentAttachmentSystem != null
+                ? currentAttachmentSystem.CurrentFireRate
+                : currentWeapon.fireRate;
+            nextFireTime = Time.time + fireRate;
         }
         else
         {
@@ -158,6 +179,11 @@ public class PlayerShooting : MonoBehaviour
 
                 Vector3 shootDirection = playerCamera.transform.forward;
 
+                // Use modified spread from attachments
+                float spread = currentAttachmentSystem != null
+                    ? currentAttachmentSystem.CurrentSpread
+                    : currentWeapon.spread;
+
                 if (currentWeapon.fireMode == FireMode.Shotgun)
                 {
                     float spreadX = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
@@ -167,18 +193,24 @@ public class PlayerShooting : MonoBehaviour
                 }
                 else
                 {
-                    float horizontalSpread = Random.Range(-currentWeapon.spread, currentWeapon.spread);
+                    float horizontalSpread = Random.Range(-spread, spread);
                     shootDirection += playerCamera.transform.right * horizontalSpread;
                 }
 
                 shootDirection.Normalize();
                 bulletObj.transform.forward = shootDirection;
 
-                //  Assign WeaponData directly (dynamic damage)
+                // Assign WeaponData with modified damage from attachments
                 Bullet bullet = bulletObj.GetComponent<Bullet>();
                 if (bullet != null)
                 {
                     bullet.weaponData = currentWeapon;
+
+                    // Override damage if attachments are present
+                    if (currentAttachmentSystem != null)
+                    {
+                        currentWeapon.damage = currentAttachmentSystem.CurrentDamage;
+                    }
                 }
 
                 // Apply speed from WeaponData
@@ -198,8 +230,13 @@ public class PlayerShooting : MonoBehaviour
     {
         if (currentWeapon == null || isReloading) return;
 
+        // Use modified magazine size from attachments
+        int maxMagazine = currentAttachmentSystem != null
+            ? currentAttachmentSystem.CurrentMagazineSize
+            : currentWeapon.magazineSize;
+
         // Check if magazine is already full
-        if (currentAmmo == currentWeapon.magazineSize)
+        if (currentAmmo == maxMagazine)
         {
             Debug.Log("Magazine is already full!");
             return;
@@ -220,7 +257,10 @@ public class PlayerShooting : MonoBehaviour
             yield break;
         }
 
-        int ammoNeeded = currentWeapon.magazineSize - currentAmmo;
+        int maxMagazine = currentAttachmentSystem != null
+            ? currentAttachmentSystem.CurrentMagazineSize
+            : currentWeapon.magazineSize;
+        int ammoNeeded = maxMagazine - currentAmmo;
         int availableAmmo = playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType);
 
         if (availableAmmo <= 0)
@@ -235,7 +275,12 @@ public class PlayerShooting : MonoBehaviour
         if (currentWeapon.reloadSound)
             AudioSource.PlayClipAtPoint(currentWeapon.reloadSound, firePoint.position);
 
-        yield return new WaitForSeconds(currentWeapon.reloadTime);
+        // Use modified reload time from attachments
+        float reloadTime = currentAttachmentSystem != null
+            ? currentAttachmentSystem.CurrentReloadTime
+            : currentWeapon.reloadTime;
+
+        yield return new WaitForSeconds(reloadTime);
 
         int ammoToTake = Mathf.Min(ammoNeeded, availableAmmo);
 
@@ -248,7 +293,7 @@ public class PlayerShooting : MonoBehaviour
                 WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
             }
 
-            Debug.Log($"Reloaded {currentWeapon.Name}, Current Ammo: {currentAmmo}/{currentWeapon.magazineSize}, Remaining in inventory: {playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType)}");
+            Debug.Log($"Reloaded {currentWeapon.Name}, Current Ammo: {currentAmmo}/{maxMagazine}, Remaining in inventory: {playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType)}");
         }
         else
         {
@@ -267,7 +312,9 @@ public class PlayerShooting : MonoBehaviour
     }
 
     public int GetCurrentAmmo() => currentAmmo;
-    public int GetMaxAmmo() => currentWeapon?.magazineSize ?? 0;
+    public int GetMaxAmmo() => currentAttachmentSystem != null
+        ? currentAttachmentSystem.CurrentMagazineSize
+        : currentWeapon?.magazineSize ?? 0;
 
     public int GetInventoryAmmo()
     {

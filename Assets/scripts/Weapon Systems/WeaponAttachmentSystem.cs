@@ -9,14 +9,31 @@ public class WeaponAttachmentSystem : MonoBehaviour
     public List<AttachmentData> equippedAttachments = new List<AttachmentData>();
     private Dictionary<string, GameObject> spawned = new Dictionary<string, GameObject>();
 
-    public float currentDamage { get; private set; }
-    public float currentFireRate { get; private set; }
-
     private AttachmentSlotMap slotMap;
+
+    // Cached stats - recalculated whenever attachments change
+    private float cachedDamage;
+    private float cachedFireRate;
+    private float cachedReloadTime;
+    private float cachedSpread;
+    private float cachedRecoilX;
+    private float cachedRecoilY;
+    private float cachedRecoilZ;
+    private int cachedMagazineSize;
+
+    public float CurrentDamage => cachedDamage;
+    public float CurrentFireRate => cachedFireRate;
+    public float CurrentReloadTime => cachedReloadTime;
+    public float CurrentSpread => cachedSpread;
+    public float CurrentRecoilX => cachedRecoilX;
+    public float CurrentRecoilY => cachedRecoilY;
+    public float CurrentRecoilZ => cachedRecoilZ;
+    public int CurrentMagazineSize => cachedMagazineSize;
 
     void Awake()
     {
         slotMap = GetComponent<AttachmentSlotMap>();
+        RecalculateStats();
     }
 
     void Start()
@@ -24,7 +41,6 @@ public class WeaponAttachmentSystem : MonoBehaviour
         RecalculateStats();
     }
 
-    // Updated EquipAttachment method with two arguments
     public void EquipAttachment(AttachmentData att, WeaponAttachmentEntry entry)
     {
         if (att == null || entry == null) return;
@@ -45,7 +61,6 @@ public class WeaponAttachmentSystem : MonoBehaviour
             go.transform.localPosition = new Vector3(entry.posX, entry.posY, entry.posZ);
             go.transform.localRotation = Quaternion.Euler(entry.rotX, entry.rotY, entry.rotZ);
             go.transform.localScale = new Vector3(entry.scaleX, entry.scaleY, entry.scaleZ);
-
             spawned[att.id] = go;
         }
 
@@ -82,7 +97,32 @@ public class WeaponAttachmentSystem : MonoBehaviour
 
     public void RecalculateStats()
     {
-        currentDamage = weaponData.damage;
-        currentFireRate = weaponData.fireRate;
+        // Start with base weapon stats
+        cachedDamage = weaponData.damage;
+        cachedFireRate = weaponData.fireRate;
+        cachedReloadTime = weaponData.reloadTime;
+        cachedSpread = weaponData.spread;
+        cachedRecoilX = weaponData.recoilX;
+        cachedRecoilY = weaponData.recoilY;
+        cachedRecoilZ = weaponData.recoilZ;
+        cachedMagazineSize = weaponData.magazineSize;
+
+        // Apply modifiers from all equipped attachments
+        foreach (var att in equippedAttachments)
+        {
+            // Additive modifiers
+            cachedDamage += att.damageBonus;
+            cachedMagazineSize += att.magazineBonus;
+
+            // Multiplicative modifiers
+            cachedFireRate *= att.fireRateMultiplier;
+            cachedReloadTime *= att.reloadTimeMultiplier;
+            cachedSpread *= att.spreadMultiplier;
+            cachedRecoilX *= att.recoilMultiplier;
+            cachedRecoilY *= att.recoilMultiplier;
+            cachedRecoilZ *= att.recoilMultiplier;
+        }
+
+        Debug.Log($"Stats recalculated - Damage: {cachedDamage}, FireRate: {cachedFireRate}, Spread: {cachedSpread}, Recoil: ({cachedRecoilX}, {cachedRecoilY}, {cachedRecoilZ})");
     }
 }
