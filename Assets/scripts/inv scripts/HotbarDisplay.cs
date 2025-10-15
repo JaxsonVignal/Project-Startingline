@@ -13,6 +13,8 @@ public class HotbarDisplay : StaticInventoryDisplay
     [SerializeField] private Transform weaponHolder;
     private GameObject currentWeapon;
 
+    private bool isAiming = false;
+
     private void Awake()
     {
         _gameInput = new GameInput();
@@ -45,6 +47,10 @@ public class HotbarDisplay : StaticInventoryDisplay
         _gameInput.Player.Hotbar8.performed += ctx => SetIndex(7);
         _gameInput.Player.Hotbar9.performed += ctx => SetIndex(8);
         _gameInput.Player.Hotbar10.performed += ctx => SetIndex(9);
+
+        // NEW: Track aiming state
+        _gameInput.Player.Aim.performed += ctx => isAiming = true;
+        _gameInput.Player.Aim.canceled += ctx => isAiming = false;
     }
 
     protected override void OnDisable()
@@ -66,6 +72,10 @@ public class HotbarDisplay : StaticInventoryDisplay
         _gameInput.Player.Hotbar8.performed -= ctx => SetIndex(7);
         _gameInput.Player.Hotbar9.performed -= ctx => SetIndex(8);
         _gameInput.Player.Hotbar10.performed -= ctx => SetIndex(9);
+
+        // NEW: Unsubscribe from aim events
+        _gameInput.Player.Aim.performed -= ctx => isAiming = true;
+        _gameInput.Player.Aim.canceled -= ctx => isAiming = false;
     }
 
     private void Update()
@@ -77,6 +87,13 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     private void SetIndex(int newIndex)
     {
+        // NEW: Prevent switching while aiming
+        if (isAiming)
+        {
+            Debug.Log("Cannot switch items while aiming!");
+            return;
+        }
+
         slots[_currentIndex].ToggleHighlight();
 
         _currentIndex = Mathf.Clamp(newIndex, 0, _maxIndexSize);
@@ -92,6 +109,10 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     private void ChangeIndex(int direction)
     {
+        // NEW: Prevent switching while aiming
+        if (isAiming)
+            return;
+
         int newIndex = _currentIndex + direction;
         if (newIndex > _maxIndexSize) newIndex = 0;
         if (newIndex < 0) newIndex = _maxIndexSize;
@@ -124,11 +145,12 @@ public class HotbarDisplay : StaticInventoryDisplay
             ads.playerCamera = Camera.main;
             ads.hipPosition = currentWeapon.transform.Find("HipPosition");
             ads.adsPosition = currentWeapon.transform.Find("ADSPosition");
+            ads.scopeAdsPosition = currentWeapon.transform.Find("ScopeAdsPosition");
 
-            // NEW: Apply attachments from WeaponInstance if available
+            // Apply attachments from WeaponInstance if available
             var attachSys = ApplyStoredAttachments(currentWeapon, slotID);
 
-            // NEW: Set the attachment system on PlayerShooting to apply modifiers
+            // Set the attachment system on PlayerShooting to apply modifiers
             if (attachSys != null)
             {
                 PlayerShooting.Instance.SetAttachmentSystem(attachSys);
