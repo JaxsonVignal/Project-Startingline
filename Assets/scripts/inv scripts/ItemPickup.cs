@@ -8,7 +8,6 @@ public class ItemPickup : MonoBehaviour
 {
     public float pickUpRadius = 1;
     public InventoryItemData ItemData;
-
     private SphereCollider myCollider;
     [SerializeField] private ItemPickUpSaveData itemSaveData;
     private string id;
@@ -19,7 +18,6 @@ public class ItemPickup : MonoBehaviour
         myCollider = GetComponent<SphereCollider>();
         myCollider.isTrigger = true;
         myCollider.radius = pickUpRadius;
-
         id = GetComponent<UniqueID>().ID;
         itemSaveData = new ItemPickUpSaveData(ItemData, transform.position, transform.rotation);
     }
@@ -51,13 +49,41 @@ public class ItemPickup : MonoBehaviour
         var inventory = other.GetComponent<PlayerInventoryHolder>();
         if (!inventory) return;
 
+        Debug.Log("Player detected, attempting to add item: " + ItemData.name);
+
+        // Store weapon instance BEFORE pickup (in case we need to find the slot after)
+        var instanceHolder = GetComponent<WeaponInstanceHolder>();
+        WeaponInstance weaponInstance = instanceHolder?.weaponInstance;
+
         if (inventory.AddToInventory(ItemData, 1))
         {
+            // NEW: Transfer weapon attachment data if this is a weapon with attachments
+            if (weaponInstance != null)
+            {
+                // Find the slot that contains this weapon
+                InventorySlot targetSlot = FindSlotWithWeapon(inventory, ItemData);
+                if (targetSlot != null)
+                {
+                    WeaponInstanceStorage.StoreInstance(targetSlot.UniqueSlotID, weaponInstance);
+                    Debug.Log($"Transferred weapon instance with {weaponInstance.attachments.Count} attachments to slot {targetSlot.UniqueSlotID}");
+                }
+            }
+
             SaveGameManager.data.collectedItems.Add(id);
             Destroy(this.gameObject);
         }
+    }
 
-        Debug.Log("Player detected, attempting to add item: " + ItemData.name);
+    private InventorySlot FindSlotWithWeapon(PlayerInventoryHolder inventory, InventoryItemData weaponData)
+    {
+        // Search through all slots in the primary inventory system
+        foreach (var slot in inventory.PrimaryInventorySystem.InventorySlots)
+        {
+            if (slot.ItemData == weaponData)
+                return slot;
+        }
+
+        return null;
     }
 }
 

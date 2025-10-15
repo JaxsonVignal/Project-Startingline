@@ -17,9 +17,12 @@ MonoBehaviour:
   prefab: {fileID: 5480886499858025401, guid: 752571ce81c7bde49ba3a5f38c4d4fb4, type: 3}
   icon: {fileID: 0}
   description: 
-  damageModifier: 0
+  localPosition: {x: 0, y: 0, z: 0}
+  localEuler: {x: 0, y: -90, z: 0}
+  localScale: {x: 1, y: 1, z: 1}
+  damageBonus: 0
   fireRateMultiplier: 1
-  recoilMultiplier: 0.5
-  spreadMultiplier: 1
   reloadTimeMultiplier: 1
+  spreadMultiplier: 1
+  recoilMultiplier: 0.5
   magazineBonus: 0

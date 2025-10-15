@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
+  m_Name: Red Dot test
+  m_EditorClassIdentifier: 
+  id: Red_Dot
+  type: 0
+  prefab: {fileID: 8542341081227047507, guid: 61d468946f5b8fb4b9b7adda3cd1b8bd, type: 3}
+  icon: {fileID: 0}
+  description: 
+  localPosition: {x: 0, y: 0, z: 0}
+  localEuler: {x: 0, y: 0, z: 0}
+  localScale: {x: 1, y: 1, z: 1}
+  damageBonus: 0
+  fireRateMultiplier: 1
+  reloadTimeMultiplier: 1
+  spreadMultiplier: 1
+  recoilMultiplier: 1
+  magazineBonus: 0

@@ -179,10 +179,13 @@ public class WeaponBuilderUI : MonoBehaviour
 
         runtime.InitFromInstance(previewInstance, selectedBase, attachmentLookup);
 
+        // NEW: Store the weapon instance data on the pickup object
+        var instanceHolder = pickupWeapon.AddComponent<WeaponInstanceHolder>();
+        instanceHolder.weaponInstance = previewInstance;
+
         // Hide builder and preview
         if (previewContainer != null)
             previewContainer.SetActive(false);
         gameObject.SetActive(false);
     }
-
 }

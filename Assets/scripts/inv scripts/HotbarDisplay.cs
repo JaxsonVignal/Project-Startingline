@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -108,26 +109,87 @@ public class HotbarDisplay : StaticInventoryDisplay
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
 
-            
             var follow = currentWeapon.AddComponent<WeaponFollow>();
             follow.cameraTransform = Camera.main.transform;
             follow.smoothSpeed = 10f;
             follow.swayAmount = 0f;
             follow.swaySmooth = 4f;
 
-            
-
             PlayerShooting.Instance.firePoint = currentWeapon.transform.Find("FirePoint");
             PlayerShooting.Instance.EquipWeapon(weapon, slotID);
 
-            //  Attach ADS system
+            // Attach ADS system
             var ads = currentWeapon.AddComponent<ADS>();
             ads.weaponRoot = currentWeapon.transform;
             ads.playerCamera = Camera.main;
             ads.hipPosition = currentWeapon.transform.Find("HipPosition");
             ads.adsPosition = currentWeapon.transform.Find("ADSPosition");
+
+            // NEW: Apply attachments from WeaponInstance if available
+            ApplyStoredAttachments(currentWeapon, slotID);
         }
     }
+
+    private void ApplyStoredAttachments(GameObject weaponObject, string slotID)
+    {
+        // Get the WeaponInstance stored for this slot
+        WeaponInstance storedInstance = WeaponInstanceStorage.GetInstance(slotID);
+        if (storedInstance == null || storedInstance.attachments.Count == 0)
+        {
+            Debug.Log($"No stored attachments found for slot {slotID}");
+            return; // No stored attachments
+        }
+
+        // Ensure attachment system exists
+        var attachSys = weaponObject.GetComponent<WeaponAttachmentSystem>();
+        if (attachSys == null)
+        {
+            attachSys = weaponObject.AddComponent<WeaponAttachmentSystem>();
+        }
+
+        // Get the weapon data from the equipped weapon's slot
+        var slot = FindSlotByID(slotID);
+        if (slot != null && slot.ItemData is WeaponData weaponData)
+        {
+            attachSys.weaponData = weaponData;
+        }
+
+        // Build attachment lookup from Resources
+        var allAttachments = Resources.LoadAll<AttachmentData>("Attachments");
+        var attachmentLookup = new Dictionary<string, AttachmentData>();
+        foreach (var att in allAttachments)
+        {
+            if (att != null && !string.IsNullOrEmpty(att.id))
+                attachmentLookup[att.id] = att;
+        }
+
+        // Apply each attachment
+        foreach (var entry in storedInstance.attachments)
+        {
+            if (attachmentLookup.TryGetValue(entry.attachmentId, out var attData))
+            {
+                attachSys.EquipAttachment(attData, entry);
+                Debug.Log($"Applied attachment: {attData.id} to equipped weapon");
+            }
+        }
+
+        Debug.Log($"Successfully applied {storedInstance.attachments.Count} attachments to equipped weapon");
+    }
+
+    private InventorySlot FindSlotByID(string slotID)
+    {
+        var playerInv = FindObjectOfType<PlayerInventoryHolder>();
+        if (playerInv != null)
+        {
+            foreach (var slot in playerInv.PrimaryInventorySystem.InventorySlots)
+            {
+                if (slot.UniqueSlotID == slotID)
+                    return slot;
+            }
+        }
+        return null;
+    }
+
     private void UnequipWeapon()
     {
         if (currentWeapon != null)
