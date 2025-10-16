@@ -345,6 +345,7 @@ MonoBehaviour:
     itemData: {fileID: 0}
     _itemID: -1
     stackSize: -1
+    _uniqueSlotID: bba7ed28-4497-4dda-9c15-87185adcf534
 --- !u!114 &4035001515428826351
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -445,4 +446,5 @@ MonoBehaviour:
     itemData: {fileID: 0}
     _itemID: -1
     stackSize: -1
+    _uniqueSlotID: f401e9c4-d73a-4dc0-903f-80ce69f98c82
   _slotHighlight: {fileID: 6919822077966577739}

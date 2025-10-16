@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum FireMode
@@ -11,6 +12,7 @@ public enum FireMode
 [CreateAssetMenu(menuName = "Inventory System/Weapon")]
 public class WeaponData : InventoryItemData
 {
+    public string weaponId = "";
     [Header("Weapon Stats")]
     public float damage = 30f;
     public float fireRate = 0.1f;
@@ -34,6 +36,9 @@ public class WeaponData : InventoryItemData
     public float recoilY = 1.5f;
     public float recoilZ = 1.5f;
     public float spread = 0.05f;
+
+    [Header("Attachment Configuration")]
+    public List<AttachmentType> allowedAttachmentSlots;
 
     [Header("3D Model")]
     public GameObject weaponPrefab;

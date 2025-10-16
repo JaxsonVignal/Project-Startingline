@@ -2,24 +2,25 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    public float speed = 50f;
-    public float lifetime = 3f;
-    public float damage = 10f;
+    [HideInInspector] public WeaponData weaponData;
+    public float lifetime = 5f;
 
     private void Start()
     {
         Destroy(gameObject, lifetime);
     }
 
-    private void Update()
+    private void OnCollisionEnter(Collision collision)
     {
-        transform.position += transform.forward * speed * Time.deltaTime;
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        
+        // Try to apply damage to hit object
+        EnemyHealth health = collision.collider.GetComponent<EnemyHealth>();
+        if (health != null && weaponData != null)
+        {
+            health.TakeDamage(weaponData.damage);
+        }
 
         Destroy(gameObject);
     }
+
+    
 }

@@ -5,13 +5,13 @@ public class PlayerMovement : MonoBehaviour
     [Header("Refs")]
     private CharacterController cc;
     [SerializeField] private Transform cameraHolder;
-    [SerializeField] private PlayerInputHandler inputHandler; // Drag in Inspector
+    [SerializeField] private PlayerInputHandler inputHandler;
     [SerializeField] private Interactor interactor;
 
     [Header("Movement Settings")]
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float mouseSensitivity = 2f;
-    [SerializeField, Range(0.1f, 5f)] private float sensitivityModifier = 1f; // <-- new modifier
+    [SerializeField, Range(0.1f, 5f)] private float sensitivityModifier = 1f;
     [SerializeField] private float Gravity = 9.8f;
     [SerializeField] private float jumpHeight = 2f;
     [SerializeField] private float sprintSpeed = 10f;
@@ -35,8 +35,7 @@ public class PlayerMovement : MonoBehaviour
             uiMode = !uiMode;
             if (uiMode) SetUIMode();
             else SetGameplayMode();
-
-            inputHandler.ResetToggleUI(); // so it only toggles once per press
+            inputHandler.ResetToggleUI();
         }
 
         if (interactor.isInteracting)
@@ -64,22 +63,19 @@ public class PlayerMovement : MonoBehaviour
 
         move *= speed;
         move.y = CalculateVerticalVelocity();
-
         cc.Move(move * Time.deltaTime);
     }
 
     private void HandleLook()
     {
-        // Scale by deltaTime and a factor for reasonable speed
         float factor = 50f;
         Vector2 look = inputHandler.LookInput * mouseSensitivity * sensitivityModifier * Time.deltaTime * factor;
-
         transform.Rotate(Vector3.up * look.x);
-
         verticalLookRotation -= look.y;
         verticalLookRotation = Mathf.Clamp(verticalLookRotation, -90f, 90f);
         cameraHolder.localRotation = Quaternion.Euler(verticalLookRotation, 0f, 0f);
     }
+
     private float CalculateVerticalVelocity()
     {
         if (cc.isGrounded)
@@ -92,7 +88,6 @@ public class PlayerMovement : MonoBehaviour
         {
             verticalVelocity -= Gravity * Time.deltaTime;
         }
-
         return verticalVelocity;
     }
 
@@ -100,12 +95,18 @@ public class PlayerMovement : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        // NEW: Notify PlayerShooting that UI mode is active
+        PlayerShooting.Instance.SetUIMode(true);
     }
 
     private void SetGameplayMode()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // NEW: Notify PlayerShooting that UI mode is inactive
+        PlayerShooting.Instance.SetUIMode(false);
     }
 
 

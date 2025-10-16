@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,6 +12,8 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     [SerializeField] private Transform weaponHolder;
     private GameObject currentWeapon;
+
+    private bool isAiming = false;
 
     private void Awake()
     {
@@ -44,6 +47,10 @@ public class HotbarDisplay : StaticInventoryDisplay
         _gameInput.Player.Hotbar8.performed += ctx => SetIndex(7);
         _gameInput.Player.Hotbar9.performed += ctx => SetIndex(8);
         _gameInput.Player.Hotbar10.performed += ctx => SetIndex(9);
+
+        // NEW: Track aiming state
+        _gameInput.Player.Aim.performed += ctx => isAiming = true;
+        _gameInput.Player.Aim.canceled += ctx => isAiming = false;
     }
 
     protected override void OnDisable()
@@ -65,6 +72,10 @@ public class HotbarDisplay : StaticInventoryDisplay
         _gameInput.Player.Hotbar8.performed -= ctx => SetIndex(7);
         _gameInput.Player.Hotbar9.performed -= ctx => SetIndex(8);
         _gameInput.Player.Hotbar10.performed -= ctx => SetIndex(9);
+
+        // NEW: Unsubscribe from aim events
+        _gameInput.Player.Aim.performed -= ctx => isAiming = true;
+        _gameInput.Player.Aim.canceled -= ctx => isAiming = false;
     }
 
     private void Update()
@@ -76,6 +87,13 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     private void SetIndex(int newIndex)
     {
+        // NEW: Prevent switching while aiming
+        if (isAiming)
+        {
+            Debug.Log("Cannot switch items while aiming!");
+            return;
+        }
+
         slots[_currentIndex].ToggleHighlight();
 
         _currentIndex = Mathf.Clamp(newIndex, 0, _maxIndexSize);
@@ -91,6 +109,10 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     private void ChangeIndex(int direction)
     {
+        // NEW: Prevent switching while aiming
+        if (isAiming)
+            return;
+
         int newIndex = _currentIndex + direction;
         if (newIndex > _maxIndexSize) newIndex = 0;
         if (newIndex < 0) newIndex = _maxIndexSize;
@@ -108,26 +130,97 @@ public class HotbarDisplay : StaticInventoryDisplay
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
 
-            
             var follow = currentWeapon.AddComponent<WeaponFollow>();
             follow.cameraTransform = Camera.main.transform;
             follow.smoothSpeed = 10f;
             follow.swayAmount = 0f;
             follow.swaySmooth = 4f;
 
-            
-
             PlayerShooting.Instance.firePoint = currentWeapon.transform.Find("FirePoint");
             PlayerShooting.Instance.EquipWeapon(weapon, slotID);
 
-            //  Attach ADS system
+            // Attach ADS system
             var ads = currentWeapon.AddComponent<ADS>();
             ads.weaponRoot = currentWeapon.transform;
             ads.playerCamera = Camera.main;
             ads.hipPosition = currentWeapon.transform.Find("HipPosition");
             ads.adsPosition = currentWeapon.transform.Find("ADSPosition");
+            ads.scopeAdsPosition = currentWeapon.transform.Find("ScopeAdsPosition");
+
+            // Apply attachments from WeaponInstance if available
+            var attachSys = ApplyStoredAttachments(currentWeapon, slotID);
+
+            // Set the attachment system on PlayerShooting to apply modifiers
+            if (attachSys != null)
+            {
+                PlayerShooting.Instance.SetAttachmentSystem(attachSys);
+                Debug.Log($"Attachment system set on PlayerShooting - modifiers now active");
+            }
         }
     }
+
+    private WeaponAttachmentSystem ApplyStoredAttachments(GameObject weaponObject, string slotID)
+    {
+        // Get the WeaponInstance stored for this slot
+        WeaponInstance storedInstance = WeaponInstanceStorage.GetInstance(slotID);
+        if (storedInstance == null || storedInstance.attachments.Count == 0)
+        {
+            Debug.Log($"No stored attachments found for slot {slotID}");
+            return null; // No stored attachments
+        }
+
+        // Ensure attachment system exists
+        var attachSys = weaponObject.GetComponent<WeaponAttachmentSystem>();
+        if (attachSys == null)
+        {
+            attachSys = weaponObject.AddComponent<WeaponAttachmentSystem>();
+        }
+
+        // Get the weapon data from the equipped weapon's slot
+        var slot = FindSlotByID(slotID);
+        if (slot != null && slot.ItemData is WeaponData weaponData)
+        {
+            attachSys.weaponData = weaponData;
+        }
+
+        // Build attachment lookup from Resources
+        var allAttachments = Resources.LoadAll<AttachmentData>("Attachments");
+        var attachmentLookup = new Dictionary<string, AttachmentData>();
+        foreach (var att in allAttachments)
+        {
+            if (att != null && !string.IsNullOrEmpty(att.id))
+                attachmentLookup[att.id] = att;
+        }
+
+        // Apply each attachment
+        foreach (var entry in storedInstance.attachments)
+        {
+            if (attachmentLookup.TryGetValue(entry.attachmentId, out var attData))
+            {
+                attachSys.EquipAttachment(attData, entry);
+                Debug.Log($"Applied attachment: {attData.id} to equipped weapon");
+            }
+        }
+
+        Debug.Log($"Successfully applied {storedInstance.attachments.Count} attachments to equipped weapon");
+
+        return attachSys; // Return the attachment system
+    }
+
+    private InventorySlot FindSlotByID(string slotID)
+    {
+        var playerInv = FindObjectOfType<PlayerInventoryHolder>();
+        if (playerInv != null)
+        {
+            foreach (var slot in playerInv.PrimaryInventorySystem.InventorySlots)
+            {
+                if (slot.UniqueSlotID == slotID)
+                    return slot;
+            }
+        }
+        return null;
+    }
+
     private void UnequipWeapon()
     {
         if (currentWeapon != null)
