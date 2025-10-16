@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -69,35 +70,79 @@ public static class SaveLoad
     {
         data.weaponInstances.Clear();
 
-        // Get all inventory slots and save their weapon instances
+        // --- Save Player Inventory ---
         var playerInventory = GameObject.FindObjectOfType<PlayerInventoryHolder>();
         if (playerInventory != null)
         {
-            foreach (var slot in playerInventory.PrimaryInventorySystem.InventorySlots)
+            SaveInventoryInstances(playerInventory.PrimaryInventorySystem, data);
+        }
+
+        // --- Save All Chests ---
+        var chests = GameObject.FindObjectsOfType<chestInventory>();
+        foreach (var chest in chests)
+        {
+            SaveInventoryInstances(chest.PrimaryInventorySystem, data);
+        }
+
+        Debug.Log($"Saved weapon instances from player + {GameObject.FindObjectsOfType<chestInventory>().Length} chests");
+    }
+
+    // Helper method to reduce duplication
+    private static void SaveInventoryInstances(InventorySystem invSystem, SaveData data)
+    {
+        foreach (var slot in invSystem.InventorySlots)
+        {
+            if (slot.ItemData is WeaponData)
             {
-                if (slot.ItemData is WeaponData)
+                var instance = WeaponInstanceStorage.GetInstance(slot.UniqueSlotID);
+                if (instance != null)
                 {
-                    var instance = WeaponInstanceStorage.GetInstance(slot.UniqueSlotID);
-                    if (instance != null)
-                    {
-                        data.weaponInstances[slot.UniqueSlotID] = new WeaponInstanceSaveData(instance);
-                        Debug.Log($"Saved weapon instance for slot {slot.UniqueSlotID} with {instance.attachments.Count} attachments");
-                    }
+                    data.weaponInstances[slot.UniqueSlotID] = new WeaponInstanceSaveData(instance);
+                    Debug.Log($"Saved weapon instance for slot {slot.UniqueSlotID} ({slot.ItemData.name}) with {instance.attachments.Count} attachments");
                 }
             }
         }
     }
 
-    // NEW: Load all weapon instances from SaveData
     private static void LoadWeaponInstances(SaveData data)
     {
         WeaponInstanceStorage.ClearAll();
 
+        // --- STEP 1: Rebuild storage ---
         foreach (var kvp in data.weaponInstances)
         {
             var instance = kvp.Value.ToInstance();
             WeaponInstanceStorage.StoreInstance(kvp.Key, instance);
             Debug.Log($"Loaded weapon instance for slot {kvp.Key} with {instance.attachments.Count} attachments");
         }
+
+        // --- STEP 2: Reapply to all inventories ---
+        var allInventories = new List<InventorySystem>();
+
+        var player = GameObject.FindObjectOfType<PlayerInventoryHolder>();
+        if (player != null)
+            allInventories.Add(player.PrimaryInventorySystem);
+
+        allInventories.AddRange(GameObject.FindObjectsOfType<chestInventory>().Select(c => c.PrimaryInventorySystem));
+
+        foreach (var inv in allInventories)
+        {
+            foreach (var slot in inv.InventorySlots)
+            {
+                if (slot.ItemData is WeaponData weaponData)
+                {
+                    var instance = WeaponInstanceStorage.GetInstance(slot.UniqueSlotID);
+                    if (instance != null)
+                    {
+                        Debug.Log($"Restored attachments for {weaponData.name} in slot {slot.UniqueSlotID} ({instance.attachments.Count} attachments)");
+                        // You don't need to visually re-attach yet; that will happen when equipped.
+                        // But now, when the player picks or equips it, it will have the correct data.
+                    }
+                }
+            }
+        }
+
+        Debug.Log("All weapon instances restored for player and chest inventories.");
     }
+
 }

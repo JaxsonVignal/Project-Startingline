@@ -31,6 +31,13 @@ public class InventorySlot : ISerializationCallbackReceiver
 
     public void ClearSlot()
     {
+        // If this slot had a weapon instance, remove it from storage
+        if (itemData is WeaponData)
+        {
+            WeaponInstanceStorage.RemoveInstance(_uniqueSlotID);
+            Debug.Log($"Removed weapon instance for cleared slot {_uniqueSlotID}");
+        }
+
         itemData = null;
         _itemID = -1;
         stackSize = -1;
@@ -39,6 +46,15 @@ public class InventorySlot : ISerializationCallbackReceiver
 
     public void AssignItem(InventorySlot invSlot)
     {
+        bool wasWeapon = itemData is WeaponData;
+        bool isWeapon = invSlot.itemData is WeaponData;
+
+        // If we are replacing a weapon with something else, clean up
+        if (wasWeapon && !isWeapon)
+        {
+            WeaponInstanceStorage.RemoveInstance(_uniqueSlotID);
+        }
+
         if (itemData == invSlot.itemData)
         {
             AddToStack(invSlot.stackSize);
@@ -46,9 +62,21 @@ public class InventorySlot : ISerializationCallbackReceiver
         else
         {
             itemData = invSlot.itemData;
-            _itemID = itemData.ID;
+            _itemID = itemData != null ? itemData.ID : -1;
             stackSize = 0;
             AddToStack(invSlot.StackSize);
+        }
+
+        // Move weapon instance if needed
+        if (isWeapon)
+        {
+            var instance = WeaponInstanceStorage.GetInstance(invSlot.UniqueSlotID);
+            if (instance != null)
+            {
+                WeaponInstanceStorage.RemoveInstance(invSlot.UniqueSlotID);
+                WeaponInstanceStorage.StoreInstance(_uniqueSlotID, instance);
+                Debug.Log($"Moved weapon instance from {invSlot.UniqueSlotID} -> {_uniqueSlotID}");
+            }
         }
     }
 
@@ -60,14 +88,7 @@ public class InventorySlot : ISerializationCallbackReceiver
 
     public bool RoomLeftInStack(int amountToAdd)
     {
-        if (stackSize + amountToAdd <= itemData.maxStackSize)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return (stackSize + amountToAdd <= itemData.maxStackSize);
     }
 
     public void AddToStack(int amount)
@@ -93,15 +114,26 @@ public class InventorySlot : ISerializationCallbackReceiver
             splitStack = null;
             return false;
         }
+
         int halfStack = Mathf.RoundToInt(stackSize / 2);
         RemoveFromStack(halfStack);
         splitStack = new InventorySlot(itemData, halfStack);
+
+        // If weapon, also copy its instance (since both halves represent the same weapon)
+        if (itemData is WeaponData)
+        {
+            var instance = WeaponInstanceStorage.GetInstance(_uniqueSlotID);
+            if (instance != null)
+            {
+                WeaponInstanceStorage.StoreInstance(splitStack.UniqueSlotID, instance);
+                Debug.Log($"Copied weapon instance to split slot {splitStack.UniqueSlotID}");
+            }
+        }
+
         return true;
     }
 
-    public void OnBeforeSerialize()
-    {
-    }
+    public void OnBeforeSerialize() { }
 
     public void OnAfterDeserialize()
     {
