@@ -52,6 +52,15 @@ public class DayNightCycleManager : MonoBehaviour
         }
     }
 
+    public void SetTime(float hour)
+    {
+        currentTimeOfDay = hour;      // Set your internal time variable
+        UpdateLighting();        // Update sun, sky, etc.
+
+        // Trigger event if you have one
+        OnTimeChanged?.Invoke(currentTimeOfDay);
+    }
+
     public int GetHour() => Mathf.FloorToInt(currentTimeOfDay);
     public int GetMinute() => Mathf.FloorToInt((currentTimeOfDay % 1f) * 60f);
 }

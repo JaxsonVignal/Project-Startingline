@@ -14,6 +14,8 @@ public class NPCManager : MonoBehaviour
     public float workStartTime = 9f;
     public float workEndTime = 17f;
     public float sleepTime = 22f;
+    public float breakStartTime = 12f;
+    public float breakEndTime = 13f;
 
     [Header("Waypoints")]
     public Transform bedLocation;
@@ -44,7 +46,7 @@ public class NPCManager : MonoBehaviour
     {
         if (hour >= sleepTime || hour < wakeUpTime)
             return NPCState.Sleeping;
-        else if (hour >= wakeUpTime && hour < workStartTime)
+        else if (hour >= breakStartTime && hour < breakEndTime)
             return NPCState.Eating;
         else if (hour >= workStartTime && hour < workEndTime)
             return NPCState.Working;
@@ -54,6 +56,8 @@ public class NPCManager : MonoBehaviour
 
     private void SwitchState(NPCState newState)
     {
+        if (newState == currentState) return; // Prevent unnecessary MoveTo
+
         currentState = newState;
         Debug.Log($"{npcName} switched to {newState}");
 
@@ -64,17 +68,40 @@ public class NPCManager : MonoBehaviour
         switch (newState)
         {
             case NPCState.Sleeping:
-                movement.MoveTo(bedLocation);
+                movement?.MoveTo(bedLocation);
                 break;
             case NPCState.Eating:
-                movement.MoveTo(eatLocation);
+                movement?.MoveTo(eatLocation);
                 break;
             case NPCState.Working:
-                movement.MoveTo(workLocation);
+                movement?.MoveTo(workLocation);
                 break;
             case NPCState.Idle:
-                movement.MoveTo(idleLocation);
+                movement?.MoveTo(idleLocation);
                 break;
         }
     }
+
+    public void ResetToBed()
+    {
+        if (bedLocation == null)
+        {
+            Debug.LogWarning($"{npcName} has no bed assigned!");
+            return;
+        }
+
+        // Stop NavMeshAgent and teleport
+        if (movement != null)
+        {
+            movement.OverrideMovementTemporarily(bedLocation, 2f); // hold at bed for 2 seconds
+        }
+        else
+        {
+            transform.position = bedLocation.position;
+        }
+
+        currentState = NPCState.Sleeping;
+        Debug.Log($"{npcName} has been reset to bed.");
+    }
+
 }

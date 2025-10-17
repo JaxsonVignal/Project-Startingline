@@ -1,72 +1,61 @@
 using UnityEngine;
 using UnityEngine.AI;
+using System.Collections;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class CivilianMovementController : MonoBehaviour
 {
     private NavMeshAgent agent;
-    private Transform currentDestination;
+    private Transform currentTarget;
+    private bool overrideMovement = false;
 
-    [Header("Movement Settings")]
-    public float stoppingDistance = 1f;
-    public float repathDelay = 1f; // How often to re-path (in seconds)
-
-    private float nextPathTime;
-
-    void Awake()
+    private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
     }
 
-    void Update()
-    {
-        if (currentDestination == null)
-            return;
+    public Transform CurrentTarget => currentTarget;
 
-        // Refresh the path occasionally
-        if (Time.time > nextPathTime)
-        {
-            agent.SetDestination(currentDestination.position);
-            nextPathTime = Time.time + repathDelay;
-        }
-    }
-
-    /// <summary>
-    /// Makes the civilian move to a target location.
-    /// </summary>
     public void MoveTo(Transform target)
     {
-        if (target == null)
-        {
-            Debug.LogWarning($"{gameObject.name}: Tried to move to a null target!");
+        if (target == null || overrideMovement)
             return;
-        }
 
-        currentDestination = target;
-        agent.isStopped = false;
-        agent.stoppingDistance = stoppingDistance;
+        if (currentTarget == target)
+            return; // Already moving there
+
+        currentTarget = target;
         agent.SetDestination(target.position);
     }
 
     /// <summary>
-    /// Stops movement immediately.
+    /// Temporarily override movement to a fixed position for duration seconds
     /// </summary>
-    public void Stop()
+    public void OverrideMovementTemporarily(Transform target, float duration)
     {
-        if (agent == null) return;
-
-        agent.isStopped = true;
-        currentDestination = null;
+        StopAllCoroutines();
+        StartCoroutine(OverrideRoutine(target, duration));
     }
 
-    /// <summary>
-    /// Checks if the NPC reached its current destination.
-    /// </summary>
-    public bool IsAtDestination()
+    private IEnumerator OverrideRoutine(Transform target, float duration)
     {
-        if (currentDestination == null || agent == null)
-            return false;
+        overrideMovement = true;
 
-        return !agent.pathPending && agent.remainingDistance <= stoppingDistance;
+        // Teleport and reset path
+        agent.Warp(target.position);
+        agent.ResetPath();
+
+        currentTarget = target;
+
+        float timer = 0f;
+        while (timer < duration)
+        {
+            // Keep agent stopped at target
+            agent.Warp(target.position);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        overrideMovement = false;
     }
 }
