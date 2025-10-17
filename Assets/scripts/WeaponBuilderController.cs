@@ -5,6 +5,7 @@ public class WeaponBuilderController : MonoBehaviour
     [Header("References")]
     public GameObject builderCanvas;      // Assign your WeaponBuilderCanvas
     public GameObject previewContainer;   // Optional: 3D preview parent
+    [SerializeField] private Interactor interactor;
 
     private bool isOpen = false;
 
@@ -18,29 +19,38 @@ public class WeaponBuilderController : MonoBehaviour
 
     void Update()
     {
-        // Toggle builder with "I"
-        if (Input.GetKeyDown(KeyCode.I))
+        // Allow Escape to close builder even during pause
+        if (isOpen && Input.GetKeyDown(KeyCode.Escape))
         {
-            ToggleBuilder();
+            CloseBuilder();
         }
     }
 
-    public void ToggleBuilder()
+    public void OpenBuilder()
     {
-        isOpen = !isOpen;
-
-        // Show/hide builder UI
-        builderCanvas.SetActive(isOpen);
-
-        // Show/hide preview container
+        isOpen = true;
+        builderCanvas.SetActive(true);
         if (previewContainer != null)
-            previewContainer.SetActive(isOpen);
-
-        // Optional: pause game while builder is open
-        Time.timeScale = isOpen ? 0f : 1f;
-
-        // Show/hide cursor
-        Cursor.visible = isOpen;
-        Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
+            previewContainer.SetActive(true);
+        Time.timeScale = 0f;
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
+
+    public void CloseBuilder()
+    {
+        isOpen = false;
+        builderCanvas.SetActive(false);
+        if (previewContainer != null)
+            previewContainer.SetActive(false);
+        Time.timeScale = 1f;
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        // Notify interactor that interaction ended
+        if (interactor != null)
+            interactor.EndInteraction();
+    }
+
+    public bool IsOpen() => isOpen;
 }

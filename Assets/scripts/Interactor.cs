@@ -6,7 +6,7 @@ public class Interactor : MonoBehaviour
 {
     public Transform InteractionPoint;
     public LayerMask InteractionLayer;
-    public float InteractionPointRadius = 1f;
+    public float InteractionPointRadius = 5f;
     public bool isInteracting {  get; private set; }
 
     private void Update()
@@ -29,6 +29,7 @@ public class Interactor : MonoBehaviour
         if(Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             EndInteraction();
+            
         }
     }
 
@@ -38,7 +39,7 @@ public class Interactor : MonoBehaviour
         isInteracting = true;
     }
 
-    void EndInteraction()
+    public void EndInteraction()
     {
         isInteracting = false;
     }
