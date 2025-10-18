@@ -27,7 +27,6 @@ public class CarController : MonoBehaviour
     public float acceleration = 3500f;
     public float brakePower = 4000f;
     public float maxSteerAngle = 35f;
-    public float reverseSteerMultiplier = 1.5f;
     public float steeringSpeed = 6f;
     public float deceleration = 0.98f;
     public Vector3 _centerOfMass;
@@ -39,8 +38,13 @@ public class CarController : MonoBehaviour
     [Range(0f, 1f)] public float angularDragFactor = 0.25f;
     public float speedSteerReduction = 0.025f;
     public float driftTriggerTime = 0.5f;
-    public float counterSteerFactor = 0.6f;   // Strength of countersteering
-    public float slipAngleThreshold = 10f;    // Slip angle in degrees before countersteering starts
+    public float counterSteerFactor = 0.6f;
+    public float slipAngleThreshold = 10f;
+
+    [Header("Recovery & Reverse Fix")]
+    public float reverseBoostTorque = 5000f;   // Extra torque when reversing from a stop
+    public float reverseUnstickImpulse = 4f;   // Small push when stuck against a wall
+    public float minSpeedForBoost = 1.5f;      // Below this speed, boost activates
 
     private float moveInput;
     private float steerInput;
@@ -100,57 +104,78 @@ public class CarController : MonoBehaviour
     {
         float forwardSpeed = Vector3.Dot(carRb.velocity, transform.forward);
 
-        // Determine car state
-        if (moveInput > 0)
+        // --- Enhanced gear switching ---
+        if (moveInput > 0.1f)
             currentState = CarState.Forward;
-        else if (moveInput < 0)
+        else if (moveInput < -0.1f)
             currentState = CarState.Reverse;
         else if (Mathf.Abs(forwardSpeed) < 0.1f)
             currentState = CarState.Neutral;
 
         foreach (var wheel in wheels)
         {
-            if (wheel.axel == Axel.Rear)
+            if (wheel.axel != Axel.Rear) continue;
+
+            wheel.wheelCollider.brakeTorque = 0f;
+
+            float appliedTorque = moveInput * acceleration;
+
+            // --- Reverse boost when stuck ---
+            if (currentState == CarState.Reverse && carRb.velocity.magnitude < minSpeedForBoost && moveInput < -0.1f)
             {
-                wheel.wheelCollider.brakeTorque = 0f;
+                appliedTorque -= reverseBoostTorque; // more torque when reversing from stop
+            }
 
-                switch (currentState)
-                {
-                    case CarState.Forward:
-                    case CarState.Reverse:
-                        wheel.wheelCollider.motorTorque = moveInput * acceleration;
-                        break;
-                    case CarState.Neutral:
-                        wheel.wheelCollider.motorTorque = 0f;
-                        break;
-                }
+            // --- Apply braking when changing direction ---
+            if ((forwardSpeed > 1f && moveInput < -0.1f) ||
+                (forwardSpeed < -1f && moveInput > 0.1f))
+            {
+                wheel.wheelCollider.motorTorque = 0f;
+                wheel.wheelCollider.brakeTorque = brakePower;
+            }
+            else
+            {
+                wheel.wheelCollider.motorTorque = appliedTorque;
+            }
 
-                // Braking when pressing opposite direction
-                if ((forwardSpeed > 0.5f && moveInput < 0) ||
-                    (forwardSpeed < -0.5f && moveInput > 0))
-                {
-                    wheel.wheelCollider.motorTorque = 0f;
-                    wheel.wheelCollider.brakeTorque = brakePower;
-                }
+            // --- Unstick impulse ---
+            if (currentState == CarState.Reverse && carRb.velocity.magnitude < 0.5f && moveInput < -0.1f)
+            {
+                carRb.AddForce(-transform.forward * reverseUnstickImpulse, ForceMode.VelocityChange);
             }
         }
     }
 
     void ApplySteering()
     {
-        float speedFactor = Mathf.Clamp01(carRb.velocity.magnitude * speedSteerReduction);
-        float steerAngle = steerInput * maxSteerAngle * (1 - speedFactor);
+        float speed = carRb.velocity.magnitude;
 
-        // Invert steering in reverse
-        if (currentState == CarState.Reverse)
-            steerAngle *= -reverseSteerMultiplier;
+        float lowSpeedFactor = Mathf.Lerp(1.5f, 0.5f, speed / 30f);
+        lowSpeedFactor = Mathf.Clamp(lowSpeedFactor, 0.5f, 1.5f);
 
-        // Calculate slip angle for countersteering
+        float speedFactor = Mathf.Clamp01(speed * speedSteerReduction);
+        float targetSteer = steerInput * maxSteerAngle * (1 - speedFactor) * lowSpeedFactor;
+
+        if (Mathf.Abs(moveInput) < 0.1f && speed < 5f)
+            targetSteer = Mathf.Lerp(targetSteer, 0f, Time.fixedDeltaTime * steeringSpeed * 2f);
+
+        float currentSteer = 0f;
+        foreach (var wheel in wheels)
+        {
+            if (wheel.axel == Axel.Front)
+            {
+                currentSteer = wheel.wheelCollider.steerAngle;
+                break;
+            }
+        }
+
+        float steerDelta = Mathf.Abs(targetSteer - currentSteer);
+        float steerSpeedDynamic = steeringSpeed / (1f + steerDelta * 0.1f);
+
         Vector3 localVelocity = transform.InverseTransformDirection(carRb.velocity);
         float slipAngle = Mathf.Atan2(localVelocity.x, Mathf.Abs(localVelocity.z)) * Mathf.Rad2Deg;
 
-        // Detect drift based on slip
-        if (Mathf.Abs(steerInput) > 0.1f && carRb.velocity.magnitude > 5f)
+        if (Mathf.Abs(steerInput) > 0.1f && speed > 5f)
         {
             turnTimer += Time.fixedDeltaTime;
             if (turnTimer > driftTriggerTime)
@@ -164,23 +189,23 @@ public class CarController : MonoBehaviour
 
         foreach (var wheel in wheels)
         {
-            if (wheel.axel == Axel.Front)
+            if (wheel.axel != Axel.Front) continue;
+
+            float finalSteer = Mathf.Lerp(
+                wheel.wheelCollider.steerAngle,
+                targetSteer,
+                Time.fixedDeltaTime * steerSpeedDynamic
+            );
+
+            if (isDrifting)
             {
-                float finalSteer = Mathf.Lerp(
-                    wheel.wheelCollider.steerAngle,
-                    steerAngle,
-                    Time.fixedDeltaTime * steeringSpeed
-                );
-
-                // Apply countersteering only when drifting
-                if (isDrifting)
-                {
-                    float counterSteer = -Mathf.Sign(slipAngle) * Mathf.Min(Mathf.Abs(slipAngle) / 30f, 1f) * counterSteerFactor * maxSteerAngle;
-                    finalSteer += counterSteer;
-                }
-
-                wheel.wheelCollider.steerAngle = finalSteer;
+                float counterSteer = -Mathf.Sign(slipAngle) *
+                                     Mathf.Min(Mathf.Abs(slipAngle) / 30f, 1f) *
+                                     counterSteerFactor * maxSteerAngle;
+                finalSteer += counterSteer;
             }
+
+            wheel.wheelCollider.steerAngle = finalSteer;
         }
     }
 
