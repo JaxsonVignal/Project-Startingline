@@ -16,16 +16,21 @@ public class CivilianMovementController : MonoBehaviour
 
     public Transform CurrentTarget => currentTarget;
 
-    public void MoveTo(Transform target)
+    /// <summary>
+    /// Move to a target. If alwaysUpdate is true, the agent will continuously update the destination.
+    /// </summary>
+    public void MoveTo(Transform target, bool alwaysUpdate = false)
     {
         if (target == null || overrideMovement)
             return;
 
-        if (currentTarget == target)
-            return; // Already moving there
+        // Only skip updating if not forced
+        if (!alwaysUpdate && currentTarget == target)
+            return;
 
         currentTarget = target;
         agent.SetDestination(target.position);
+        agent.isStopped = false;
     }
 
     /// <summary>
@@ -44,18 +49,26 @@ public class CivilianMovementController : MonoBehaviour
         // Teleport and reset path
         agent.Warp(target.position);
         agent.ResetPath();
-
         currentTarget = target;
 
         float timer = 0f;
         while (timer < duration)
         {
-            // Keep agent stopped at target
-            agent.Warp(target.position);
+            agent.Warp(target.position); // keep agent at target
             timer += Time.deltaTime;
             yield return null;
         }
 
         overrideMovement = false;
+    }
+
+    /// <summary>
+    /// Stops movement immediately
+    /// </summary>
+    public void StopMovement()
+    {
+        agent.isStopped = true;
+        agent.ResetPath();
+        currentTarget = null;
     }
 }

@@ -22,7 +22,7 @@ MonoBehaviour:
   fireRate: 0.1
   reloadTime: 2.5
   magazineSize: 30
-  bulletSpeed: 100
+  bulletSpeed: 50
   FOVChange: 40
   requiredAmmoType: 3
   pelletsPerShot: 8

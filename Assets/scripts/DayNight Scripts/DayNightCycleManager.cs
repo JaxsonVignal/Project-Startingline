@@ -3,6 +3,8 @@ using System;
 
 public class DayNightCycleManager : MonoBehaviour
 {
+
+    public static DayNightCycleManager Instance { get; private set; }
     [Header("Time Settings")]
     public float dayLengthInMinutes = 24f; // 1 in-game day = 24 real minutes
     public float startHour = 6f;           // Start at 6 AM
@@ -33,6 +35,13 @@ public class DayNightCycleManager : MonoBehaviour
 
         UpdateLighting();
         OnTimeChanged?.Invoke(currentTimeOfDay); // Broadcast current time
+    }
+
+    
+
+    private void Awake()
+    {
+        Instance = this;
     }
 
     void UpdateLighting()
