@@ -3140,7 +3140,8 @@ MonoBehaviour:
   brakePower: 4000
   maxSteerAngle: 35
   steeringSpeed: 6
-  deceleration: 100
+  passiveDecelerationRate: 5
+  oppositeDecelerationRate: 12
   _centerOfMass: {x: 0, y: 0, z: 0}
   wheels:
   - wheelModel: {fileID: 5155841683623964969}
@@ -3157,12 +3158,12 @@ MonoBehaviour:
     wheelCollider: {fileID: 1497185764}
     wheelEffectObj: {fileID: 2006027963}
     smokeParticle: {fileID: 1908032434}
-    axel: 0
+    axel: 1
   - wheelModel: {fileID: 2548593744398471743}
     wheelCollider: {fileID: 934714986}
     wheelEffectObj: {fileID: 1226831962}
     smokeParticle: {fileID: 652121951}
-    axel: 0
+    axel: 1
   driftFactor: 0.9
   angularDragFactor: 0.25
   speedSteerReduction: 0.025
@@ -3170,8 +3171,8 @@ MonoBehaviour:
   counterSteerFactor: 0.6
   slipAngleThreshold: 10
   reverseBoostTorque: 5000
-  reverseUnstickImpulse: 4
-  minSpeedForBoost: 1.5
+  reverseUnstickImpulse: 1
+  minSpeedForBoost: 1.1
 --- !u!54 &4334947467026304227
 Rigidbody:
   m_ObjectHideFlags: 0

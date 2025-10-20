@@ -28,7 +28,9 @@ public class CarController : MonoBehaviour
     public float brakePower = 4000f;
     public float maxSteerAngle = 35f;
     public float steeringSpeed = 6f;
-    [Range(0f, 1f)] public float deceleration = 0.98f; // lower = faster slow down
+    [Header("Deceleration")]
+    public float passiveDecelerationRate = 5f; // m/s² when no input
+    public float oppositeDecelerationRate = 12f; // m/s² when pressing opposite
     public Vector3 _centerOfMass;
 
     public List<Wheel> wheels;
@@ -89,6 +91,8 @@ public class CarController : MonoBehaviour
         ApplyBrakes();
         ApplyDeceleration();
         SimulateInertia();
+
+        Debug.Log("Speed: " + carRb.velocity.magnitude);
     }
 
     void GetInputs()
@@ -100,18 +104,15 @@ public class CarController : MonoBehaviour
         }
     }
 
-    // ---------------- DRIVE & DECELERATION FIXES ----------------
     void ApplyDrive()
     {
         float forwardSpeed = Vector3.Dot(carRb.velocity, transform.forward);
 
-        // Determine driving state
+        // Determine current driving state
         if (moveInput > 0.1f)
             currentState = CarState.Forward;
         else if (moveInput < -0.1f)
             currentState = CarState.Reverse;
-        else if (Mathf.Abs(forwardSpeed) < 0.1f)
-            currentState = CarState.Neutral;
 
         foreach (var wheel in wheels)
         {
@@ -124,23 +125,8 @@ public class CarController : MonoBehaviour
             if (currentState == CarState.Reverse && Mathf.Abs(forwardSpeed) < minSpeedForBoost && moveInput < -0.1f)
                 appliedTorque -= reverseBoostTorque;
 
-            // --- Directional logic ---
-            if ((forwardSpeed > 1f && moveInput < 0) || (forwardSpeed < -1f && moveInput > 0))
-            {
-                // braking phase — reduce speed first
-                wheel.wheelCollider.motorTorque = 0f;
-                wheel.wheelCollider.brakeTorque = brakePower * 0.6f;
-            }
-            else
-            {
-                // driving normally
-                wheel.wheelCollider.brakeTorque = 0f;
-                wheel.wheelCollider.motorTorque = appliedTorque;
-            }
-
-            // --- Smooth transition to reverse after braking ---
-            if (forwardSpeed < 0.5f && moveInput < -0.1f)
-                currentState = CarState.Reverse;
+            // Apply torque normally
+            wheel.wheelCollider.motorTorque = appliedTorque;
 
             // Unstick impulse for reverse
             if (currentState == CarState.Reverse && carRb.velocity.magnitude < 0.5f && moveInput < -0.1f)
@@ -151,26 +137,21 @@ public class CarController : MonoBehaviour
     void ApplyDeceleration()
     {
         float forwardDot = Vector3.Dot(carRb.velocity, transform.forward);
+        Vector3 localVel = transform.InverseTransformDirection(carRb.velocity);
 
+        // Passive deceleration when no input
         if (Mathf.Abs(moveInput) < 0.1f)
         {
-            Vector3 localVel = transform.InverseTransformDirection(carRb.velocity);
-
-            // Use deceleration variable directly
-            localVel.z = Mathf.Lerp(localVel.z, 0f, Time.fixedDeltaTime * deceleration);
-
-            carRb.velocity = transform.TransformDirection(localVel);
+            localVel.z = Mathf.MoveTowards(localVel.z, 0f, passiveDecelerationRate * Time.fixedDeltaTime);
         }
-        else if ((moveInput < 0 && forwardDot > 0.5f) || (moveInput > 0 && forwardDot < -0.5f))
+        // Faster deceleration when pressing opposite direction
+        else if ((moveInput < 0 && forwardDot > 0.1f) || (moveInput > 0 && forwardDot < -0.1f))
         {
-            // braking toward zero before switching direction
-            carRb.velocity = Vector3.Lerp(carRb.velocity, Vector3.zero, Time.fixedDeltaTime * deceleration * 1.2f);
+            localVel.z = Mathf.MoveTowards(localVel.z, 0f, oppositeDecelerationRate * Time.fixedDeltaTime);
         }
+
+        carRb.velocity = transform.TransformDirection(localVel);
     }
-
-
-
-    // -----------------------------------------------------------------
 
     void ApplySteering()
     {
