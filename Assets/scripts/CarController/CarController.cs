@@ -1,20 +1,13 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
 
+[RequireComponent(typeof(Rigidbody))]
 public class CarController : MonoBehaviour
 {
-    public enum ControlMode
-    {
-        Keyboard,
-        Buttons
-    };
-
-    public enum Axel
-    {
-        Front,
-        Rear
-    }
+    public enum ControlMode { Keyboard, Buttons }
+    public enum Axel { Front, Rear }
+    public enum CarState { Forward, Reverse, Neutral }
 
     [Serializable]
     public struct Wheel
@@ -26,29 +19,51 @@ public class CarController : MonoBehaviour
         public Axel axel;
     }
 
-    public ControlMode control;
+    [Header("Controls")]
+    public ControlMode control = ControlMode.Keyboard;
 
-    public float maxAcceleration = 30.0f;
-    public float brakeAcceleration = 50.0f;
-
-    public float turnSensitivity = 1.0f;
-    public float maxSteerAngle = 30.0f;
-
+    [Header("Car Settings")]
+    public float maxSpeed = 70f;
+    public float acceleration = 3500f;
+    public float brakePower = 4000f;
+    public float maxSteerAngle = 35f;
+    public float steeringSpeed = 6f;
+    [Header("Deceleration")]
+    public float passiveDecelerationRate = 5f; // m/s² when no input
+    public float oppositeDecelerationRate = 12f; // m/s² when pressing opposite
     public Vector3 _centerOfMass;
 
     public List<Wheel> wheels;
 
-    float moveInput;
-    float steerInput;
+    [Header("Handling & Drift")]
+    [Range(0f, 1f)] public float driftFactor = 0.90f;
+    [Range(0f, 1f)] public float angularDragFactor = 0.25f;
+    public float speedSteerReduction = 0.025f;
+    public float driftTriggerTime = 0.5f;
+    public float counterSteerFactor = 0.6f;
+    public float slipAngleThreshold = 10f;
 
+    [Header("Recovery & Reverse Fix")]
+    public float reverseBoostTorque = 5000f;
+    public float reverseUnstickImpulse = 4f;
+    public float minSpeedForBoost = 1.5f;
+
+    private float moveInput;
+    private float steerInput;
     private Rigidbody carRb;
-
     private CarLights carLights;
+
+    private float turnTimer = 0f;
+    private bool isDrifting = false;
+    private CarState currentState = CarState.Neutral;
 
     void Start()
     {
         carRb = GetComponent<Rigidbody>();
         carRb.centerOfMass = _centerOfMass;
+        carRb.mass = 1200f;
+        carRb.drag = 0.03f;
+        carRb.angularDrag = 0.5f;
 
         carLights = GetComponent<CarLights>();
     }
@@ -58,23 +73,26 @@ public class CarController : MonoBehaviour
         GetInputs();
         AnimateWheels();
         WheelEffects();
+
+        if (Input.GetKeyDown(KeyCode.L) && carLights != null)
+        {
+            carLights.isFrontLightOn = !carLights.isFrontLightOn;
+            carLights.OperateFrontLights();
+
+            carLights.isBackLightOn = carLights.isFrontLightOn;
+            carLights.OperateBackLights();
+        }
     }
 
-    void LateUpdate()
+    void FixedUpdate()
     {
-        Move();
-        Steer();
-        Brake();
-    }
+        ApplyDrive();
+        ApplySteering();
+        ApplyBrakes();
+        ApplyDeceleration();
+        SimulateInertia();
 
-    public void MoveInput(float input)
-    {
-        moveInput = input;
-    }
-
-    public void SteerInput(float input)
-    {
-        steerInput = input;
+        Debug.Log("Speed: " + carRb.velocity.magnitude);
     }
 
     void GetInputs()
@@ -86,46 +104,131 @@ public class CarController : MonoBehaviour
         }
     }
 
-    void Move()
+    void ApplyDrive()
     {
+        float forwardSpeed = Vector3.Dot(carRb.velocity, transform.forward);
+
+        // Determine current driving state
+        if (moveInput > 0.1f)
+            currentState = CarState.Forward;
+        else if (moveInput < -0.1f)
+            currentState = CarState.Reverse;
+
         foreach (var wheel in wheels)
         {
-            wheel.wheelCollider.motorTorque = moveInput * 600 * maxAcceleration * Time.deltaTime;
+            if (wheel.axel != Axel.Rear) continue;
+
+            wheel.wheelCollider.brakeTorque = 0f;
+            float appliedTorque = moveInput * acceleration;
+
+            // Reverse boost when stuck
+            if (currentState == CarState.Reverse && Mathf.Abs(forwardSpeed) < minSpeedForBoost && moveInput < -0.1f)
+                appliedTorque -= reverseBoostTorque;
+
+            // Apply torque normally
+            wheel.wheelCollider.motorTorque = appliedTorque;
+
+            // Unstick impulse for reverse
+            if (currentState == CarState.Reverse && carRb.velocity.magnitude < 0.5f && moveInput < -0.1f)
+                carRb.AddForce(-transform.forward * reverseUnstickImpulse, ForceMode.VelocityChange);
         }
     }
 
-    void Steer()
+    void ApplyDeceleration()
     {
+        float forwardDot = Vector3.Dot(carRb.velocity, transform.forward);
+        Vector3 localVel = transform.InverseTransformDirection(carRb.velocity);
+
+        // Passive deceleration when no input
+        if (Mathf.Abs(moveInput) < 0.1f)
+        {
+            localVel.z = Mathf.MoveTowards(localVel.z, 0f, passiveDecelerationRate * Time.fixedDeltaTime);
+        }
+        // Faster deceleration when pressing opposite direction
+        else if ((moveInput < 0 && forwardDot > 0.1f) || (moveInput > 0 && forwardDot < -0.1f))
+        {
+            localVel.z = Mathf.MoveTowards(localVel.z, 0f, oppositeDecelerationRate * Time.fixedDeltaTime);
+        }
+
+        carRb.velocity = transform.TransformDirection(localVel);
+    }
+
+    void ApplySteering()
+    {
+        float speed = carRb.velocity.magnitude;
+
+        float lowSpeedFactor = Mathf.Lerp(1.5f, 0.5f, speed / 30f);
+        lowSpeedFactor = Mathf.Clamp(lowSpeedFactor, 0.5f, 1.5f);
+
+        float speedFactor = Mathf.Clamp01(speed * speedSteerReduction);
+        float targetSteer = steerInput * maxSteerAngle * (1 - speedFactor) * lowSpeedFactor;
+
+        if (Mathf.Abs(moveInput) < 0.1f && speed < 5f)
+            targetSteer = Mathf.Lerp(targetSteer, 0f, Time.fixedDeltaTime * steeringSpeed * 2f);
+
+        float currentSteer = 0f;
         foreach (var wheel in wheels)
         {
             if (wheel.axel == Axel.Front)
             {
-                var _steerAngle = steerInput * turnSensitivity * maxSteerAngle;
-                wheel.wheelCollider.steerAngle = Mathf.Lerp(wheel.wheelCollider.steerAngle, _steerAngle, 0.6f);
+                currentSteer = wheel.wheelCollider.steerAngle;
+                break;
             }
         }
-    }
 
-    void Brake()
-    {
-        if (Input.GetKey(KeyCode.Space) || moveInput == 0)
+        float steerDelta = Mathf.Abs(targetSteer - currentSteer);
+        float steerSpeedDynamic = steeringSpeed / (1f + steerDelta * 0.1f);
+
+        Vector3 localVelocity = transform.InverseTransformDirection(carRb.velocity);
+        float slipAngle = Mathf.Atan2(localVelocity.x, Mathf.Abs(localVelocity.z)) * Mathf.Rad2Deg;
+
+        if (Mathf.Abs(steerInput) > 0.1f && speed > 5f)
         {
-            foreach (var wheel in wheels)
-            {
-                wheel.wheelCollider.brakeTorque = 300 * brakeAcceleration * Time.deltaTime;
-            }
-
-            carLights.isBackLightOn = true;
-            carLights.OperateBackLights();
+            turnTimer += Time.fixedDeltaTime;
+            if (turnTimer > driftTriggerTime)
+                isDrifting = Mathf.Abs(slipAngle) > slipAngleThreshold;
         }
         else
         {
-            foreach (var wheel in wheels)
+            turnTimer = 0f;
+            isDrifting = false;
+        }
+
+        foreach (var wheel in wheels)
+        {
+            if (wheel.axel != Axel.Front) continue;
+
+            float finalSteer = Mathf.Lerp(
+                wheel.wheelCollider.steerAngle,
+                targetSteer,
+                Time.fixedDeltaTime * steerSpeedDynamic
+            );
+
+            if (isDrifting)
             {
-                wheel.wheelCollider.brakeTorque = 0;
+                float counterSteer = -Mathf.Sign(slipAngle) *
+                                     Mathf.Min(Mathf.Abs(slipAngle) / 30f, 1f) *
+                                     counterSteerFactor * maxSteerAngle;
+                finalSteer += counterSteer;
             }
 
-            carLights.isBackLightOn = false;
+            wheel.wheelCollider.steerAngle = finalSteer;
+        }
+    }
+
+    void ApplyBrakes()
+    {
+        bool isHandBrake = Input.GetKey(KeyCode.Space);
+
+        foreach (var wheel in wheels)
+        {
+            if (wheel.axel == Axel.Rear)
+                wheel.wheelCollider.brakeTorque = isHandBrake ? brakePower : 0f;
+        }
+
+        if (carLights != null)
+        {
+            carLights.isBackLightOn = isHandBrake || carLights.isFrontLightOn;
             carLights.OperateBackLights();
         }
     }
@@ -134,11 +237,8 @@ public class CarController : MonoBehaviour
     {
         foreach (var wheel in wheels)
         {
-            Quaternion rot;
-            Vector3 pos;
-            wheel.wheelCollider.GetWorldPose(out pos, out rot);
-            wheel.wheelModel.transform.position = pos;
-            wheel.wheelModel.transform.rotation = rot;
+            wheel.wheelCollider.GetWorldPose(out Vector3 pos, out Quaternion rot);
+            wheel.wheelModel.transform.SetPositionAndRotation(pos, rot);
         }
     }
 
@@ -146,9 +246,10 @@ public class CarController : MonoBehaviour
     {
         foreach (var wheel in wheels)
         {
-            //var dirtParticleMainSettings = wheel.smokeParticle.main;
-
-            if (Input.GetKey(KeyCode.Space) && wheel.axel == Axel.Rear && wheel.wheelCollider.isGrounded == true && carRb.velocity.magnitude >= 10.0f)
+            if (Input.GetKey(KeyCode.Space) &&
+                wheel.axel == Axel.Rear &&
+                wheel.wheelCollider.isGrounded &&
+                carRb.velocity.magnitude >= 10f)
             {
                 wheel.wheelEffectObj.GetComponentInChildren<TrailRenderer>().emitting = true;
                 wheel.smokeParticle.Emit(1);
@@ -158,5 +259,16 @@ public class CarController : MonoBehaviour
                 wheel.wheelEffectObj.GetComponentInChildren<TrailRenderer>().emitting = false;
             }
         }
+    }
+
+    void SimulateInertia()
+    {
+        Vector3 localVel = transform.InverseTransformDirection(carRb.velocity);
+
+        if (!isDrifting)
+            localVel.x *= driftFactor;
+
+        carRb.velocity = transform.TransformDirection(localVel);
+        carRb.angularVelocity *= (1 - Time.fixedDeltaTime * angularDragFactor);
     }
 }
