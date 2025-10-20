@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Cruds
   layers:
   - Default
   - TransparentFX
@@ -11,10 +12,10 @@ TagManager:
   - interatable
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
+  - Bullets
+  - Walkable
+  - Enemies
+  - Player
   - 
   - 
   - 

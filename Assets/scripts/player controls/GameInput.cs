@@ -197,6 +197,15 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Aim"",
+                    ""type"": ""Button"",
+                    ""id"": ""f45cc2ea-e30a-4524-ae2e-ea85f7bea11e"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -474,6 +483,17 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""action"": ""Reload"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ebb033be-a872-42e2-8470-e8d01faaacbd"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": ""Hold"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Aim"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -501,6 +521,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         m_Player_useItem = m_Player.FindAction("useItem", throwIfNotFound: true);
         m_Player_MouseWheel = m_Player.FindAction("MouseWheel", throwIfNotFound: true);
         m_Player_Reload = m_Player.FindAction("Reload", throwIfNotFound: true);
+        m_Player_Aim = m_Player.FindAction("Aim", throwIfNotFound: true);
     }
 
     ~@GameInput()
@@ -586,6 +607,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_useItem;
     private readonly InputAction m_Player_MouseWheel;
     private readonly InputAction m_Player_Reload;
+    private readonly InputAction m_Player_Aim;
     public struct PlayerActions
     {
         private @GameInput m_Wrapper;
@@ -609,6 +631,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         public InputAction @useItem => m_Wrapper.m_Player_useItem;
         public InputAction @MouseWheel => m_Wrapper.m_Player_MouseWheel;
         public InputAction @Reload => m_Wrapper.m_Player_Reload;
+        public InputAction @Aim => m_Wrapper.m_Player_Aim;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -675,6 +698,9 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @Reload.started += instance.OnReload;
             @Reload.performed += instance.OnReload;
             @Reload.canceled += instance.OnReload;
+            @Aim.started += instance.OnAim;
+            @Aim.performed += instance.OnAim;
+            @Aim.canceled += instance.OnAim;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -736,6 +762,9 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @Reload.started -= instance.OnReload;
             @Reload.performed -= instance.OnReload;
             @Reload.canceled -= instance.OnReload;
+            @Aim.started -= instance.OnAim;
+            @Aim.performed -= instance.OnAim;
+            @Aim.canceled -= instance.OnAim;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -774,5 +803,6 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         void OnUseItem(InputAction.CallbackContext context);
         void OnMouseWheel(InputAction.CallbackContext context);
         void OnReload(InputAction.CallbackContext context);
+        void OnAim(InputAction.CallbackContext context);
     }
 }

@@ -11,49 +11,65 @@ public class PlayerShooting : MonoBehaviour
     public GameObject bulletPrefab;
     public Camera playerCamera;
 
-    // Current weapon info
+    public Recoil recoilScript;
+
     private WeaponData currentWeapon;
+    private WeaponAttachmentSystem currentAttachmentSystem;
+    private string currentWeaponSlotID;
     private int currentAmmo;
     private bool isReloading;
     private float nextFireTime;
+    private bool isUIMode = false;
 
     private AudioSource weaponAudio;
-
     private bool isFiring;
 
-    [Header("Recoil Settings")]
-    [SerializeField] private float recoilRecoverySpeed = 6f;
-    private Vector3 currentRecoil;
-    private Vector3 targetRecoil;
+    private Recoil recoil;
 
     private void Update()
     {
+        recoil = transform.Find("cameraHolder/CameraRecoil").GetComponent<Recoil>();
+
         if (isFiring && currentWeapon != null)
         {
             if (Time.time >= nextFireTime)
             {
                 Fire();
 
-                if (currentWeapon.fireMode == FireMode.FullAuto)
-                    nextFireTime = Time.time + currentWeapon.fireRate;
-                else
+                // Use modified fire rate from attachments
+                float fireRate = currentAttachmentSystem != null
+                    ? currentAttachmentSystem.CurrentFireRate
+                    : currentWeapon.fireRate;
+                nextFireTime = Time.time + fireRate;
+
+                if (currentWeapon.fireMode != FireMode.FullAuto)
                     isFiring = false;
             }
-        }
-
-        // Smoothly recover camera from recoil
-        currentRecoil = Vector3.Lerp(currentRecoil, Vector3.zero, recoilRecoverySpeed * Time.deltaTime);
-
-        if (playerCamera != null)
-        {
-            playerCamera.transform.localRotation = Quaternion.Euler(currentRecoil);
         }
     }
 
     public void EquipWeapon(WeaponData weapon)
     {
+        EquipWeapon(weapon, null);
+    }
+
+    public void EquipWeapon(WeaponData weapon, string slotID)
+    {
+        // Save current weapon's ammo
+        if (currentWeapon != null && !string.IsNullOrEmpty(currentWeaponSlotID))
+        {
+            WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
+        }
+
         currentWeapon = weapon;
-        if (weapon == null) return;
+        currentWeaponSlotID = slotID;
+        currentAttachmentSystem = null;
+
+        if (weapon == null)
+        {
+            currentAmmo = 0;
+            return;
+        }
 
         if (firePoint != null)
         {
@@ -67,17 +83,61 @@ public class PlayerShooting : MonoBehaviour
             weaponAudio.spatialBlend = 1f;
         }
 
-        currentAmmo = weapon.magazineSize;
+        // Load ammo for this specific weapon slot
+        int maxMagazine = weapon.magazineSize;
+        if (!string.IsNullOrEmpty(slotID))
+        {
+            currentAmmo = WeaponAmmoTracker.GetAmmo(slotID, maxMagazine);
+        }
+        else
+        {
+            currentAmmo = maxMagazine;
+        }
+
+        if (recoilScript != null)
+            recoilScript.SetWeaponData(weapon);
+
+        Debug.Log($"Equipped {weapon.Name} (Slot: {slotID}) - Ammo: {currentAmmo}/{maxMagazine}");
+    }
+
+    public void SetAttachmentSystem(WeaponAttachmentSystem attachmentSystem)
+    {
+        currentAttachmentSystem = attachmentSystem;
+
+        if (recoilScript != null && attachmentSystem != null)
+        {
+            // Update recoil with attachment modifiers
+            recoilScript.SetAttachmentSystem(attachmentSystem);
+        }
+    }
+
+    public void SetUIMode(bool uiMode)
+    {
+        isUIMode = uiMode;
+        if (isUIMode)
+        {
+            StopFiring(); // Stop firing if entering UI mode
+        }
     }
 
     public void StartFiring()
     {
         if (currentWeapon == null) return;
 
-        if (currentWeapon.fireMode == FireMode.SemiAuto)
+        if (Time.time < nextFireTime) return;
+
+        if (currentWeapon.fireMode == FireMode.SemiAuto || currentWeapon.fireMode == FireMode.Shotgun)
+        {
             Fire();
+            float fireRate = currentAttachmentSystem != null
+                ? currentAttachmentSystem.CurrentFireRate
+                : currentWeapon.fireRate;
+            nextFireTime = Time.time + fireRate;
+        }
         else
+        {
             isFiring = true;
+        }
     }
 
     public void StopFiring()
@@ -98,6 +158,12 @@ public class PlayerShooting : MonoBehaviour
 
         currentAmmo--;
 
+        // Save ammo after each shot
+        if (!string.IsNullOrEmpty(currentWeaponSlotID))
+        {
+            WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
+        }
+
         // Play shooting sound
         if (weaponAudio != null)
         {
@@ -107,46 +173,84 @@ public class PlayerShooting : MonoBehaviour
                     weaponAudio.Play();
             }
             else
+            {
                 weaponAudio.PlayOneShot(currentWeapon.shootSound);
+            }
         }
 
-        // Spawn bullet
-        if (bulletPrefab && firePoint && playerCamera)
+        // Determine number of bullets to fire
+        int pellets = currentWeapon.fireMode == FireMode.Shotgun ? currentWeapon.pelletsPerShot : 1;
+
+        for (int i = 0; i < pellets; i++)
         {
-            GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-
-            float horizontalSpread = Random.Range(-currentWeapon.spread, currentWeapon.spread);
-            Vector3 shootDirection = playerCamera.transform.forward + playerCamera.transform.right * horizontalSpread;
-            shootDirection.Normalize();
-
-            bulletObj.transform.forward = shootDirection;
-
-            Bullet bullet = bulletObj.GetComponent<Bullet>();
-            if (bullet != null)
+            if (bulletPrefab && firePoint && playerCamera)
             {
-                bullet.damage = currentWeapon.damage;
-                bullet.speed = currentWeapon.bulletSpeed;
-            }
+                GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
-            Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
-            if (rb != null)
-                rb.AddForce(shootDirection * currentWeapon.bulletSpeed, ForceMode.Impulse);
+                Vector3 shootDirection = playerCamera.transform.forward;
+
+                // Use modified spread from attachments
+                float spread = currentAttachmentSystem != null
+                    ? currentAttachmentSystem.CurrentSpread
+                    : currentWeapon.spread;
+
+                if (currentWeapon.fireMode == FireMode.Shotgun)
+                {
+                    float spreadX = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
+                    float spreadY = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
+                    Quaternion spreadRot = Quaternion.Euler(spreadY, spreadX, 0);
+                    shootDirection = spreadRot * shootDirection;
+                }
+                else
+                {
+                    float horizontalSpread = Random.Range(-spread, spread);
+                    shootDirection += playerCamera.transform.right * horizontalSpread;
+                }
+
+                shootDirection.Normalize();
+                bulletObj.transform.forward = shootDirection;
+
+                // Assign WeaponData with modified damage from attachments
+                Bullet bullet = bulletObj.GetComponent<Bullet>();
+                if (bullet != null)
+                {
+                    bullet.weaponData = currentWeapon;
+
+                    // Override damage if attachments are present
+                    if (currentAttachmentSystem != null)
+                    {
+                        currentWeapon.damage = currentAttachmentSystem.CurrentDamage;
+                    }
+                }
+
+                // Apply speed from WeaponData
+                Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
+                if (rb != null)
+                    rb.AddForce(shootDirection * currentWeapon.bulletSpeed, ForceMode.Impulse);
+            }
         }
 
         if (currentWeapon.muzzleFlashPrefab)
             Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
 
-        // --- RELATIVE CAMERA RECOIL ---
-        float verticalRecoil = Random.Range(currentWeapon.recoilAmount * 0.5f, currentWeapon.recoilAmount);
-        float horizontalRecoil = Random.Range(-currentWeapon.spread, currentWeapon.spread);
-
-        targetRecoil += new Vector3(-verticalRecoil, horizontalRecoil, 0f); // only relative
-        currentRecoil += targetRecoil;
+        recoil.RecoilFire();
     }
 
     public void Reload()
     {
-        if (currentWeapon == null || isReloading || currentAmmo == currentWeapon.magazineSize) return;
+        if (currentWeapon == null || isReloading) return;
+
+        // Use modified magazine size from attachments
+        int maxMagazine = currentAttachmentSystem != null
+            ? currentAttachmentSystem.CurrentMagazineSize
+            : currentWeapon.magazineSize;
+
+        // Check if magazine is already full
+        if (currentAmmo == maxMagazine)
+        {
+            Debug.Log("Magazine is already full!");
+            return;
+        }
 
         StartCoroutine(ReloadCoroutine());
     }
@@ -154,17 +258,59 @@ public class PlayerShooting : MonoBehaviour
     private IEnumerator ReloadCoroutine()
     {
         isReloading = true;
-        Debug.Log($"Reloading {currentWeapon.Name}...");
+
+        var playerInventory = FindObjectOfType<PlayerInventoryHolder>();
+        if (playerInventory == null)
+        {
+            Debug.LogError("PlayerInventoryHolder not found!");
+            isReloading = false;
+            yield break;
+        }
+
+        int maxMagazine = currentAttachmentSystem != null
+            ? currentAttachmentSystem.CurrentMagazineSize
+            : currentWeapon.magazineSize;
+        int ammoNeeded = maxMagazine - currentAmmo;
+        int availableAmmo = playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType);
+
+        if (availableAmmo <= 0)
+        {
+            Debug.Log($"No {currentWeapon.requiredAmmoType} ammo in inventory!");
+            isReloading = false;
+            yield break;
+        }
+
+        Debug.Log($"Reloading {currentWeapon.Name}... Available ammo: {availableAmmo}");
 
         if (currentWeapon.reloadSound)
             AudioSource.PlayClipAtPoint(currentWeapon.reloadSound, firePoint.position);
 
-        yield return new WaitForSeconds(currentWeapon.reloadTime);
+        // Use modified reload time from attachments
+        float reloadTime = currentAttachmentSystem != null
+            ? currentAttachmentSystem.CurrentReloadTime
+            : currentWeapon.reloadTime;
 
-        currentAmmo = currentWeapon.magazineSize;
+        yield return new WaitForSeconds(reloadTime);
+
+        int ammoToTake = Mathf.Min(ammoNeeded, availableAmmo);
+
+        if (playerInventory.PrimaryInventorySystem.ConsumeAmmo(currentWeapon.requiredAmmoType, ammoToTake))
+        {
+            currentAmmo += ammoToTake;
+
+            if (!string.IsNullOrEmpty(currentWeaponSlotID))
+            {
+                WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
+            }
+
+            Debug.Log($"Reloaded {currentWeapon.Name}, Current Ammo: {currentAmmo}/{maxMagazine}, Remaining in inventory: {playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType)}");
+        }
+        else
+        {
+            Debug.LogError("Failed to consume ammo from inventory!");
+        }
+
         isReloading = false;
-
-        Debug.Log($"Reloaded {currentWeapon.Name}, Ammo: {currentAmmo}");
     }
 
     private IEnumerator StopWeaponAudioDelayed(float delay)
@@ -173,5 +319,20 @@ public class PlayerShooting : MonoBehaviour
 
         if (weaponAudio != null && !isFiring)
             weaponAudio.Stop();
+    }
+
+    public int GetCurrentAmmo() => currentAmmo;
+    public int GetMaxAmmo() => currentAttachmentSystem != null
+        ? currentAttachmentSystem.CurrentMagazineSize
+        : currentWeapon?.magazineSize ?? 0;
+
+    public int GetInventoryAmmo()
+    {
+        if (currentWeapon == null) return 0;
+
+        var playerInventory = FindObjectOfType<PlayerInventoryHolder>();
+        if (playerInventory == null) return 0;
+
+        return playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType);
     }
 }

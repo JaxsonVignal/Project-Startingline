@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f79f944a179857040ab849c45959f93e, type: 3}
+  m_Name: 7.62 Ammo Box
+  m_EditorClassIdentifier: 
+  ID: 4
+  Name: 
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 1
+  ammoToGive: {fileID: 11400000, guid: ed077dd9ead375c489d6604634eb9ba8, type: 2}
+  ammoAmount: 100
