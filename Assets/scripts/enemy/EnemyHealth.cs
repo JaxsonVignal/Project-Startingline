@@ -20,32 +20,26 @@ public class EnemyHealth : MonoBehaviour
     public void TakeDamage(float amount)
     {
         currentHealth -= amount;
+
         if (currentHealth <= 0)
         {
-            Die();
+            Destroy(gameObject);
             return;
         }
 
-        // Only trigger aggro the first time we take damage
-        if (!hasTriggeredAggro)
+        if (guardManager != null && !hasTriggeredAggro)
         {
             hasTriggeredAggro = true;
+            guardManager.OnDamaged();
+        }
 
-            // Call appropriate manager if it exists
-            if (guardManager != null)
-                guardManager.OnDamaged();
+        if (npcManager != null)
+        {
+            npcManager.RunAwayFromPlayer();
         }
     }
-
     private void Die()
     {
-        Debug.Log($"{gameObject.name} died!");
         Destroy(gameObject);
-    }
-
-    public void ResetHealth()
-    {
-        currentHealth = maxHealth;
-        hasTriggeredAggro = false;
     }
 }
