@@ -17,12 +17,12 @@ MonoBehaviour:
   Description: AK-47
   Icon: {fileID: 21300000, guid: 475a967b2727fd2469ec55b4725ebd08, type: 3}
   maxStackSize: 1
-  weaponId: AK-47
+  weaponId: AK47
   damage: 100
   fireRate: 0.1
   reloadTime: 2.5
   magazineSize: 30
-  bulletSpeed: 100
+  bulletSpeed: 50
   FOVChange: 40
   requiredAmmoType: 3
   pelletsPerShot: 8

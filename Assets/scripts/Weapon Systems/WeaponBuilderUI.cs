@@ -137,11 +137,11 @@ public class WeaponBuilderUI : MonoBehaviour
 
     public void FinalizeWeapon()
     {
-        if (previewInstance == null) return;
+        if (previewInstance == null || previewRuntime == null) return;
 
-        // Spawn in front of player
-        Vector3 spawnPos = Camera.main.transform.position + Camera.main.transform.forward * 2f;
-        Quaternion spawnRot = Quaternion.Euler(0f, Camera.main.transform.eulerAngles.y, 0f);
+        //Use the preview weapon’s current position and rotation
+        Vector3 spawnPos = previewRuntime.transform.position;
+        Quaternion spawnRot = previewRuntime.transform.rotation;
 
         GameObject pickupWeapon = Instantiate(selectedBase.weaponPrefab, spawnPos, spawnRot);
 
@@ -179,7 +179,7 @@ public class WeaponBuilderUI : MonoBehaviour
 
         runtime.InitFromInstance(previewInstance, selectedBase, attachmentLookup);
 
-        // NEW: Store the weapon instance data on the pickup object
+        // Store weapon instance on the pickup object
         var instanceHolder = pickupWeapon.AddComponent<WeaponInstanceHolder>();
         instanceHolder.weaponInstance = previewInstance;
 

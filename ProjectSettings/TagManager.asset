@@ -13,9 +13,9 @@ TagManager:
   - Water
   - UI
   - Bullets
-  - 
-  - 
-  - 
+  - Walkable
+  - Enemies
+  - Player
   - 
   - 
   - 

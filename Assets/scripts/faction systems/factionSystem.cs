@@ -3,6 +3,7 @@ using UnityEngine;
 
 public enum Faction
 {
+    Civs,
     Cruds,
     Tripz,
     HeavensDevils,
