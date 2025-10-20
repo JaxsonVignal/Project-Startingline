@@ -28,7 +28,7 @@ public class CarController : MonoBehaviour
     public float brakePower = 4000f;
     public float maxSteerAngle = 35f;
     public float steeringSpeed = 6f;
-    public float deceleration = 0.98f;
+    [Range(0f, 1f)] public float deceleration = 0.98f; // lower = faster slow down
     public Vector3 _centerOfMass;
 
     public List<Wheel> wheels;
@@ -42,9 +42,9 @@ public class CarController : MonoBehaviour
     public float slipAngleThreshold = 10f;
 
     [Header("Recovery & Reverse Fix")]
-    public float reverseBoostTorque = 5000f;   // Extra torque when reversing from a stop
-    public float reverseUnstickImpulse = 4f;   // Small push when stuck against a wall
-    public float minSpeedForBoost = 1.5f;      // Below this speed, boost activates
+    public float reverseBoostTorque = 5000f;
+    public float reverseUnstickImpulse = 4f;
+    public float minSpeedForBoost = 1.5f;
 
     private float moveInput;
     private float steerInput;
@@ -100,11 +100,12 @@ public class CarController : MonoBehaviour
         }
     }
 
+    // ---------------- DRIVE & DECELERATION FIXES ----------------
     void ApplyDrive()
     {
         float forwardSpeed = Vector3.Dot(carRb.velocity, transform.forward);
 
-        // --- Enhanced gear switching ---
+        // Determine driving state
         if (moveInput > 0.1f)
             currentState = CarState.Forward;
         else if (moveInput < -0.1f)
@@ -117,34 +118,59 @@ public class CarController : MonoBehaviour
             if (wheel.axel != Axel.Rear) continue;
 
             wheel.wheelCollider.brakeTorque = 0f;
-
             float appliedTorque = moveInput * acceleration;
 
-            // --- Reverse boost when stuck ---
-            if (currentState == CarState.Reverse && carRb.velocity.magnitude < minSpeedForBoost && moveInput < -0.1f)
-            {
-                appliedTorque -= reverseBoostTorque; // more torque when reversing from stop
-            }
+            // Reverse boost when stuck
+            if (currentState == CarState.Reverse && Mathf.Abs(forwardSpeed) < minSpeedForBoost && moveInput < -0.1f)
+                appliedTorque -= reverseBoostTorque;
 
-            // --- Apply braking when changing direction ---
-            if ((forwardSpeed > 1f && moveInput < -0.1f) ||
-                (forwardSpeed < -1f && moveInput > 0.1f))
+            // --- Directional logic ---
+            if ((forwardSpeed > 1f && moveInput < 0) || (forwardSpeed < -1f && moveInput > 0))
             {
+                // braking phase — reduce speed first
                 wheel.wheelCollider.motorTorque = 0f;
-                wheel.wheelCollider.brakeTorque = brakePower;
+                wheel.wheelCollider.brakeTorque = brakePower * 0.6f;
             }
             else
             {
+                // driving normally
+                wheel.wheelCollider.brakeTorque = 0f;
                 wheel.wheelCollider.motorTorque = appliedTorque;
             }
 
-            // --- Unstick impulse ---
+            // --- Smooth transition to reverse after braking ---
+            if (forwardSpeed < 0.5f && moveInput < -0.1f)
+                currentState = CarState.Reverse;
+
+            // Unstick impulse for reverse
             if (currentState == CarState.Reverse && carRb.velocity.magnitude < 0.5f && moveInput < -0.1f)
-            {
                 carRb.AddForce(-transform.forward * reverseUnstickImpulse, ForceMode.VelocityChange);
-            }
         }
     }
+
+    void ApplyDeceleration()
+    {
+        float forwardDot = Vector3.Dot(carRb.velocity, transform.forward);
+
+        if (Mathf.Abs(moveInput) < 0.1f)
+        {
+            Vector3 localVel = transform.InverseTransformDirection(carRb.velocity);
+
+            // Use deceleration variable directly
+            localVel.z = Mathf.Lerp(localVel.z, 0f, Time.fixedDeltaTime * deceleration);
+
+            carRb.velocity = transform.TransformDirection(localVel);
+        }
+        else if ((moveInput < 0 && forwardDot > 0.5f) || (moveInput > 0 && forwardDot < -0.5f))
+        {
+            // braking toward zero before switching direction
+            carRb.velocity = Vector3.Lerp(carRb.velocity, Vector3.zero, Time.fixedDeltaTime * deceleration * 1.2f);
+        }
+    }
+
+
+
+    // -----------------------------------------------------------------
 
     void ApplySteering()
     {
@@ -223,20 +249,6 @@ public class CarController : MonoBehaviour
         {
             carLights.isBackLightOn = isHandBrake || carLights.isFrontLightOn;
             carLights.OperateBackLights();
-        }
-    }
-
-    void ApplyDeceleration()
-    {
-        float forwardSpeed = Vector3.Dot(carRb.velocity, transform.forward);
-
-        if (Mathf.Abs(moveInput) < 0.1f ||
-            (forwardSpeed > 0.1f && moveInput < 0) ||
-            (forwardSpeed < -0.1f && moveInput > 0))
-        {
-            Vector3 localVel = transform.InverseTransformDirection(carRb.velocity);
-            localVel.z *= deceleration;
-            carRb.velocity = transform.TransformDirection(localVel);
         }
     }
 

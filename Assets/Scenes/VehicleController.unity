@@ -3138,9 +3138,9 @@ MonoBehaviour:
   maxSpeed: 70
   acceleration: 3500
   brakePower: 4000
-  maxSteerAngle: 30
+  maxSteerAngle: 35
   steeringSpeed: 6
-  deceleration: 0.98
+  deceleration: 100
   _centerOfMass: {x: 0, y: 0, z: 0}
   wheels:
   - wheelModel: {fileID: 5155841683623964969}
@@ -3157,20 +3157,20 @@ MonoBehaviour:
     wheelCollider: {fileID: 1497185764}
     wheelEffectObj: {fileID: 2006027963}
     smokeParticle: {fileID: 1908032434}
-    axel: 1
+    axel: 0
   - wheelModel: {fileID: 2548593744398471743}
     wheelCollider: {fileID: 934714986}
     wheelEffectObj: {fileID: 1226831962}
     smokeParticle: {fileID: 652121951}
-    axel: 1
+    axel: 0
   driftFactor: 0.9
   angularDragFactor: 0.25
   speedSteerReduction: 0.025
   driftTriggerTime: 0.5
-  counterSteerFactor: 0.7
+  counterSteerFactor: 0.6
   slipAngleThreshold: 10
   reverseBoostTorque: 5000
-  reverseUnstickImpulse: 2
+  reverseUnstickImpulse: 4
   minSpeedForBoost: 1.5
 --- !u!54 &4334947467026304227
 Rigidbody:
@@ -3182,7 +3182,7 @@ Rigidbody:
   serializedVersion: 4
   m_Mass: 350
   m_Drag: 0
-  m_AngularDrag: 0.05
+  m_AngularDrag: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
