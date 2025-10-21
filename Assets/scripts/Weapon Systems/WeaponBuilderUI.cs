@@ -18,12 +18,15 @@ public class WeaponBuilderUI : MonoBehaviour
     public List<AttachmentData> allAttachments; // Keep for lookup reference
 
     private WeaponData selectedBase;
-    private InventorySlot selectedWeaponSlot;
     private WeaponInstance previewInstance;
     private WeaponRuntime previewRuntime;
     private Dictionary<string, AttachmentData> attachmentLookup = new Dictionary<string, AttachmentData>();
     private List<WeaponData> availableWeapons = new List<WeaponData>();
     private List<AttachmentData> availableAttachments = new List<AttachmentData>();
+    private Dictionary<AttachmentData, int> attachmentCounts = new Dictionary<AttachmentData, int>();
+
+    // Track which attachments were on the weapon BEFORE we started editing
+    private List<string> originalAttachmentIds = new List<string>();
 
     void Start()
     {
@@ -36,7 +39,11 @@ public class WeaponBuilderUI : MonoBehaviour
                 attachmentLookup[att.id] = att;
 
         finalizeButton.onClick.AddListener(FinalizeWeapon);
+    }
 
+    void OnEnable()
+    {
+        // Refresh items whenever the builder UI is opened
         RefreshAvailableItems();
     }
 
@@ -47,6 +54,7 @@ public class WeaponBuilderUI : MonoBehaviour
     {
         availableWeapons.Clear();
         availableAttachments.Clear();
+        attachmentCounts.Clear();
 
         if (playerInventory == null)
         {
@@ -54,22 +62,28 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        // Get all inventory slots
-        var slots = playerInventory.PrimaryInventorySystem.GetAllInventorySlots();
+        // Get unique weapons from inventory
+        availableWeapons = playerInventory.PrimaryInventorySystem.GetAllWeapons();
 
-        foreach (var slot in slots)
+        // Get unique attachments and their counts
+        var attachmentSlots = playerInventory.PrimaryInventorySystem.InventorySlots
+            .FindAll(slot => slot.ItemData is AttachmentData);
+
+        foreach (var slot in attachmentSlots)
         {
-            if (slot.ItemData == null) continue;
+            var att = slot.ItemData as AttachmentData;
+            if (att != null)
+            {
+                if (!availableAttachments.Contains(att))
+                {
+                    availableAttachments.Add(att);
+                }
 
-            // Check if it's a weapon
-            if (slot.ItemData is WeaponData weaponData)
-            {
-                availableWeapons.Add(weaponData);
-            }
-            // Check if it's an attachment
-            else if (slot.ItemData is AttachmentData attachmentData)
-            {
-                availableAttachments.Add(attachmentData);
+                // Track how many of each attachment we have
+                if (attachmentCounts.ContainsKey(att))
+                    attachmentCounts[att] += slot.StackSize;
+                else
+                    attachmentCounts[att] = slot.StackSize;
             }
         }
 
@@ -85,14 +99,18 @@ public class WeaponBuilderUI : MonoBehaviour
         {
             weaponDropdown.AddOptions(new List<string> { "No weapons available" });
             weaponDropdown.interactable = false;
+            finalizeButton.interactable = false;
             return;
         }
 
         weaponDropdown.interactable = true;
+        finalizeButton.interactable = true; // Re-enable finalize button when weapons are available
+
         List<string> options = new List<string>();
         foreach (var w in availableWeapons)
         {
-            options.Add(w.name);
+            int count = playerInventory.PrimaryInventorySystem.GetItemCount(w);
+            options.Add($"{w.Name} ({count})");
         }
         weaponDropdown.AddOptions(options);
         weaponDropdown.onValueChanged.RemoveAllListeners();
@@ -107,31 +125,41 @@ public class WeaponBuilderUI : MonoBehaviour
         if (index < 0 || index >= availableWeapons.Count) return;
 
         selectedBase = availableWeapons[index];
-        selectedWeaponSlot = FindInventorySlotForWeapon(selectedBase);
-
         StartPreview();
-    }
-
-    InventorySlot FindInventorySlotForWeapon(WeaponData weaponData)
-    {
-        var slots = playerInventory.PrimaryInventorySystem.GetAllInventorySlots();
-        foreach (var slot in slots)
-        {
-            if (slot.ItemData == weaponData)
-                return slot;
-        }
-        return null;
     }
 
     void StartPreview()
     {
         if (previewRuntime != null) Destroy(previewRuntime.gameObject);
 
-        previewInstance = new WeaponInstance
+        // Clear the original attachments list
+        originalAttachmentIds.Clear();
+
+        // Check if this weapon has an existing instance with attachments
+        WeaponInstance existingInstance = FindExistingWeaponInstance(selectedBase);
+
+        if (existingInstance != null)
         {
-            weaponId = selectedBase.weaponId,
-            displayName = selectedBase.name
-        };
+            // Use existing instance (preserves attachments)
+            previewInstance = existingInstance;
+
+            // Store which attachments were originally on the weapon
+            foreach (var att in existingInstance.attachments)
+            {
+                originalAttachmentIds.Add(att.attachmentId);
+            }
+
+            Debug.Log($"Loaded existing weapon instance with {existingInstance.attachments.Count} attachments");
+        }
+        else
+        {
+            // Create new instance
+            previewInstance = new WeaponInstance
+            {
+                weaponId = selectedBase.weaponId,
+                displayName = selectedBase.Name
+            };
+        }
 
         GameObject go = Instantiate(selectedBase.weaponPrefab, previewContainer.transform);
         previewRuntime = go.AddComponent<WeaponRuntime>();
@@ -143,13 +171,44 @@ public class WeaponBuilderUI : MonoBehaviour
         UpdateSelectedAttachmentsUI();
     }
 
+    /// <summary>
+    /// Find if this weapon already has a WeaponInstance stored in inventory
+    /// </summary>
+    WeaponInstance FindExistingWeaponInstance(WeaponData weaponData)
+    {
+        if (playerInventory == null) return null;
+
+        var slots = playerInventory.PrimaryInventorySystem.InventorySlots;
+
+        foreach (var slot in slots)
+        {
+            if (slot.ItemData == weaponData)
+            {
+                // Check if this slot has a stored weapon instance
+                var instance = WeaponInstanceStorage.GetInstance(slot.UniqueSlotID);
+                if (instance != null)
+                {
+                    return instance;
+                }
+            }
+        }
+
+        return null;
+    }
+
     void PopulateAttachmentButtons()
     {
         foreach (Transform child in attachmentListPanel) Destroy(child.gameObject);
 
         if (availableAttachments.Count == 0)
         {
-            // Optionally add a "No attachments available" text
+            // Create a "No attachments" text object
+            GameObject textGO = new GameObject("NoAttachmentsText");
+            textGO.transform.SetParent(attachmentListPanel, false);
+            var text = textGO.AddComponent<TextMeshProUGUI>();
+            text.text = "No attachments in inventory";
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = Color.gray;
             return;
         }
 
@@ -158,15 +217,45 @@ public class WeaponBuilderUI : MonoBehaviour
             var btnGO = Instantiate(attachmentButtonPrefab, attachmentListPanel);
             var btn = btnGO.GetComponent<Button>();
             var img = btnGO.GetComponentInChildren<Image>();
-            if (img != null) img.sprite = att.icon;
+            if (img != null) img.sprite = att.Icon;
+
+            // Show attachment count
+            var texts = btnGO.GetComponentsInChildren<TextMeshProUGUI>();
+            if (texts.Length > 0)
+            {
+                int available = GetAvailableAttachmentCount(att);
+                texts[0].text = $"x{available}";
+            }
+
+            // Disable button if no more available (all used in preview)
+            int availableCount = GetAvailableAttachmentCount(att);
+            btn.interactable = availableCount > 0;
 
             btn.onClick.AddListener(() => AddAttachmentToPreview(att));
         }
     }
 
+    /// <summary>
+    /// Get how many of this attachment are available (total - used in preview)
+    /// </summary>
+    int GetAvailableAttachmentCount(AttachmentData att)
+    {
+        int total = attachmentCounts.ContainsKey(att) ? attachmentCounts[att] : 0;
+        int usedInPreview = previewInstance != null ?
+            previewInstance.attachments.FindAll(e => e.attachmentId == att.id).Count : 0;
+        return total - usedInPreview;
+    }
+
     public void AddAttachmentToPreview(AttachmentData att)
     {
         if (att == null || previewRuntime == null) return;
+
+        // Check if we have this attachment available
+        if (GetAvailableAttachmentCount(att) <= 0)
+        {
+            Debug.Log($"No {att.Name} available in inventory");
+            return;
+        }
 
         // Check if attachment type is already equipped
         bool alreadyEquipped = previewInstance.attachments.Exists(e => e.type == att.type);
@@ -177,14 +266,12 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        // Remove any existing attachment of the same type (safety check)
-        previewInstance.attachments.RemoveAll(e => e.type == att.type);
-
         var entry = new WeaponAttachmentEntry(att.id, att.type, att.localPosition, att.localEuler, att.localScale);
         previewInstance.attachments.Add(entry);
         previewRuntime.attachmentSystem.EquipAttachment(att, entry);
 
         UpdateSelectedAttachmentsUI();
+        PopulateAttachmentButtons(); // Refresh to update counts
     }
 
     public void RemoveAttachmentFromPreview(AttachmentType type)
@@ -195,6 +282,7 @@ public class WeaponBuilderUI : MonoBehaviour
         previewRuntime.attachmentSystem.UnequipType(type);
 
         UpdateSelectedAttachmentsUI();
+        PopulateAttachmentButtons(); // Refresh to update counts
     }
 
     void UpdateSelectedAttachmentsUI()
@@ -207,30 +295,89 @@ public class WeaponBuilderUI : MonoBehaviour
 
             var btnGO = Instantiate(attachmentButtonPrefab, selectedAttachmentsPanel);
             var img = btnGO.GetComponentInChildren<Image>();
-            if (img != null) img.sprite = att.icon;
+            if (img != null) img.sprite = att.Icon;
 
             var btn = btnGO.GetComponent<Button>();
+            btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => RemoveAttachmentFromPreview(entry.type));
+
+            // Optional: Change button color or add X icon to indicate it's removable
         }
     }
 
     public void FinalizeWeapon()
     {
-        if (previewInstance == null || previewRuntime == null || selectedWeaponSlot == null)
+        if (previewInstance == null || previewRuntime == null || selectedBase == null)
         {
-            Debug.LogError("Cannot finalize: missing preview or selected weapon slot");
+            Debug.LogError("Cannot finalize: missing preview or selected weapon");
             return;
         }
 
-        // Remove base weapon from inventory
-        playerInventory.PrimaryInventorySystem.RemoveFromInventory(selectedBase, 1);
+        // Find the inventory slot containing this weapon
+        InventorySlot weaponSlot = FindInventorySlotForWeapon(selectedBase);
 
-        // Remove used attachments from inventory
+        if (weaponSlot == null)
+        {
+            Debug.LogError("Cannot find weapon in inventory!");
+            return;
+        }
+
+        // Verify we still have the weapon in inventory
+        if (!playerInventory.PrimaryInventorySystem.ContainsItem(selectedBase, 1))
+        {
+            Debug.LogError("Selected weapon no longer in inventory!");
+            RefreshAvailableItems();
+            return;
+        }
+
+        // Verify we have NEW attachments that were added (don't check pre-existing ones)
         foreach (var entry in previewInstance.attachments)
         {
+            // Skip if this attachment was already on the weapon when we started editing
+            if (originalAttachmentIds.Contains(entry.attachmentId))
+                continue;
+
             if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
             {
-                playerInventory.PrimaryInventorySystem.RemoveFromInventory(att, 1);
+                if (!playerInventory.PrimaryInventorySystem.ContainsItem(att, 1))
+                {
+                    Debug.LogError($"Attachment {att.Name} no longer in inventory!");
+                    RefreshAvailableItems();
+                    return;
+                }
+            }
+        }
+
+        // Remove base weapon from inventory
+        if (!playerInventory.PrimaryInventorySystem.RemoveFromInventory(selectedBase, 1))
+        {
+            Debug.LogError("Failed to remove weapon from inventory!");
+            return;
+        }
+
+        // Remove the weapon instance from storage (we'll create a new one)
+        WeaponInstanceStorage.RemoveInstance(weaponSlot.UniqueSlotID);
+
+        // Remove only NEWLY ADDED attachments from inventory (not pre-existing ones)
+        foreach (var entry in previewInstance.attachments)
+        {
+            // Skip if this attachment was already on the weapon when we started editing
+            if (originalAttachmentIds.Contains(entry.attachmentId))
+            {
+                Debug.Log($"Keeping pre-existing attachment: {entry.attachmentId}");
+                continue;
+            }
+
+            if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
+            {
+                if (!playerInventory.PrimaryInventorySystem.RemoveFromInventory(att, 1))
+                {
+                    Debug.LogWarning($"Failed to remove attachment {att.Name} from inventory!");
+                }
+                else
+                {
+                    Debug.Log($"Removed new attachment from inventory: {att.Name}");
+                }
             }
         }
 
@@ -265,7 +412,7 @@ public class WeaponBuilderUI : MonoBehaviour
         attachSys.weaponData = selectedBase;
         runtime.attachmentSystem = attachSys;
 
-        // Apply attachments
+        // Apply ALL attachments (including pre-existing ones)
         foreach (var entry in previewInstance.attachments)
         {
             if (!attachmentLookup.TryGetValue(entry.attachmentId, out var att)) continue;
@@ -281,9 +428,31 @@ public class WeaponBuilderUI : MonoBehaviour
         // Notify inventory system
         PlayerInventoryHolder.OnPlayerInventoryChanged?.Invoke();
 
+        Debug.Log($"Finalized weapon: {selectedBase.Name} with {previewInstance.attachments.Count} attachments");
+
         // Hide builder
         if (previewContainer != null)
             previewContainer.SetActive(false);
         gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Find the inventory slot containing the selected weapon
+    /// </summary>
+    InventorySlot FindInventorySlotForWeapon(WeaponData weaponData)
+    {
+        if (playerInventory == null) return null;
+
+        var slots = playerInventory.PrimaryInventorySystem.InventorySlots;
+
+        foreach (var slot in slots)
+        {
+            if (slot.ItemData == weaponData)
+            {
+                return slot;
+            }
+        }
+
+        return null;
     }
 }
