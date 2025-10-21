@@ -1,26 +1,34 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
+/// <summary>
+/// Controls the weapon builder UI visibility and input handling
+/// </summary>
 public class WeaponBuilderController : MonoBehaviour
 {
     [Header("References")]
-    public GameObject builderCanvas;      // Assign your WeaponBuilderCanvas
-    public GameObject previewContainer;   // Optional: 3D preview parent
-    [SerializeField] private Interactor interactor;
+    [SerializeField] private GameObject builderUIPanel;
+    [SerializeField] private GameObject previewContainer;
+    [SerializeField] private WeaponBuilderUI builderUI;
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private Camera previewCamera;
 
-    private bool isOpen = false;
+    [Header("Settings")]
+    [SerializeField] private bool pauseGameWhenOpen = true;
+    [SerializeField] private KeyCode exitKey = KeyCode.Escape;
 
-    void Start()
+    private bool isBuilderOpen = false;
+
+    private void Start()
     {
-        // Ensure builder UI and preview start hidden
-        builderCanvas.SetActive(false);
-        if (previewContainer != null)
-            previewContainer.SetActive(false);
+        // Ensure builder is closed on start
+        CloseBuilder();
     }
 
-    void Update()
+    private void Update()
     {
-        // Allow Escape to close builder even during pause
-        if (isOpen && Input.GetKeyDown(KeyCode.Escape))
+        // Allow closing with Escape key
+        if (isBuilderOpen && Keyboard.current[Key.Escape].wasPressedThisFrame)
         {
             CloseBuilder();
         }
@@ -28,29 +36,88 @@ public class WeaponBuilderController : MonoBehaviour
 
     public void OpenBuilder()
     {
-        isOpen = true;
-        builderCanvas.SetActive(true);
+        if (isBuilderOpen) return;
+
+        isBuilderOpen = true;
+
+        // Show UI
+        if (builderUIPanel != null)
+            builderUIPanel.SetActive(true);
+
+        // Show preview container
         if (previewContainer != null)
             previewContainer.SetActive(true);
-        Time.timeScale = 0f;
-        Cursor.visible = true;
+
+        // Refresh available items from inventory
+        if (builderUI != null)
+            builderUI.RefreshAvailableItems();
+
+        // Enable preview camera if it exists
+        if (previewCamera != null)
+            previewCamera.enabled = true;
+
+        // Disable main camera if needed
+        if (mainCamera != null && previewCamera != null)
+            mainCamera.enabled = false;
+
+        // Pause game
+        if (pauseGameWhenOpen)
+        {
+            Time.timeScale = 0f;
+        }
+
+        // Show cursor
         Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        Debug.Log("Weapon Builder opened");
     }
 
     public void CloseBuilder()
     {
-        isOpen = false;
-        builderCanvas.SetActive(false);
+        if (!isBuilderOpen) return;
+
+        isBuilderOpen = false;
+
+        // Hide UI
+        if (builderUIPanel != null)
+            builderUIPanel.SetActive(false);
+
+        // Hide preview container
         if (previewContainer != null)
             previewContainer.SetActive(false);
-        Time.timeScale = 1f;
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
 
-        // Notify interactor that interaction ended
-        if (interactor != null)
-            interactor.EndInteraction();
+        // Disable preview camera
+        if (previewCamera != null)
+            previewCamera.enabled = false;
+
+        // Re-enable main camera
+        if (mainCamera != null)
+            mainCamera.enabled = true;
+
+        // Unpause game
+        if (pauseGameWhenOpen)
+        {
+            Time.timeScale = 1f;
+        }
+
+        // Hide cursor (adjust based on your game's needs)
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        Debug.Log("Weapon Builder closed");
     }
 
-    public bool IsOpen() => isOpen;
+    public void ToggleBuilder()
+    {
+        if (isBuilderOpen)
+            CloseBuilder();
+        else
+            OpenBuilder();
+    }
+
+    public bool IsBuilderOpen()
+    {
+        return isBuilderOpen;
+    }
 }

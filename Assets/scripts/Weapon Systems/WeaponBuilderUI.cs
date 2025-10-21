@@ -12,19 +12,21 @@ public class WeaponBuilderUI : MonoBehaviour
     public GameObject attachmentButtonPrefab;
     public Button finalizeButton;
     public GameObject previewContainer;
+    public PlayerInventoryHolder playerInventory;
 
     [Header("Asset Data")]
-    public List<WeaponData> allWeaponTemplates;
-    public List<AttachmentData> allAttachments;
+    public List<AttachmentData> allAttachments; // Keep for lookup reference
 
     private WeaponData selectedBase;
+    private InventorySlot selectedWeaponSlot;
     private WeaponInstance previewInstance;
     private WeaponRuntime previewRuntime;
     private Dictionary<string, AttachmentData> attachmentLookup = new Dictionary<string, AttachmentData>();
+    private List<WeaponData> availableWeapons = new List<WeaponData>();
+    private List<AttachmentData> availableAttachments = new List<AttachmentData>();
 
     void Start()
     {
-        // Ensure preview container is OFF by default
         if (previewContainer != null)
             previewContainer.SetActive(false);
 
@@ -33,35 +35,103 @@ public class WeaponBuilderUI : MonoBehaviour
             if (att != null && !string.IsNullOrEmpty(att.id))
                 attachmentLookup[att.id] = att;
 
-        // Populate TMP Dropdown
-        weaponDropdown.ClearOptions();
-        List<string> options = new List<string>();
-        foreach (var w in allWeaponTemplates) options.Add(w.name);
-        weaponDropdown.AddOptions(options);
-        weaponDropdown.onValueChanged.AddListener(OnWeaponSelected);
-
         finalizeButton.onClick.AddListener(FinalizeWeapon);
 
-        PopulateAttachmentButtons();
+        RefreshAvailableItems();
+    }
 
-        if (allWeaponTemplates.Count > 0)
+    /// <summary>
+    /// Scan player inventory for weapons and attachments
+    /// </summary>
+    public void RefreshAvailableItems()
+    {
+        availableWeapons.Clear();
+        availableAttachments.Clear();
+
+        if (playerInventory == null)
+        {
+            Debug.LogError("PlayerInventory not assigned!");
+            return;
+        }
+
+        // Get all inventory slots
+        var slots = playerInventory.PrimaryInventorySystem.GetAllInventorySlots();
+
+        foreach (var slot in slots)
+        {
+            if (slot.ItemData == null) continue;
+
+            // Check if it's a weapon
+            if (slot.ItemData is WeaponData weaponData)
+            {
+                availableWeapons.Add(weaponData);
+            }
+            // Check if it's an attachment
+            else if (slot.ItemData is AttachmentData attachmentData)
+            {
+                availableAttachments.Add(attachmentData);
+            }
+        }
+
+        PopulateWeaponDropdown();
+        PopulateAttachmentButtons();
+    }
+
+    void PopulateWeaponDropdown()
+    {
+        weaponDropdown.ClearOptions();
+
+        if (availableWeapons.Count == 0)
+        {
+            weaponDropdown.AddOptions(new List<string> { "No weapons available" });
+            weaponDropdown.interactable = false;
+            return;
+        }
+
+        weaponDropdown.interactable = true;
+        List<string> options = new List<string>();
+        foreach (var w in availableWeapons)
+        {
+            options.Add(w.name);
+        }
+        weaponDropdown.AddOptions(options);
+        weaponDropdown.onValueChanged.RemoveAllListeners();
+        weaponDropdown.onValueChanged.AddListener(OnWeaponSelected);
+
+        if (availableWeapons.Count > 0)
             OnWeaponSelected(0);
     }
 
     void OnWeaponSelected(int index)
     {
-        if (index < 0 || index >= allWeaponTemplates.Count) return;
-        selectedBase = allWeaponTemplates[index];
+        if (index < 0 || index >= availableWeapons.Count) return;
+
+        selectedBase = availableWeapons[index];
+        selectedWeaponSlot = FindInventorySlotForWeapon(selectedBase);
+
         StartPreview();
+    }
+
+    InventorySlot FindInventorySlotForWeapon(WeaponData weaponData)
+    {
+        var slots = playerInventory.PrimaryInventorySystem.GetAllInventorySlots();
+        foreach (var slot in slots)
+        {
+            if (slot.ItemData == weaponData)
+                return slot;
+        }
+        return null;
     }
 
     void StartPreview()
     {
-        // Destroy old preview
         if (previewRuntime != null) Destroy(previewRuntime.gameObject);
 
-        // Create new instance for runtime
-        previewInstance = new WeaponInstance { weaponId = selectedBase.weaponId, displayName = selectedBase.name };
+        previewInstance = new WeaponInstance
+        {
+            weaponId = selectedBase.weaponId,
+            displayName = selectedBase.name
+        };
 
         GameObject go = Instantiate(selectedBase.weaponPrefab, previewContainer.transform);
         previewRuntime = go.AddComponent<WeaponRuntime>();
@@ -70,8 +140,6 @@ public class WeaponBuilderUI : MonoBehaviour
         previewRuntime.attachmentSystem = attachSys;
         previewRuntime.InitFromInstance(previewInstance, selectedBase, attachmentLookup);
 
-        // DO NOT enable previewContainer here! Let WeaponBuilderController handle visibility
-
         UpdateSelectedAttachmentsUI();
     }
 
@@ -79,7 +147,13 @@ public class WeaponBuilderUI : MonoBehaviour
     {
         foreach (Transform child in attachmentListPanel) Destroy(child.gameObject);
 
-        foreach (var att in allAttachments)
+        if (availableAttachments.Count == 0)
+        {
+            // Optionally add a "No attachments available" text
+            return;
+        }
+
+        foreach (var att in availableAttachments)
         {
             var btnGO = Instantiate(attachmentButtonPrefab, attachmentListPanel);
             var btn = btnGO.GetComponent<Button>();
@@ -94,16 +168,20 @@ public class WeaponBuilderUI : MonoBehaviour
     {
         if (att == null || previewRuntime == null) return;
 
-        // Remove any existing attachment of the same type
+        // Check if attachment type is already equipped
+        bool alreadyEquipped = previewInstance.attachments.Exists(e => e.type == att.type);
+
+        if (alreadyEquipped)
+        {
+            Debug.Log($"Already have a {att.type} equipped. Remove it first.");
+            return;
+        }
+
+        // Remove any existing attachment of the same type (safety check)
         previewInstance.attachments.RemoveAll(e => e.type == att.type);
 
-        // Create a new WeaponAttachmentEntry
         var entry = new WeaponAttachmentEntry(att.id, att.type, att.localPosition, att.localEuler, att.localScale);
-
-        // Add to preview instance
         previewInstance.attachments.Add(entry);
-
-        // Equip attachment visually using both arguments
         previewRuntime.attachmentSystem.EquipAttachment(att, entry);
 
         UpdateSelectedAttachmentsUI();
@@ -112,6 +190,7 @@ public class WeaponBuilderUI : MonoBehaviour
     public void RemoveAttachmentFromPreview(AttachmentType type)
     {
         if (previewRuntime == null) return;
+
         previewInstance.attachments.RemoveAll(e => e.type == type);
         previewRuntime.attachmentSystem.UnequipType(type);
 
@@ -137,31 +216,47 @@ public class WeaponBuilderUI : MonoBehaviour
 
     public void FinalizeWeapon()
     {
-        if (previewInstance == null || previewRuntime == null) return;
+        if (previewInstance == null || previewRuntime == null || selectedWeaponSlot == null)
+        {
+            Debug.LogError("Cannot finalize: missing preview or selected weapon slot");
+            return;
+        }
 
-        //Use the preview weapon’s current position and rotation
+        // Remove base weapon from inventory
+        playerInventory.PrimaryInventorySystem.RemoveFromInventory(selectedBase, 1);
+
+        // Remove used attachments from inventory
+        foreach (var entry in previewInstance.attachments)
+        {
+            if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
+            {
+                playerInventory.PrimaryInventorySystem.RemoveFromInventory(att, 1);
+            }
+        }
+
+        // Create the finished weapon pickup
         Vector3 spawnPos = previewRuntime.transform.position;
         Quaternion spawnRot = previewRuntime.transform.rotation;
 
         GameObject pickupWeapon = Instantiate(selectedBase.weaponPrefab, spawnPos, spawnRot);
 
-        // Ensure SphereCollider exists
+        // Setup collider
         SphereCollider col = pickupWeapon.GetComponent<SphereCollider>();
         if (col == null) col = pickupWeapon.AddComponent<SphereCollider>();
         col.isTrigger = true;
         col.radius = 1.5f;
 
-        // Ensure UniqueID exists
+        // Ensure UniqueID
         if (!pickupWeapon.TryGetComponent<UniqueID>(out var id))
             pickupWeapon.AddComponent<UniqueID>();
 
-        // Add ItemPickup component
+        // Add ItemPickup
         var pickup = pickupWeapon.GetComponent<ItemPickup>();
         if (pickup == null) pickup = pickupWeapon.AddComponent<ItemPickup>();
         pickup.ItemData = selectedBase;
         pickup.pickUpRadius = col.radius;
 
-        // Ensure WeaponRuntime and AttachmentSystem exist
+        // Setup runtime and attachment system
         var runtime = pickupWeapon.GetComponent<WeaponRuntime>();
         if (runtime == null) runtime = pickupWeapon.AddComponent<WeaponRuntime>();
 
@@ -170,7 +265,7 @@ public class WeaponBuilderUI : MonoBehaviour
         attachSys.weaponData = selectedBase;
         runtime.attachmentSystem = attachSys;
 
-        // Apply attachments from previewInstance
+        // Apply attachments
         foreach (var entry in previewInstance.attachments)
         {
             if (!attachmentLookup.TryGetValue(entry.attachmentId, out var att)) continue;
@@ -179,11 +274,14 @@ public class WeaponBuilderUI : MonoBehaviour
 
         runtime.InitFromInstance(previewInstance, selectedBase, attachmentLookup);
 
-        // Store weapon instance on the pickup object
+        // Store weapon instance
         var instanceHolder = pickupWeapon.AddComponent<WeaponInstanceHolder>();
         instanceHolder.weaponInstance = previewInstance;
 
-        // Hide builder and preview
+        // Notify inventory system
+        PlayerInventoryHolder.OnPlayerInventoryChanged?.Invoke();
+
+        // Hide builder
         if (previewContainer != null)
             previewContainer.SetActive(false);
         gameObject.SetActive(false);

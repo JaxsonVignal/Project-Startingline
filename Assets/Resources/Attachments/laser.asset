@@ -12,6 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
   m_Name: laser
   m_EditorClassIdentifier: 
+  ID: 12
+  Name: 
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 0
   id: laser
   type: 7
   prefab: {fileID: 8930509118748250283, guid: 8533898e85dd3a94d82f821fcf3b0b6e, type: 3}
