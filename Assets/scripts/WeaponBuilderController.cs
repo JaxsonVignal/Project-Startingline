@@ -65,8 +65,8 @@ public class WeaponBuilderController : MonoBehaviour
             mainCamera.enabled = false;
 
         // Pause game
-        if (pauseGameWhenOpen)
-            Time.timeScale = 0f;
+       // if (pauseGameWhenOpen)
+            //Time.timeScale = 0f;
 
         // Show cursor
         Cursor.lockState = CursorLockMode.None;
@@ -101,8 +101,8 @@ public class WeaponBuilderController : MonoBehaviour
             mainUIPanel.SetActive(true);
 
         // Unpause game
-        if (pauseGameWhenOpen)
-            Time.timeScale = 1f;
+       // if (pauseGameWhenOpen)
+            //Time.timeScale = 1f;
 
         // Hide cursor (adjust based on your game's needs)
         Cursor.lockState = CursorLockMode.Locked;

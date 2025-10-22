@@ -13,6 +13,7 @@ public class WeaponBuilderUI : MonoBehaviour
     public Button finalizeButton;
     public GameObject previewContainer;
     public PlayerInventoryHolder playerInventory;
+    public AttachmentMinigameManager minigameManager;
 
     [Header("Asset Data")]
     public List<AttachmentData> allAttachments; // Keep for lookup reference
@@ -110,7 +111,7 @@ public class WeaponBuilderUI : MonoBehaviour
         foreach (var w in availableWeapons)
         {
             int count = playerInventory.PrimaryInventorySystem.GetItemCount(w);
-            options.Add($"{w.Name} ({count})");
+            options.Add($"{w.name} ({count})");
         }
         weaponDropdown.AddOptions(options);
         weaponDropdown.onValueChanged.RemoveAllListeners();
@@ -157,7 +158,7 @@ public class WeaponBuilderUI : MonoBehaviour
             previewInstance = new WeaponInstance
             {
                 weaponId = selectedBase.weaponId,
-                displayName = selectedBase.Name
+                displayName = selectedBase.name
             };
         }
 
@@ -253,7 +254,7 @@ public class WeaponBuilderUI : MonoBehaviour
         // Check if we have this attachment available
         if (GetAvailableAttachmentCount(att) <= 0)
         {
-            Debug.Log($"No {att.Name} available in inventory");
+            Debug.Log($"No {att.name} available in inventory");
             return;
         }
 
@@ -266,6 +267,94 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
+        // Check if this attachment type requires a minigame
+        if (RequiresMinigame(att))
+        {
+            StartAttachmentMinigame(att);
+        }
+        else
+        {
+            // No minigame required, add directly
+            AddAttachmentDirectly(att);
+        }
+    }
+
+    /// <summary>
+    /// Check if this attachment type requires a minigame
+    /// </summary>
+    bool RequiresMinigame(AttachmentData att)
+    {
+        switch (att.type)
+        {
+            case AttachmentType.Barrel: // Silencers
+                return true;
+            // Add more types that require minigames
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Start the minigame for this attachment
+    /// </summary>
+    void StartAttachmentMinigame(AttachmentData att)
+    {
+        if (minigameManager == null)
+        {
+            Debug.LogError("MinigameManager not assigned! Adding attachment directly.");
+            AddAttachmentDirectly(att);
+            return;
+        }
+
+        // Get the appropriate socket for this attachment type
+        Transform socket = GetSocketForAttachmentType(att.type);
+
+        if (socket == null)
+        {
+            Debug.LogError($"No socket found for {att.type}! Adding directly.");
+            AddAttachmentDirectly(att);
+            return;
+        }
+
+        // Disable finalize button while minigame is active
+        if (finalizeButton != null)
+            finalizeButton.interactable = false;
+
+        // Start the minigame
+        minigameManager.StartMinigame(att, selectedBase, socket, (completedAttachment) =>
+        {
+            // Called when minigame is completed
+            AddAttachmentDirectly(completedAttachment);
+
+            // Re-enable finalize button
+            if (finalizeButton != null)
+                finalizeButton.interactable = true;
+        });
+    }
+
+    /// <summary>
+    /// Get the socket transform for an attachment type
+    /// </summary>
+    Transform GetSocketForAttachmentType(AttachmentType type)
+    {
+        if (previewRuntime == null) return null;
+
+        // Get the AttachmentSlotMap from the preview weapon
+        AttachmentSlotMap slotMap = previewRuntime.GetComponent<AttachmentSlotMap>();
+        if (slotMap == null)
+        {
+            Debug.LogError("AttachmentSlotMap not found on preview weapon!");
+            return null;
+        }
+
+        return slotMap.GetSocket(type);
+    }
+
+    /// <summary>
+    /// Add attachment directly without minigame
+    /// </summary>
+    void AddAttachmentDirectly(AttachmentData att)
+    {
         var entry = new WeaponAttachmentEntry(att.id, att.type, att.localPosition, att.localEuler, att.localScale);
         previewInstance.attachments.Add(entry);
         previewRuntime.attachmentSystem.EquipAttachment(att, entry);
@@ -307,6 +396,13 @@ public class WeaponBuilderUI : MonoBehaviour
 
     public void FinalizeWeapon()
     {
+        // Check if a minigame is currently active
+        if (minigameManager != null && minigameManager.IsMinigameActive())
+        {
+            Debug.LogWarning("Cannot finalize while minigame is active! Complete or cancel the minigame first.");
+            return;
+        }
+
         if (previewInstance == null || previewRuntime == null || selectedBase == null)
         {
             Debug.LogError("Cannot finalize: missing preview or selected weapon");
@@ -341,7 +437,7 @@ public class WeaponBuilderUI : MonoBehaviour
             {
                 if (!playerInventory.PrimaryInventorySystem.ContainsItem(att, 1))
                 {
-                    Debug.LogError($"Attachment {att.Name} no longer in inventory!");
+                    Debug.LogError($"Attachment {att.name} no longer in inventory!");
                     RefreshAvailableItems();
                     return;
                 }
@@ -372,11 +468,11 @@ public class WeaponBuilderUI : MonoBehaviour
             {
                 if (!playerInventory.PrimaryInventorySystem.RemoveFromInventory(att, 1))
                 {
-                    Debug.LogWarning($"Failed to remove attachment {att.Name} from inventory!");
+                    Debug.LogWarning($"Failed to remove attachment {att.name} from inventory!");
                 }
                 else
                 {
-                    Debug.Log($"Removed new attachment from inventory: {att.Name}");
+                    Debug.Log($"Removed new attachment from inventory: {att.name}");
                 }
             }
         }
@@ -428,12 +524,22 @@ public class WeaponBuilderUI : MonoBehaviour
         // Notify inventory system
         PlayerInventoryHolder.OnPlayerInventoryChanged?.Invoke();
 
-        Debug.Log($"Finalized weapon: {selectedBase.Name} with {previewInstance.attachments.Count} attachments");
+        Debug.Log($"Finalized weapon: {selectedBase.name} with {previewInstance.attachments.Count} attachments");
 
-        // Hide builder
-        if (previewContainer != null)
-            previewContainer.SetActive(false);
-        gameObject.SetActive(false);
+        // Call WeaponBuilderController to close FIRST (before disabling this GameObject)
+        WeaponBuilderController controller = FindObjectOfType<WeaponBuilderController>();
+        if (controller != null)
+        {
+            controller.CloseBuilder();
+        }
+        else
+        {
+            // Fallback if no controller exists
+            if (previewContainer != null)
+                previewContainer.SetActive(false);
+
+            gameObject.SetActive(false);
+        }
     }
 
     /// <summary>
