@@ -12,6 +12,7 @@ public class WeaponBuilderController : MonoBehaviour
     [SerializeField] private WeaponBuilderUI builderUI;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private Camera previewCamera;
+    [SerializeField] private GameObject mainUIPanel; // <-- Added
 
     [Header("Settings")]
     [SerializeField] private bool pauseGameWhenOpen = true;
@@ -37,10 +38,13 @@ public class WeaponBuilderController : MonoBehaviour
     public void OpenBuilder()
     {
         if (isBuilderOpen) return;
-
         isBuilderOpen = true;
 
-        // Show UI
+        // Hide main UI
+        if (mainUIPanel != null)
+            mainUIPanel.SetActive(false);
+
+        // Show builder UI
         if (builderUIPanel != null)
             builderUIPanel.SetActive(true);
 
@@ -62,9 +66,7 @@ public class WeaponBuilderController : MonoBehaviour
 
         // Pause game
         if (pauseGameWhenOpen)
-        {
             Time.timeScale = 0f;
-        }
 
         // Show cursor
         Cursor.lockState = CursorLockMode.None;
@@ -76,10 +78,9 @@ public class WeaponBuilderController : MonoBehaviour
     public void CloseBuilder()
     {
         if (!isBuilderOpen) return;
-
         isBuilderOpen = false;
 
-        // Hide UI
+        // Hide builder UI
         if (builderUIPanel != null)
             builderUIPanel.SetActive(false);
 
@@ -95,11 +96,13 @@ public class WeaponBuilderController : MonoBehaviour
         if (mainCamera != null)
             mainCamera.enabled = true;
 
+        // Re-enable main UI
+        if (mainUIPanel != null)
+            mainUIPanel.SetActive(true);
+
         // Unpause game
         if (pauseGameWhenOpen)
-        {
             Time.timeScale = 1f;
-        }
 
         // Hide cursor (adjust based on your game's needs)
         Cursor.lockState = CursorLockMode.Locked;
