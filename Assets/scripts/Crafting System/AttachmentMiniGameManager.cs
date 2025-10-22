@@ -62,6 +62,10 @@ public class AttachmentMinigameManager : MonoBehaviour
                 minigame = attachmentObj.AddComponent<SilencerMinigame>();
                 Debug.Log("Added SilencerMinigame component");
                 break;
+            case AttachmentType.Sight:
+                minigame = attachmentObj.AddComponent<ScopeMinigame>();
+                Debug.Log("Added ScopeMinigame component");
+                break;
             // Add more cases for other attachment types
             default:
                 Debug.LogWarning($"No minigame implementation for {attachment.type}");
@@ -97,12 +101,19 @@ public class AttachmentMinigameManager : MonoBehaviour
     /// </summary>
     private bool HasMinigameImplementation(AttachmentType type)
     {
+        Debug.Log($"HasMinigameImplementation check for: {type}");
+
         switch (type)
         {
             case AttachmentType.Barrel:
+                Debug.Log("Barrel has minigame implementation");
+                return true;
+            case AttachmentType.Sight:
+                Debug.Log("Sight has minigame implementation");
                 return true;
             // Add more types as you implement them
             default:
+                Debug.Log($"{type} does NOT have minigame implementation");
                 return false;
         }
     }

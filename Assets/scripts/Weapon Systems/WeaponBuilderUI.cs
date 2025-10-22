@@ -251,6 +251,8 @@ public class WeaponBuilderUI : MonoBehaviour
     {
         if (att == null || previewRuntime == null) return;
 
+        Debug.Log($"AddAttachmentToPreview called for: {att.name} (Type: {att.type})");
+
         // Check if we have this attachment available
         if (GetAvailableAttachmentCount(att) <= 0)
         {
@@ -268,7 +270,10 @@ public class WeaponBuilderUI : MonoBehaviour
         }
 
         // Check if this attachment type requires a minigame
-        if (RequiresMinigame(att))
+        bool requiresMinigame = RequiresMinigame(att);
+        Debug.Log($"RequiresMinigame({att.type}): {requiresMinigame}");
+
+        if (requiresMinigame)
         {
             StartAttachmentMinigame(att);
         }
@@ -287,6 +292,7 @@ public class WeaponBuilderUI : MonoBehaviour
         switch (att.type)
         {
             case AttachmentType.Barrel: // Silencers
+            case AttachmentType.Sight:  // Scopes
                 return true;
             // Add more types that require minigames
             default:
@@ -299,12 +305,16 @@ public class WeaponBuilderUI : MonoBehaviour
     /// </summary>
     void StartAttachmentMinigame(AttachmentData att)
     {
+        Debug.Log($"StartAttachmentMinigame called for {att.name} (Type: {att.type})");
+
         if (minigameManager == null)
         {
             Debug.LogError("MinigameManager not assigned! Adding attachment directly.");
             AddAttachmentDirectly(att);
             return;
         }
+
+        Debug.Log("MinigameManager is assigned");
 
         // Get the appropriate socket for this attachment type
         Transform socket = GetSocketForAttachmentType(att.type);
@@ -316,20 +326,44 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        // Disable finalize button while minigame is active
+        Debug.Log($"Socket found: {socket.name}");
+
+        // Disable finalize button and attachment buttons while minigame is active
         if (finalizeButton != null)
             finalizeButton.interactable = false;
+
+        DisableAllAttachmentButtons();
+
+        Debug.Log("About to call minigameManager.StartMinigame...");
 
         // Start the minigame
         minigameManager.StartMinigame(att, selectedBase, socket, (completedAttachment) =>
         {
+            Debug.Log("Minigame completion callback triggered!");
             // Called when minigame is completed
             AddAttachmentDirectly(completedAttachment);
 
-            // Re-enable finalize button
+            // Re-enable finalize button and attachment buttons
             if (finalizeButton != null)
                 finalizeButton.interactable = true;
+
+            PopulateAttachmentButtons(); // This will re-enable available buttons
         });
+    }
+
+    /// <summary>
+    /// Disable all attachment buttons (used during minigame)
+    /// </summary>
+    void DisableAllAttachmentButtons()
+    {
+        foreach (Transform child in attachmentListPanel)
+        {
+            var button = child.GetComponent<Button>();
+            if (button != null)
+            {
+                button.interactable = false;
+            }
+        }
     }
 
     /// <summary>
