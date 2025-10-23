@@ -12,6 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
   m_Name: Red Dot test
   m_EditorClassIdentifier: 
+  ID: 10
+  Name: 
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 0
   id: Red_Dot
   type: 0
   prefab: {fileID: 8542341081227047507, guid: 61d468946f5b8fb4b9b7adda3cd1b8bd, type: 3}

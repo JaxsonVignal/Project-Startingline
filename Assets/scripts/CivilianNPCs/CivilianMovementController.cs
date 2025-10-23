@@ -71,4 +71,24 @@ public class CivilianMovementController : MonoBehaviour
         agent.ResetPath();
         currentTarget = null;
     }
+
+    public void MoveToPosition(Vector3 position)
+    {
+        if (agent == null || overrideMovement) return;
+
+        // Create a temporary GameObject to hold the position
+        GameObject tempTarget = new GameObject("TempTarget");
+        tempTarget.transform.position = position;
+
+        MoveTo(tempTarget.transform);
+
+        // Destroy temp target after reaching it
+        StartCoroutine(DestroyTempTarget(tempTarget)); // destroy after 5 seconds max
+    }
+
+    private IEnumerator DestroyTempTarget(GameObject temp)
+    {
+        yield return new WaitForSeconds(5f);
+        if (temp != null) Destroy(temp);
+    }
 }

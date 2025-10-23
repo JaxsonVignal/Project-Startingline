@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Animator), typeof(CivilianMovementController))]
 public class NPCManager : MonoBehaviour
@@ -16,6 +17,7 @@ public class NPCManager : MonoBehaviour
     public float sleepTime = 22f;
     public float breakStartTime = 12f;
     public float breakEndTime = 13f;
+    public float fleeDuration = 20f; // how long the NPC runs away
 
     [Header("Waypoints")]
     public Transform bedLocation;
@@ -102,6 +104,31 @@ public class NPCManager : MonoBehaviour
 
         currentState = NPCState.Sleeping;
         Debug.Log($"{npcName} has been reset to bed.");
+    }
+
+    public void RunAwayFromPlayer()
+    {
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player == null || movement == null) return;
+
+        Vector3 fleeDir = (transform.position - player.transform.position).normalized;
+        Vector3 fleeTarget = transform.position + fleeDir * 10f;
+
+        movement.MoveToPosition(fleeTarget);
+
+        Debug.Log($"{name} is running away from the player!");
+
+        // Start timer to resume schedule
+        StopCoroutine("ResumeSchedule");
+        StartCoroutine(ResumeSchedule());
+    }
+
+    private IEnumerator ResumeSchedule()
+    {
+        yield return new WaitForSeconds(fleeDuration);
+
+        // Let the schedule system take over
+        HandleTimeUpdate(DayNightCycleManager.Instance.currentTimeOfDay);
     }
 
 }

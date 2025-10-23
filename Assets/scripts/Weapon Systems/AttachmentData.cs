@@ -3,7 +3,7 @@ using UnityEngine;
 public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel,SideRail}
 
 [CreateAssetMenu(menuName = "Inventory System/Attachment")]
-public class AttachmentData : ScriptableObject
+public class AttachmentData : InventoryItemData
 {
     [Tooltip("Unique id; keep stable for save/load. Could use asset name.")]
     public string id;

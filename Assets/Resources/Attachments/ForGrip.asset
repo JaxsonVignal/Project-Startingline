@@ -12,6 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
   m_Name: ForGrip
   m_EditorClassIdentifier: 
+  ID: 13
+  Name: 
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 0
   id: fg
   type: 6
   prefab: {fileID: 5776842091292140231, guid: df1ea9a6925dce146b944f5e92c3dc1b, type: 3}

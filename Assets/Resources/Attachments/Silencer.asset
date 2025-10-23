@@ -12,9 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
   m_Name: Silencer
   m_EditorClassIdentifier: 
+  ID: 11
+  Name: 
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 0
   id: silence
   type: 1
-  prefab: {fileID: 919132149155446097, guid: 9cf852a76f5a42b4b8f899aefe530751, type: 3}
+  prefab: {fileID: 5217203177592647600, guid: 7fe176f727eb2ed4ca7a5ccbd555f11c, type: 3}
   icon: {fileID: 0}
   description: 
   localPosition: {x: 0, y: 0, z: 0}
