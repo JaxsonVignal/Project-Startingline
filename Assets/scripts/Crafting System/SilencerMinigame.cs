@@ -14,6 +14,10 @@ public class SilencerMinigame : AttachmentMinigameBase
     [Header("Spawn Settings")]
     [SerializeField] private Vector3 spawnOffset = new Vector3(2f, 0f, 0f); // Offset from weapon
 
+    [Header("Camera Zoom Settings")]
+    [SerializeField] private float zoomAmount = 0.7f;
+    [SerializeField] private float zoomSpeed = 2f;
+
     private Camera mainCamera;
     private Vector3 dragStartMousePos;
     private Vector3 objectStartPos;
@@ -22,6 +26,12 @@ public class SilencerMinigame : AttachmentMinigameBase
     private Vector3 lastMousePosition;
     private float totalDragDistance = 0f;
     private Quaternion startRotation;
+
+    // Camera zoom
+    private Vector3 originalCameraPosition;
+    private bool isZooming = false;
+    private bool isZoomingOut = false;
+    private Vector3 targetCameraPosition;
 
     protected override void Awake()
     {
@@ -69,8 +79,11 @@ public class SilencerMinigame : AttachmentMinigameBase
             return;
         }
 
+        // Store original camera position
+        originalCameraPosition = mainCamera.transform.position;
+
         Debug.Log($"SilencerMinigame: Using camera: {mainCamera.name}");
-        Debug.Log($"mainCamera is now: {(mainCamera != null ? mainCamera.name : "NULL")}");
+        Debug.Log($"Original camera position: {originalCameraPosition}");
 
         // Position the silencer next to the weapon
         if (targetSocket != null)
@@ -90,10 +103,21 @@ public class SilencerMinigame : AttachmentMinigameBase
 
         if (isComplete) return;
 
-        // Debug input detection
-        if (Input.GetMouseButtonDown(0))
+        // Handle camera zooming
+        if (isZooming || isZoomingOut)
         {
-            Debug.Log($"LEFT CLICK DETECTED - isSnapped: {isSnapped}, isDragging: {isDragging}");
+            mainCamera.transform.position = Vector3.Lerp(
+                mainCamera.transform.position,
+                targetCameraPosition,
+                Time.deltaTime * zoomSpeed
+            );
+
+            if (Vector3.Distance(mainCamera.transform.position, targetCameraPosition) < 0.01f)
+            {
+                mainCamera.transform.position = targetCameraPosition;
+                isZooming = false;
+                isZoomingOut = false;
+            }
         }
 
         if (!isSnapped)
@@ -108,12 +132,6 @@ public class SilencerMinigame : AttachmentMinigameBase
 
     void HandleDragging()
     {
-        // Debug to see if this method is even being called
-        if (Input.GetMouseButtonDown(0))
-        {
-            Debug.Log("HandleDragging: Left click detected!");
-        }
-
         // Start dragging
         if (Input.GetMouseButtonDown(0))
         {
@@ -125,26 +143,19 @@ public class SilencerMinigame : AttachmentMinigameBase
                 return;
             }
 
-            Debug.Log("About to do raycast...");
-
             if (mainCamera == null)
             {
                 Debug.LogError("mainCamera is NULL!");
                 return;
             }
 
-            Debug.Log($"Using camera: {mainCamera.name}");
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
             Debug.DrawRay(ray.origin, ray.direction * 100f, Color.red, 1f);
-            Debug.Log($"Ray origin: {ray.origin}, direction: {ray.direction}");
 
             RaycastHit[] hits = Physics.RaycastAll(ray, 1000f, raycastLayerMask);
-            Debug.Log($"Raycast found {hits.Length} hits");
 
             foreach (var hit in hits)
             {
-                Debug.Log($"Raycast hit: {hit.collider.gameObject.name} (Layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)})");
-
                 if (hit.collider.gameObject == gameObject || hit.collider.transform.IsChildOf(transform))
                 {
                     isDragging = true;
@@ -153,15 +164,6 @@ public class SilencerMinigame : AttachmentMinigameBase
                     Debug.Log("Started dragging silencer!");
                     break;
                 }
-            }
-
-            if (!isDragging && hits.Length > 0)
-            {
-                Debug.Log($"Clicked something, but not the silencer. Clicked: {hits[0].collider.gameObject.name}");
-            }
-            else if (!isDragging)
-            {
-                Debug.Log("Raycast hit nothing");
             }
         }
 
@@ -214,6 +216,18 @@ public class SilencerMinigame : AttachmentMinigameBase
         startRotation = transform.rotation;
         SetColor(validColor);
         lastMousePosition = Input.mousePosition;
+
+        // Start zooming camera towards silencer
+        if (mainCamera != null)
+        {
+            Vector3 directionToSilencer = (transform.position - mainCamera.transform.position).normalized;
+            float distanceToSilencer = Vector3.Distance(mainCamera.transform.position, transform.position);
+            targetCameraPosition = mainCamera.transform.position + (directionToSilencer * distanceToSilencer * zoomAmount);
+            isZooming = true;
+
+            Debug.Log($"Camera zooming from {mainCamera.transform.position} to {targetCameraPosition}");
+        }
+
         Debug.Log("Silencer snapped! Now drag DOWN while holding left click to screw it in.");
     }
 
@@ -240,8 +254,6 @@ public class SilencerMinigame : AttachmentMinigameBase
                 Color progressColor = Color.Lerp(validColor, Color.cyan, screwProgress);
                 SetColor(progressColor);
 
-                Debug.Log($"Screwing progress: {screwProgress * 100f:F0}%");
-
                 // Check if complete
                 if (screwProgress >= 1f)
                 {
@@ -261,6 +273,26 @@ public class SilencerMinigame : AttachmentMinigameBase
         transform.rotation = targetSocket.rotation;
         SetColor(Color.green);
 
+        // Zoom camera back out
+        if (mainCamera != null)
+        {
+            targetCameraPosition = originalCameraPosition;
+            isZoomingOut = true;
+            Debug.Log($"Camera zooming back to {originalCameraPosition}");
+        }
+
+        StartCoroutine(CompleteAfterZoomOut());
+    }
+
+    private System.Collections.IEnumerator CompleteAfterZoomOut()
+    {
+        // Wait for camera to finish zooming out
+        while (isZoomingOut)
+        {
+            yield return null;
+        }
+
+        // Now actually complete the minigame
         base.CompleteMinigame();
     }
 
