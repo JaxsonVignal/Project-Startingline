@@ -1,13 +1,12 @@
 using UnityEngine;
 
-public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel,SideRail}
+public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel, SideRail }
 
 [CreateAssetMenu(menuName = "Inventory System/Attachment")]
 public class AttachmentData : InventoryItemData
 {
     [Tooltip("Unique id; keep stable for save/load. Could use asset name.")]
     public string id;
-
     public AttachmentType type;
     public GameObject prefab; // visual/model to instantiate when equipped
     public Sprite icon;
@@ -33,4 +32,12 @@ public class AttachmentData : InventoryItemData
     public Vector3 scopeRotationOffset = Vector3.zero;
     [Tooltip("FOV override for this specific scope (0 = use default scopeFOV)")]
     public float scopeFOVOverride = 0f;
+
+    [Header("Scope Minigame Settings (for Sight attachments)")]
+    [Tooltip("Local position of front screw relative to scope")]
+    public Vector3 frontScrewLocalPos = new Vector3(-0.05f, 0.05f, -0.05f);
+    [Tooltip("Local position of back screw relative to scope")]
+    public Vector3 backScrewLocalPos = new Vector3(0.05f, 0.05f, -0.05f);
+    [Tooltip("Visual size of screw indicators")]
+    public float screwRadius = 0.015f;
 }

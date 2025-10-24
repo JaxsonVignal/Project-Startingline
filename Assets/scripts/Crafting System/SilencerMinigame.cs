@@ -8,7 +8,8 @@ public class SilencerMinigame : AttachmentMinigameBase
     [Header("Silencer Specific Settings")]
     [SerializeField] private float snapDistance = 0.3f;
     [SerializeField] private float screwDistance = 2f; // Total distance to drag down
-    [SerializeField] private float rotationSpeed = 360f; // Degrees per unit dragged
+    [SerializeField] private float maxDragPerPull = 0.25f; // Max % of screwDistance per pull (0.25 = 25%)
+    [SerializeField] private float rotationSpeed = 180f; // Degrees per unit dragged
     [SerializeField] private LayerMask raycastLayerMask = -1; // All layers by default
 
     [Header("Spawn Settings")]
@@ -25,6 +26,7 @@ public class SilencerMinigame : AttachmentMinigameBase
     private bool isSnapped = false;
     private Vector3 lastMousePosition;
     private float totalDragDistance = 0f;
+    private float currentPullDistance = 0f; // Distance dragged in current pull
     private Quaternion startRotation;
 
     // Camera zoom
@@ -103,8 +105,8 @@ public class SilencerMinigame : AttachmentMinigameBase
 
         if (isComplete) return;
 
-        // Handle camera zooming
-        if (isZooming || isZoomingOut)
+        // Handle camera zooming - only if we have valid camera and minigame is active
+        if ((isZooming || isZoomingOut) && mainCamera != null)
         {
             mainCamera.transform.position = Vector3.Lerp(
                 mainCamera.transform.position,
@@ -233,6 +235,15 @@ public class SilencerMinigame : AttachmentMinigameBase
 
     void HandleScrewing()
     {
+        // Start a new pull
+        if (Input.GetMouseButtonDown(0))
+        {
+            lastMousePosition = Input.mousePosition;
+            currentPullDistance = 0f;
+            Debug.Log("Started new pull");
+        }
+
+        // Continue pulling
         if (Input.GetMouseButton(0))
         {
             Vector3 currentMousePos = Input.mousePosition;
@@ -243,16 +254,32 @@ public class SilencerMinigame : AttachmentMinigameBase
 
             if (downwardMovement > 0)
             {
-                totalDragDistance += downwardMovement;
-                screwProgress = Mathf.Clamp01(totalDragDistance / screwDistance);
+                // Calculate max distance allowed for this pull
+                float maxDistanceThisPull = screwDistance * maxDragPerPull;
 
-                // Rotate as we screw in - rotate around the local forward axis (Z-axis)
-                float rotationAmount = downwardMovement * rotationSpeed;
-                transform.Rotate(Vector3.right, rotationAmount, Space.Self);
+                // Check if we've reached the limit for this pull
+                if (currentPullDistance < maxDistanceThisPull)
+                {
+                    // Add to current pull distance, but cap it
+                    float distanceToAdd = Mathf.Min(downwardMovement, maxDistanceThisPull - currentPullDistance);
+                    currentPullDistance += distanceToAdd;
+                    totalDragDistance += distanceToAdd;
 
-                // Visual feedback based on progress
-                Color progressColor = Color.Lerp(validColor, Color.cyan, screwProgress);
-                SetColor(progressColor);
+                    screwProgress = Mathf.Clamp01(totalDragDistance / screwDistance);
+
+                    // Rotate as we screw in
+                    float rotationAmount = distanceToAdd * rotationSpeed;
+                    transform.Rotate(Vector3.right, rotationAmount, Space.Self);
+
+                    // Visual feedback based on progress
+                    Color progressColor = Color.Lerp(validColor, Color.cyan, screwProgress);
+                    SetColor(progressColor);
+                }
+                else
+                {
+                    // Hit the limit for this pull - can't go further until they release and pull again
+                    Debug.Log($"Pull limit reached! ({currentPullDistance}/{maxDistanceThisPull}) - Release and pull again");
+                }
 
                 // Check if complete
                 if (screwProgress >= 1f)
@@ -263,6 +290,16 @@ public class SilencerMinigame : AttachmentMinigameBase
             }
 
             lastMousePosition = currentMousePos;
+        }
+
+        // Released mouse - reset for next pull
+        if (Input.GetMouseButtonUp(0))
+        {
+            if (currentPullDistance > 0)
+            {
+                Debug.Log($"Pull complete: {currentPullDistance:F2} units. Total progress: {screwProgress * 100f:F0}%");
+            }
+            currentPullDistance = 0f;
         }
     }
 

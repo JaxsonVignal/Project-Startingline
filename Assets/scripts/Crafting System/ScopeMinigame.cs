@@ -15,12 +15,12 @@ public class ScopeMinigame : AttachmentMinigameBase
     [SerializeField] private Vector3 spawnOffset = new Vector3(0.5f, 0f, 0f);
 
     [Header("Screw Positions (relative to scope)")]
-    [SerializeField] private Vector3 frontScrewLocalPos = new Vector3(-0.03f, 0f, -0.05f);
-    [SerializeField] private Vector3 backScrewLocalPos = new Vector3(0.03f, 0f, -0.05f);
+    [SerializeField] private Vector3 frontScrewLocalPos = new Vector3(-0.05f, 0.05f, -0.05f);
+    [SerializeField] private Vector3 backScrewLocalPos = new Vector3(0.05f, 0.05f, -0.05f);
     [SerializeField] private float screwRadius = 0.015f;
 
     [Header("Camera Zoom Settings")]
-    [SerializeField] private float zoomAmount = 0.6f;
+    [SerializeField] private float zoomAmount = 0.7f; // Increased from 0.5 for more zoom
     [SerializeField] private float zoomSpeed = 2f;
 
     private Camera mainCamera;
@@ -44,6 +44,11 @@ public class ScopeMinigame : AttachmentMinigameBase
     // Visual screw objects
     private GameObject frontScrewVisual;
     private GameObject backScrewVisual;
+
+    // Store the actual screw positions used for this scope
+    private Vector3 actualFrontScrewPos;
+    private Vector3 actualBackScrewPos;
+    private float actualScrewRadius;
 
     // Camera zoom
     private Vector3 originalCameraPosition;
@@ -99,18 +104,25 @@ public class ScopeMinigame : AttachmentMinigameBase
 
     void CreateScrewVisuals()
     {
+        // Use screw positions from AttachmentData if available, otherwise use defaults
+        actualFrontScrewPos = attachmentData != null ? attachmentData.frontScrewLocalPos : frontScrewLocalPos;
+        actualBackScrewPos = attachmentData != null ? attachmentData.backScrewLocalPos : backScrewLocalPos;
+        actualScrewRadius = attachmentData != null ? attachmentData.screwRadius : screwRadius;
+
+        Debug.Log($"Creating screws at: Front={actualFrontScrewPos}, Back={actualBackScrewPos}, Radius={actualScrewRadius}");
+
         frontScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         frontScrewVisual.transform.SetParent(transform);
-        frontScrewVisual.transform.localPosition = frontScrewLocalPos;
+        frontScrewVisual.transform.localPosition = actualFrontScrewPos;
         frontScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 0);
-        frontScrewVisual.transform.localScale = new Vector3(screwRadius * 2, 0.01f, screwRadius * 2);
+        frontScrewVisual.transform.localScale = new Vector3(actualScrewRadius * 2, 0.01f, actualScrewRadius * 2);
         Destroy(frontScrewVisual.GetComponent<Collider>());
 
         backScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         backScrewVisual.transform.SetParent(transform);
-        backScrewVisual.transform.localPosition = backScrewLocalPos;
+        backScrewVisual.transform.localPosition = actualBackScrewPos;
         backScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 0);
-        backScrewVisual.transform.localScale = new Vector3(screwRadius * 2, 0.01f, screwRadius * 2);
+        backScrewVisual.transform.localScale = new Vector3(actualScrewRadius * 2, 0.01f, actualScrewRadius * 2);
         Destroy(backScrewVisual.GetComponent<Collider>());
 
         SetScrewColor(frontScrewVisual, Color.red);
@@ -135,8 +147,8 @@ public class ScopeMinigame : AttachmentMinigameBase
 
         if (isComplete) return;
 
-        // Handle camera zooming
-        if (isZooming || isZoomingOut)
+        // Handle camera zooming - only if we have valid camera and minigame is active
+        if ((isZooming || isZoomingOut) && mainCamera != null)
         {
             mainCamera.transform.position = Vector3.Lerp(
                 mainCamera.transform.position,
@@ -245,8 +257,9 @@ public class ScopeMinigame : AttachmentMinigameBase
     {
         Vector3 mousePos = Input.mousePosition;
 
-        Vector3 frontScrewWorldPos = transform.TransformPoint(frontScrewLocalPos);
-        Vector3 backScrewWorldPos = transform.TransformPoint(backScrewLocalPos);
+        // Use the actual screw positions that were set in CreateScrewVisuals
+        Vector3 frontScrewWorldPos = transform.TransformPoint(actualFrontScrewPos);
+        Vector3 backScrewWorldPos = transform.TransformPoint(actualBackScrewPos);
 
         Vector3 frontScrewScreenPos = mainCamera.WorldToScreenPoint(frontScrewWorldPos);
         Vector3 backScrewScreenPos = mainCamera.WorldToScreenPoint(backScrewWorldPos);
@@ -395,10 +408,12 @@ public class ScopeMinigame : AttachmentMinigameBase
         if (isSnapped)
         {
             Gizmos.color = Color.red;
-            Vector3 frontPos = transform.TransformPoint(frontScrewLocalPos);
-            Vector3 backPos = transform.TransformPoint(backScrewLocalPos);
-            Gizmos.DrawWireSphere(frontPos, screwRadius);
-            Gizmos.DrawWireSphere(backPos, screwRadius);
+
+            // Use the actual positions that were set
+            Vector3 frontPos = transform.TransformPoint(actualFrontScrewPos);
+            Vector3 backPos = transform.TransformPoint(actualBackScrewPos);
+            Gizmos.DrawWireSphere(frontPos, actualScrewRadius);
+            Gizmos.DrawWireSphere(backPos, actualScrewRadius);
         }
     }
 }
