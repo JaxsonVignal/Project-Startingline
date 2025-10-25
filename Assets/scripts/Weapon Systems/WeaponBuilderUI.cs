@@ -163,6 +163,15 @@ public class WeaponBuilderUI : MonoBehaviour
         }
 
         GameObject go = Instantiate(selectedBase.weaponPrefab, previewContainer.transform);
+
+        // Disable ADS script on preview weapon
+        ADS adsScript = go.GetComponent<ADS>();
+        if (adsScript != null)
+        {
+            adsScript.enabled = false;
+            Debug.Log("Disabled ADS script on weapon preview");
+        }
+
         previewRuntime = go.AddComponent<WeaponRuntime>();
         var attachSys = go.AddComponent<WeaponAttachmentSystem>();
         attachSys.weaponData = selectedBase;
