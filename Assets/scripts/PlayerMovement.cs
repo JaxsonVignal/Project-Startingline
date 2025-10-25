@@ -108,4 +108,18 @@ public class PlayerMovement : MonoBehaviour
         // NEW: Notify PlayerShooting that UI mode is inactive
         PlayerShooting.Instance.SetUIMode(false);
     }
+
+
+    public void EnableUIMode()
+    {
+        uiMode = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+    public void EnableGameplayMode()
+    {
+        uiMode = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
 }
