@@ -12,12 +12,16 @@ public class ScopeMinigame : AttachmentMinigameBase
     [SerializeField] private float circleDetectionRadius = 50f; // Screen space radius for circle detection
 
     [Header("Spawn Settings")]
-    [SerializeField] private Vector3 spawnOffset = new Vector3(1f, 0f, 0f);
+    [SerializeField] private Vector3 spawnOffset = new Vector3(0.5f, 0f, 0f);
 
     [Header("Screw Positions (relative to scope)")]
-    [SerializeField] private Vector3 frontScrewLocalPos = new Vector3(-0.05f, 0f, -0.05f); // Swapped with back
-    [SerializeField] private Vector3 backScrewLocalPos = new Vector3(0.05f, 0f, -0.05f);   // Swapped with front
-    [SerializeField] private float screwRadius = 0.015f; // How close mouse needs to be to screw (halved from 0.03)
+    [SerializeField] private Vector3 frontScrewLocalPos = new Vector3(-0.05f, 0.05f, -0.05f);
+    [SerializeField] private Vector3 backScrewLocalPos = new Vector3(0.05f, 0.05f, -0.05f);
+    [SerializeField] private float screwRadius = 0.015f;
+
+    [Header("Camera Zoom Settings")]
+    [SerializeField] private float zoomAmount = 0.7f; // Increased from 0.5 for more zoom
+    [SerializeField] private float zoomSpeed = 2f;
 
     private Camera mainCamera;
     private Vector3 dragStartMousePos;
@@ -28,19 +32,25 @@ public class ScopeMinigame : AttachmentMinigameBase
     // Screw states
     private enum ScrewState { None, FrontScrew, BackScrew, Complete }
     private ScrewState currentState = ScrewState.None;
-    private float frontScrewProgress = 0f; // 0 to 1
-    private float backScrewProgress = 0f; // 0 to 1
+    private float frontScrewProgress = 0f;
+    private float backScrewProgress = 0f;
 
     // Circular motion tracking
     private Vector2 screwCenterScreenPos;
-    private float totalRotation = 0f; // Total degrees rotated
+    private float totalRotation = 0f;
     private Vector2 lastMouseAngle;
     private bool isRotating = false;
 
-    [Header("Camera Zoom Settings")]
-    [SerializeField] private float zoomAmount = 0.5f; // How much closer to zoom (multiplier)
-    [SerializeField] private float zoomSpeed = 2f; // Speed of zoom transition
+    // Visual screw objects
+    private GameObject frontScrewVisual;
+    private GameObject backScrewVisual;
 
+    // Store the actual screw positions used for this scope
+    private Vector3 actualFrontScrewPos;
+    private Vector3 actualBackScrewPos;
+    private float actualScrewRadius;
+
+    // Camera zoom
     private Vector3 originalCameraPosition;
     private bool isZooming = false;
     private bool isZoomingOut = false;
@@ -50,16 +60,11 @@ public class ScopeMinigame : AttachmentMinigameBase
     {
         base.Awake();
 
-        // Check for collider
         Collider col = GetComponent<Collider>();
-        if (col == null)
-        {
-            col = GetComponentInChildren<Collider>();
-        }
+        if (col == null) col = GetComponentInChildren<Collider>();
 
         if (col == null)
         {
-            Debug.LogWarning("ScopeMinigame: No collider found! Adding BoxCollider...");
             BoxCollider boxCol = gameObject.AddComponent<BoxCollider>();
             Renderer rend = GetComponent<Renderer>();
             if (rend == null) rend = GetComponentInChildren<Renderer>();
@@ -83,50 +88,43 @@ public class ScopeMinigame : AttachmentMinigameBase
             return;
         }
 
-        // Store the original camera position at the START of the minigame
         originalCameraPosition = mainCamera.transform.position;
-        Debug.Log($"ScopeMinigame: Using camera: {mainCamera.name}");
-        Debug.Log($"Original camera position saved: {originalCameraPosition}");
+        Debug.Log($"ScopeMinigame started. Camera: {mainCamera.name}, Position: {originalCameraPosition}");
 
-        // Position the scope next to the weapon (same as silencer)
         if (targetSocket != null)
         {
-            // Use the socket's local right direction for offset (relative to weapon)
             Vector3 worldOffset = targetSocket.TransformDirection(spawnOffset);
             transform.position = targetSocket.position + worldOffset;
             transform.rotation = targetSocket.rotation;
-
-            Debug.Log($"Scope spawned at: {transform.position}");
-        }
-        else
-        {
-            Debug.LogError("Target socket is null!");
         }
 
         CreateScrewVisuals();
         SetColor(normalColor);
-
-        Debug.Log("Scope minigame started. Drag the scope to the sight rail.");
     }
 
     void CreateScrewVisuals()
     {
-        // Create visual indicators for screws
+        // Use screw positions from AttachmentData if available, otherwise use defaults
+        actualFrontScrewPos = attachmentData != null ? attachmentData.frontScrewLocalPos : frontScrewLocalPos;
+        actualBackScrewPos = attachmentData != null ? attachmentData.backScrewLocalPos : backScrewLocalPos;
+        actualScrewRadius = attachmentData != null ? attachmentData.screwRadius : screwRadius;
+
+        Debug.Log($"Creating screws at: Front={actualFrontScrewPos}, Back={actualBackScrewPos}, Radius={actualScrewRadius}");
+
         frontScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         frontScrewVisual.transform.SetParent(transform);
-        frontScrewVisual.transform.localPosition = frontScrewLocalPos;
-        frontScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 0); // Rotate to stick out sideways
-        frontScrewVisual.transform.localScale = new Vector3(screwRadius * 2, 0.01f, screwRadius * 2);
-        Destroy(frontScrewVisual.GetComponent<Collider>()); // Remove collider
+        frontScrewVisual.transform.localPosition = actualFrontScrewPos;
+        frontScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 0);
+        frontScrewVisual.transform.localScale = new Vector3(actualScrewRadius * 2, 0.01f, actualScrewRadius * 2);
+        Destroy(frontScrewVisual.GetComponent<Collider>());
 
         backScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         backScrewVisual.transform.SetParent(transform);
-        backScrewVisual.transform.localPosition = backScrewLocalPos;
-        backScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 0); // Rotate to stick out sideways
-        backScrewVisual.transform.localScale = new Vector3(screwRadius * 2, 0.01f, screwRadius * 2);
+        backScrewVisual.transform.localPosition = actualBackScrewPos;
+        backScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 0);
+        backScrewVisual.transform.localScale = new Vector3(actualScrewRadius * 2, 0.01f, actualScrewRadius * 2);
         Destroy(backScrewVisual.GetComponent<Collider>());
 
-        // Color them red initially
         SetScrewColor(frontScrewVisual, Color.red);
         SetScrewColor(backScrewVisual, Color.red);
     }
@@ -143,18 +141,14 @@ public class ScopeMinigame : AttachmentMinigameBase
         }
     }
 
-    // Visual screw objects
-    private GameObject frontScrewVisual;
-    private GameObject backScrewVisual;
-
     protected override void Update()
     {
         base.Update();
 
         if (isComplete) return;
 
-        // Handle camera zooming
-        if (isZooming || isZoomingOut)
+        // Handle camera zooming - only if we have valid camera and minigame is active
+        if ((isZooming || isZoomingOut) && mainCamera != null)
         {
             mainCamera.transform.position = Vector3.Lerp(
                 mainCamera.transform.position,
@@ -162,7 +156,6 @@ public class ScopeMinigame : AttachmentMinigameBase
                 Time.deltaTime * zoomSpeed
             );
 
-            // Check if zoom is complete
             if (Vector3.Distance(mainCamera.transform.position, targetCameraPosition) < 0.01f)
             {
                 mainCamera.transform.position = targetCameraPosition;
@@ -195,7 +188,6 @@ public class ScopeMinigame : AttachmentMinigameBase
                     isDragging = true;
                     dragStartMousePos = Input.mousePosition;
                     objectStartPos = transform.position;
-                    Debug.Log("Started dragging scope");
                     break;
                 }
             }
@@ -212,13 +204,9 @@ public class ScopeMinigame : AttachmentMinigameBase
             transform.position = objectStartPos + worldDelta;
 
             if (IsNearSocket(snapDistance))
-            {
                 SetColor(validColor);
-            }
             else
-            {
                 SetColor(normalColor);
-            }
         }
 
         if (Input.GetMouseButtonUp(0) && isDragging)
@@ -226,19 +214,17 @@ public class ScopeMinigame : AttachmentMinigameBase
             isDragging = false;
 
             if (IsNearSocket(snapDistance))
-            {
                 SnapToSocket();
-            }
             else
-            {
                 SetColor(normalColor);
-                Debug.Log("Not close enough to socket. Try again.");
-            }
         }
     }
 
     void SnapToSocket()
     {
+        Debug.Log("=== SNAP TO SOCKET ===");
+        Debug.Log($"mainCamera null? {mainCamera == null}");
+
         isSnapped = true;
         transform.position = targetSocket.position;
         transform.rotation = targetSocket.rotation;
@@ -246,16 +232,34 @@ public class ScopeMinigame : AttachmentMinigameBase
         lastMousePosition = Input.mousePosition;
         currentState = ScrewState.FrontScrew;
 
-        Debug.Log("Scope snapped! Now screw in the FRONT screw (red indicator) by dragging DOWN.");
+        if (mainCamera != null)
+        {
+            Debug.Log($"Current camera position: {mainCamera.transform.position}");
+            Debug.Log($"Scope position: {transform.position}");
+
+            Vector3 directionToScope = (transform.position - mainCamera.transform.position).normalized;
+            float distanceToScope = Vector3.Distance(mainCamera.transform.position, transform.position);
+
+            Debug.Log($"Direction: {directionToScope}, Distance: {distanceToScope}");
+
+            targetCameraPosition = mainCamera.transform.position + (directionToScope * distanceToScope * zoomAmount);
+
+            Debug.Log($"Target position: {targetCameraPosition}");
+            Debug.Log($"Will move: {Vector3.Distance(mainCamera.transform.position, targetCameraPosition)} units");
+
+            isZooming = true;
+        }
+
+        Debug.Log("Scope snapped! Screw in the FRONT screw by moving mouse in circles.");
     }
 
     void HandleScrewing()
     {
-        // Check which screw the mouse is over
         Vector3 mousePos = Input.mousePosition;
 
-        Vector3 frontScrewWorldPos = transform.TransformPoint(frontScrewLocalPos);
-        Vector3 backScrewWorldPos = transform.TransformPoint(backScrewLocalPos);
+        // Use the actual screw positions that were set in CreateScrewVisuals
+        Vector3 frontScrewWorldPos = transform.TransformPoint(actualFrontScrewPos);
+        Vector3 backScrewWorldPos = transform.TransformPoint(actualBackScrewPos);
 
         Vector3 frontScrewScreenPos = mainCamera.WorldToScreenPoint(frontScrewWorldPos);
         Vector3 backScrewScreenPos = mainCamera.WorldToScreenPoint(backScrewWorldPos);
@@ -265,50 +269,31 @@ public class ScopeMinigame : AttachmentMinigameBase
 
         float screenScrewRadius = circleDetectionRadius;
 
-        // Highlight screws based on mouse position
+        // Highlight screws
         if (frontScrewProgress < 1f && distToFront < screenScrewRadius)
-        {
             SetScrewColor(frontScrewVisual, Color.yellow);
-        }
         else if (frontScrewProgress < 1f)
-        {
             SetScrewColor(frontScrewVisual, Color.red);
-        }
 
         if (backScrewProgress < 1f && distToBack < screenScrewRadius)
-        {
             SetScrewColor(backScrewVisual, Color.yellow);
-        }
         else if (backScrewProgress < 1f)
-        {
             SetScrewColor(backScrewVisual, Color.red);
-        }
 
-        // Handle screwing
+        // Handle clicking
         if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log("CLICK DETECTED");
-            Debug.Log("distToFront: " + distToFront + " distToBack: " + distToBack + " radius: " + screenScrewRadius);
-            Debug.Log("frontProgress: " + frontScrewProgress + " backProgress: " + backScrewProgress);
-
-            // Determine which screw to work on
             if (frontScrewProgress < 1f && distToFront < screenScrewRadius)
             {
-                Debug.Log("STARTING FRONT SCREW");
                 currentState = ScrewState.FrontScrew;
                 screwCenterScreenPos = new Vector2(frontScrewScreenPos.x, frontScrewScreenPos.y);
                 StartCircularMotion(mousePos);
             }
             else if (backScrewProgress < 1f && distToBack < screenScrewRadius)
             {
-                Debug.Log("STARTING BACK SCREW");
                 currentState = ScrewState.BackScrew;
                 screwCenterScreenPos = new Vector2(backScrewScreenPos.x, backScrewScreenPos.y);
                 StartCircularMotion(mousePos);
-            }
-            else
-            {
-                Debug.Log("Click not on any screw");
             }
         }
 
@@ -319,10 +304,6 @@ public class ScopeMinigame : AttachmentMinigameBase
 
         if (Input.GetMouseButtonUp(0))
         {
-            if (isRotating)
-            {
-                Debug.Log($"Released. Total rotation: {totalRotation:F0} degrees");
-            }
             isRotating = false;
         }
     }
@@ -334,36 +315,24 @@ public class ScopeMinigame : AttachmentMinigameBase
 
         Vector2 mouseVec = new Vector2(mousePos.x, mousePos.y) - screwCenterScreenPos;
         lastMouseAngle = mouseVec.normalized;
-
-        Debug.Log($"StartCircularMotion - Mouse distance from screw center: {mouseVec.magnitude}");
     }
 
     void UpdateCircularMotion(Vector3 mousePos)
     {
-        Debug.Log($"UpdateCircularMotion - currentState: {currentState}");
-
         Vector2 currentMouseVec = new Vector2(mousePos.x, mousePos.y) - screwCenterScreenPos;
         Vector2 currentMouseAngle = currentMouseVec.normalized;
 
-        // Calculate angle between last position and current position
         float angleDiff = Vector2.SignedAngle(lastMouseAngle, currentMouseAngle);
 
-        // Only count clockwise rotation (negative angle in Unity's 2D space)
         if (angleDiff < 0)
         {
             totalRotation += Mathf.Abs(angleDiff);
 
-            Debug.Log($"Rotation detected: {Mathf.Abs(angleDiff):F1}°, Total: {totalRotation:F1}°, State: {currentState}");
-
             if (currentState == ScrewState.FrontScrew)
             {
-                Debug.Log("Updating FRONT screw");
                 float requiredRotation = rotationsRequired * 360f;
                 frontScrewProgress = Mathf.Clamp01(totalRotation / requiredRotation);
 
-                Debug.Log($"Front screw progress: {frontScrewProgress * 100f:F1}%");
-
-                // Rotate the screw visual
                 frontScrewVisual.transform.Rotate(Vector3.up, Mathf.Abs(angleDiff), Space.Self);
 
                 Color progressColor = Color.Lerp(Color.red, Color.green, frontScrewProgress);
@@ -371,18 +340,15 @@ public class ScopeMinigame : AttachmentMinigameBase
 
                 if (frontScrewProgress >= 1f && !isComplete)
                 {
-                    Debug.Log("Front screw complete! Now screw in the BACK screw.");
+                    Debug.Log("Front screw complete!");
                     currentState = ScrewState.None;
                     isRotating = false;
                 }
             }
             else if (currentState == ScrewState.BackScrew)
             {
-                Debug.Log("Updating BACK screw");
                 float requiredRotation = rotationsRequired * 360f;
                 backScrewProgress = Mathf.Clamp01(totalRotation / requiredRotation);
-
-                Debug.Log($"Back screw progress: {backScrewProgress * 100f:F1}%");
 
                 backScrewVisual.transform.Rotate(Vector3.up, Mathf.Abs(angleDiff), Space.Self);
 
@@ -391,15 +357,11 @@ public class ScopeMinigame : AttachmentMinigameBase
 
                 if (backScrewProgress >= 1f && !isComplete)
                 {
-                    Debug.Log("Back screw complete! Scope attached successfully!");
+                    Debug.Log("Back screw complete!");
                     currentState = ScrewState.Complete;
                     isRotating = false;
                     CompleteMinigame();
                 }
-            }
-            else
-            {
-                Debug.Log($"State is {currentState} - not updating any screw");
             }
         }
 
@@ -414,27 +376,24 @@ public class ScopeMinigame : AttachmentMinigameBase
         SetScrewColor(frontScrewVisual, Color.green);
         SetScrewColor(backScrewVisual, Color.green);
 
-        // Zoom camera back out to original position
+        // Zoom camera back
         if (mainCamera != null)
         {
             targetCameraPosition = originalCameraPosition;
             isZoomingOut = true;
-            Debug.Log($"Camera zooming back to {originalCameraPosition}");
+            Debug.Log($"Zooming back to: {originalCameraPosition}");
         }
 
-        // Delay the actual completion until camera finishes zooming out
         StartCoroutine(CompleteAfterZoomOut());
     }
 
     private System.Collections.IEnumerator CompleteAfterZoomOut()
     {
-        // Wait for camera to finish zooming out
         while (isZoomingOut)
         {
             yield return null;
         }
 
-        // Now actually complete the minigame
         base.CompleteMinigame();
     }
 
@@ -448,12 +407,13 @@ public class ScopeMinigame : AttachmentMinigameBase
 
         if (isSnapped)
         {
-            // Draw screw positions
             Gizmos.color = Color.red;
-            Vector3 frontPos = transform.TransformPoint(frontScrewLocalPos);
-            Vector3 backPos = transform.TransformPoint(backScrewLocalPos);
-            Gizmos.DrawWireSphere(frontPos, screwRadius);
-            Gizmos.DrawWireSphere(backPos, screwRadius);
+
+            // Use the actual positions that were set
+            Vector3 frontPos = transform.TransformPoint(actualFrontScrewPos);
+            Vector3 backPos = transform.TransformPoint(actualBackScrewPos);
+            Gizmos.DrawWireSphere(frontPos, actualScrewRadius);
+            Gizmos.DrawWireSphere(backPos, actualScrewRadius);
         }
     }
 }
