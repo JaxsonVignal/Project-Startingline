@@ -2,12 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+
 public class Interactor : MonoBehaviour
 {
     public Transform InteractionPoint;
     public LayerMask InteractionLayer;
     public float InteractionPointRadius = 5f;
-    public bool isInteracting {  get; private set; }
+    public bool isInteracting { get; private set; }
 
     private void Update()
     {
@@ -18,25 +19,26 @@ public class Interactor : MonoBehaviour
             for (int i = 0; i < colliders.Length; i++)
             {
                 var interactable = colliders[i].GetComponent<IInteractable>();
-
-                if(interactable != null)
+                if (interactable != null)
                 {
                     startInteraction(interactable);
+                    break; // Only interact with one object
                 }
             }
         }
 
-        if(Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             EndInteraction();
-            
         }
     }
 
     void startInteraction(IInteractable interactable)
     {
         interactable.Interact(this, out bool interactSuccessful);
-        isInteracting = true;
+
+        // Only set isInteracting to true if the interaction should be held
+        isInteracting = interactSuccessful;
     }
 
     public void EndInteraction()
