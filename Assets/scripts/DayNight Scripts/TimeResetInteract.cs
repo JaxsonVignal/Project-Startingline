@@ -22,9 +22,8 @@ public class TimeResetInteractable : MonoBehaviour, IInteractable
         if (dayNight != null)
             dayNight.SetTime(morningHour);
 
-        // Save game
-        SaveData data = new SaveData();
-        SaveLoad.Save(data);
+        // Save game using the EXISTING save data (not a new empty one)
+        SaveGameManager.SaveData(); // Use this instead!
 
         // Reset all NPCs to bed
         var allNpcs = GameObject.FindObjectsOfType<NPCManager>();
@@ -36,5 +35,4 @@ public class TimeResetInteractable : MonoBehaviour, IInteractable
         interactSuccessful = true;
         Debug.Log("Time reset, game saved, and all NPCs reset to bed.");
     }
-
 }
