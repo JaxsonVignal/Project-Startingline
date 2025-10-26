@@ -13,7 +13,7 @@ public class SilencerMinigame : AttachmentMinigameBase
     [SerializeField] private LayerMask raycastLayerMask = -1; // All layers by default
 
     [Header("Spawn Settings")]
-    [SerializeField] private Vector3 spawnOffset = new Vector3(2f, 0f, 0f); // Offset from weapon
+    [SerializeField] private Vector3 spawnOffset = new Vector3(0f, 0f, 0.5f); // Offset from weapon
 
     [Header("Camera Zoom Settings")]
     [SerializeField] private float zoomAmount = 0.7f;
@@ -269,7 +269,7 @@ public class SilencerMinigame : AttachmentMinigameBase
 
                     // Rotate as we screw in
                     float rotationAmount = distanceToAdd * rotationSpeed;
-                    transform.Rotate(Vector3.right, rotationAmount, Space.Self);
+                    transform.Rotate(Vector3.forward, rotationAmount, Space.Self);
 
                     // Visual feedback based on progress
                     Color progressColor = Color.Lerp(validColor, Color.cyan, screwProgress);
