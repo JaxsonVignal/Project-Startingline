@@ -22,7 +22,7 @@ MonoBehaviour:
   prefab: {fileID: 3260286570259430461, guid: b534e3b0c6211f74b9084743873fac0c, type: 3}
   icon: {fileID: 0}
   description: 
-  localPosition: {x: 0, y: -0.0048, z: 0.001}
+  localPosition: {x: 0, y: 0, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
   damageBonus: 0

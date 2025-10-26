@@ -51,6 +51,8 @@ public class ScopeMinigame : AttachmentMinigameBase
     private bool isZoomingOut = false;
     private Vector3 targetCameraPosition;
 
+    private GameObject weaponPartToDisable; // Retrieved from WeaponData
+
     protected override void Awake()
     {
         base.Awake();
@@ -97,12 +99,86 @@ public class ScopeMinigame : AttachmentMinigameBase
         SetColor(normalColor);
     }
 
+    /// <summary>
+    /// Set the weapon part that should be disabled when the scope is attached.
+    /// Searches for the part by name within the weapon transform hierarchy.
+    /// Call this before starting the minigame.
+    /// </summary>
+    public void SetWeaponPartToDisable(Transform weaponTransform, string partPath)
+    {
+        Debug.Log($"SetWeaponPartToDisable called with weaponTransform: {(weaponTransform != null ? weaponTransform.name : "NULL")}, partPath: '{partPath}'");
+
+        if (string.IsNullOrEmpty(partPath) || weaponTransform == null)
+        {
+            weaponPartToDisable = null;
+            Debug.LogWarning("Part path is empty or weapon transform is null");
+            return;
+        }
+
+        // Try to find the part by name or path
+        Transform partTransform = weaponTransform.Find(partPath);
+
+        if (partTransform == null)
+        {
+            Debug.Log($"Could not find '{partPath}' using Find(), searching recursively...");
+            // If not found by path, search all children by name
+            partTransform = FindChildByName(weaponTransform, partPath);
+        }
+        else
+        {
+            Debug.Log($"Found '{partPath}' using Find()");
+        }
+
+        if (partTransform != null)
+        {
+            weaponPartToDisable = partTransform.gameObject;
+            Debug.Log($"SUCCESS: Scope will disable '{weaponPartToDisable.name}' at path: {GetFullPath(partTransform)}");
+        }
+        else
+        {
+            Debug.LogError($"FAILED: Could not find weapon part to disable: '{partPath}'. Check the name and hierarchy.");
+        }
+    }
+
+    private Transform FindChildByName(Transform parent, string name)
+    {
+        Debug.Log($"Searching children of '{parent.name}' for '{name}'");
+
+        foreach (Transform child in parent)
+        {
+            Debug.Log($"  Checking child: {child.name}");
+            if (child.name == name)
+            {
+                Debug.Log($"  MATCH FOUND: {child.name}");
+                return child;
+            }
+
+            Transform result = FindChildByName(child, name);
+            if (result != null)
+                return result;
+        }
+        return null;
+    }
+
+    private string GetFullPath(Transform transform)
+    {
+        string path = transform.name;
+        while (transform.parent != null)
+        {
+            transform = transform.parent;
+            path = transform.name + "/" + path;
+        }
+        return path;
+    }
+
     void CreateScrewVisuals()
     {
+        bool usingAttachmentData = attachmentData != null;
         actualFrontScrewPos = attachmentData != null ? attachmentData.frontScrewLocalPos : frontScrewLocalPos;
         actualBackScrewPos = attachmentData != null ? attachmentData.backScrewLocalPos : backScrewLocalPos;
         actualScrewRadius = attachmentData != null ? attachmentData.screwRadius : screwRadius;
 
+        Debug.Log($"Using AttachmentData: {usingAttachmentData}");
         Debug.Log($"Creating screws at: Front={actualFrontScrewPos}, Back={actualBackScrewPos}, Radius={actualScrewRadius}");
 
         frontScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -139,10 +215,16 @@ public class ScopeMinigame : AttachmentMinigameBase
     {
         base.Update();
 
-        if (isComplete) return;
+        if (isComplete)
+        {
+            Debug.Log("Update: isComplete=true, returning early");
+            return;
+        }
 
         if ((isZooming || isZoomingOut) && mainCamera != null)
         {
+            Debug.Log($"Camera moving: isZooming={isZooming}, isZoomingOut={isZoomingOut}, targetPos={targetCameraPosition}, currentPos={mainCamera.transform.position}");
+
             mainCamera.transform.position = Vector3.Lerp(
                 mainCamera.transform.position,
                 targetCameraPosition,
@@ -152,6 +234,7 @@ public class ScopeMinigame : AttachmentMinigameBase
             if (Vector3.Distance(mainCamera.transform.position, targetCameraPosition) < 0.01f)
             {
                 mainCamera.transform.position = targetCameraPosition;
+                Debug.Log($"Camera reached target. Setting isZooming=false, isZoomingOut=false");
                 isZooming = false;
                 isZoomingOut = false;
             }
@@ -313,12 +396,19 @@ public class ScopeMinigame : AttachmentMinigameBase
                 Color progressColor = Color.Lerp(Color.red, Color.green, frontScrewProgress);
                 SetScrewColor(frontScrewVisual, progressColor);
 
-                if (frontScrewProgress >= 1f && !isComplete)
+                if (frontScrewProgress >= 1f)
                 {
-                    Debug.Log("Front screw complete! Now do back screw.");
+                    Debug.Log($"Front screw complete! Checking if back screw is also done: backScrewProgress={backScrewProgress}");
                     currentState = ScrewState.None;
                     isRotating = false;
-                    // Don't zoom out - still have back screw!
+
+                    // Check if BOTH screws are now complete
+                    if (backScrewProgress >= 1f && !isComplete)
+                    {
+                        Debug.Log("Both screws complete!");
+                        currentState = ScrewState.Complete;
+                        CompleteMinigame();
+                    }
                 }
             }
             else if (currentState == ScrewState.BackScrew)
@@ -330,12 +420,19 @@ public class ScopeMinigame : AttachmentMinigameBase
                 Color progressColor = Color.Lerp(Color.red, Color.green, backScrewProgress);
                 SetScrewColor(backScrewVisual, progressColor);
 
-                if (backScrewProgress >= 1f && !isComplete)
+                if (backScrewProgress >= 1f)
                 {
-                    Debug.Log("Back screw complete! Scope attached!");
-                    currentState = ScrewState.Complete;
+                    Debug.Log($"Back screw complete! Checking if front screw is also done: frontScrewProgress={frontScrewProgress}");
+                    currentState = ScrewState.None;
                     isRotating = false;
-                    CompleteMinigame();
+
+                    // Check if BOTH screws are now complete
+                    if (frontScrewProgress >= 1f && !isComplete)
+                    {
+                        Debug.Log("Both screws complete!");
+                        currentState = ScrewState.Complete;
+                        CompleteMinigame();
+                    }
                 }
             }
         }
@@ -345,17 +442,30 @@ public class ScopeMinigame : AttachmentMinigameBase
 
     protected override void CompleteMinigame()
     {
+        Debug.Log("=== CompleteMinigame() called ===");
         transform.position = targetSocket.position;
         transform.rotation = targetSocket.rotation;
         SetColor(Color.green);
         SetScrewColor(frontScrewVisual, Color.green);
         SetScrewColor(backScrewVisual, Color.green);
 
+        // Disable the weapon part (e.g., iron sights) when scope is attached
+        if (weaponPartToDisable != null)
+        {
+            Debug.Log($"Attempting to disable weapon part: {weaponPartToDisable.name}, currently active: {weaponPartToDisable.activeSelf}");
+            weaponPartToDisable.SetActive(false);
+            Debug.Log($"Weapon part disabled. Now active: {weaponPartToDisable.activeSelf}");
+        }
+        else
+        {
+            Debug.LogWarning("weaponPartToDisable is NULL - cannot disable weapon part!");
+        }
+
         if (mainCamera != null)
         {
             targetCameraPosition = originalCameraPosition;
             isZoomingOut = true;
-            Debug.Log($"Zooming back to: {originalCameraPosition}");
+            Debug.Log($"Starting zoom out to: {originalCameraPosition}");
         }
 
         StartCoroutine(CompleteAfterZoomOut());
@@ -370,6 +480,13 @@ public class ScopeMinigame : AttachmentMinigameBase
             isZooming = false;
             isZoomingOut = false;
             Debug.Log("Camera reset on cancel");
+        }
+
+        // Re-enable the weapon part if minigame was cancelled
+        if (weaponPartToDisable != null && !weaponPartToDisable.activeSelf)
+        {
+            weaponPartToDisable.SetActive(true);
+            Debug.Log($"Re-enabled weapon part: {weaponPartToDisable.name}");
         }
 
         base.CancelMinigame();

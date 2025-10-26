@@ -65,6 +65,15 @@ public class AttachmentMinigameManager : MonoBehaviour
             case AttachmentType.Sight:
                 minigame = attachmentObj.AddComponent<ScopeMinigame>();
                 Debug.Log("Added ScopeMinigame component");
+
+                // Configure scope-specific settings
+                ScopeMinigame scopeMinigame = minigame as ScopeMinigame;
+                if (scopeMinigame != null && weapon != null && socket != null)
+                {
+                    // Set the weapon part to disable when scope is attached
+                    // Use socket.root to get the weapon's root transform
+                    scopeMinigame.SetWeaponPartToDisable(socket.root, weapon.partToDisableWithSightPath);
+                }
                 break;
             // Add more cases for other attachment types
             default:

@@ -13,6 +13,7 @@ public enum FireMode
 public class WeaponData : InventoryItemData
 {
     public string weaponId = "";
+
     [Header("Weapon Stats")]
     public float damage = 30f;
     public float fireRate = 0.1f;
@@ -39,6 +40,10 @@ public class WeaponData : InventoryItemData
 
     [Header("Attachment Configuration")]
     public List<AttachmentType> allowedAttachmentSlots;
+
+    [Header("Attachment Model Management")]
+    [Tooltip("Name or path of child GameObject to disable when a scope/sight is attached (e.g., 'IronSights' or 'Mesh/IronSights')")]
+    public string partToDisableWithSightPath;
 
     [Header("3D Model")]
     public GameObject weaponPrefab;
