@@ -70,9 +70,9 @@ public class AttachmentMinigameManager : MonoBehaviour
                 ScopeMinigame scopeMinigame = minigame as ScopeMinigame;
                 if (scopeMinigame != null && weapon != null && socket != null)
                 {
-                    // Set the weapon part to disable when scope is attached
+                    // Set the weapon parts to disable when scope is attached
                     // Use socket.root to get the weapon's root transform
-                    scopeMinigame.SetWeaponPartToDisable(socket.root, weapon.partToDisableWithSightPath);
+                    scopeMinigame.SetWeaponPartsToDisable(socket.root, weapon.GetPartsToDisableWithSight());
                 }
                 break;
             // Add more cases for other attachment types

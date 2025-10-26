@@ -630,28 +630,38 @@ public class WeaponBuilderUI : MonoBehaviour
             }
         }
 
-        // Disable iron sights if a scope/sight is equipped
-        if (hasSightAttachment && !string.IsNullOrEmpty(weaponData.partToDisableWithSightPath))
+        // Get all parts that should be disabled/enabled
+        var partsToToggle = weaponData.GetPartsToDisableWithSight();
+
+        if (partsToToggle == null || partsToToggle.Count == 0)
+            return;
+
+        // Process each part
+        foreach (var partPath in partsToToggle)
         {
-            Transform partToDisable = weaponObject.transform.Find(weaponData.partToDisableWithSightPath);
-            if (partToDisable != null)
+            if (string.IsNullOrEmpty(partPath))
+                continue;
+
+            Transform partTransform = weaponObject.transform.Find(partPath);
+
+            if (partTransform != null)
             {
-                partToDisable.gameObject.SetActive(false);
-                Debug.Log($"[HandleIronSightVisibility] Disabled iron sight part: {weaponData.partToDisableWithSightPath}");
+                if (hasSightAttachment)
+                {
+                    // Disable the part when sight is equipped
+                    partTransform.gameObject.SetActive(false);
+                    Debug.Log($"[HandleIronSightVisibility] Disabled part: {partPath}");
+                }
+                else
+                {
+                    // Re-enable the part when no sight is equipped
+                    partTransform.gameObject.SetActive(true);
+                    Debug.Log($"[HandleIronSightVisibility] Re-enabled part: {partPath}");
+                }
             }
             else
             {
-                Debug.LogWarning($"[HandleIronSightVisibility] Could not find part to disable at path: {weaponData.partToDisableWithSightPath}");
-            }
-        }
-        else if (!hasSightAttachment && !string.IsNullOrEmpty(weaponData.partToDisableWithSightPath))
-        {
-            // Re-enable iron sights if no sight is equipped
-            Transform partToEnable = weaponObject.transform.Find(weaponData.partToDisableWithSightPath);
-            if (partToEnable != null)
-            {
-                partToEnable.gameObject.SetActive(true);
-                Debug.Log($"[HandleIronSightVisibility] Re-enabled iron sight part: {weaponData.partToDisableWithSightPath}");
+                Debug.LogWarning($"[HandleIronSightVisibility] Could not find part at path: {partPath}");
             }
         }
     }
