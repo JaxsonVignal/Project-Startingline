@@ -148,7 +148,7 @@ public class HotbarDisplay : StaticInventoryDisplay
             ads.scopeAdsPosition = currentWeapon.transform.Find("ScopeAdsPosition");
 
             // Apply attachments from WeaponInstance if available
-            var attachSys = ApplyStoredAttachments(currentWeapon, slotID);
+            var attachSys = ApplyStoredAttachments(currentWeapon, slotID, weapon);
 
             // Set the attachment system on PlayerShooting to apply modifiers
             if (attachSys != null)
@@ -159,7 +159,7 @@ public class HotbarDisplay : StaticInventoryDisplay
         }
     }
 
-    private WeaponAttachmentSystem ApplyStoredAttachments(GameObject weaponObject, string slotID)
+    private WeaponAttachmentSystem ApplyStoredAttachments(GameObject weaponObject, string slotID, WeaponData weaponData)
     {
         // Get the WeaponInstance stored for this slot
         WeaponInstance storedInstance = WeaponInstanceStorage.GetInstance(slotID);
@@ -167,20 +167,6 @@ public class HotbarDisplay : StaticInventoryDisplay
         {
             Debug.Log($"No stored attachments found for slot {slotID}");
             return null; // No stored attachments
-        }
-
-        // Ensure attachment system exists
-        var attachSys = weaponObject.GetComponent<WeaponAttachmentSystem>();
-        if (attachSys == null)
-        {
-            attachSys = weaponObject.AddComponent<WeaponAttachmentSystem>();
-        }
-
-        // Get the weapon data from the equipped weapon's slot
-        var slot = FindSlotByID(slotID);
-        if (slot != null && slot.ItemData is WeaponData weaponData)
-        {
-            attachSys.weaponData = weaponData;
         }
 
         // Build attachment lookup from Resources
@@ -192,19 +178,20 @@ public class HotbarDisplay : StaticInventoryDisplay
                 attachmentLookup[att.id] = att;
         }
 
-        // Apply each attachment
-        foreach (var entry in storedInstance.attachments)
+        // Add or get WeaponRuntime component and initialize it properly
+        var runtime = weaponObject.GetComponent<WeaponRuntime>();
+        if (runtime == null)
         {
-            if (attachmentLookup.TryGetValue(entry.attachmentId, out var attData))
-            {
-                attachSys.EquipAttachment(attData, entry);
-                Debug.Log($"Applied attachment: {attData.id} to equipped weapon");
-            }
+            runtime = weaponObject.AddComponent<WeaponRuntime>();
         }
 
-        Debug.Log($"Successfully applied {storedInstance.attachments.Count} attachments to equipped weapon");
+        // Initialize WeaponRuntime with the stored instance
+        // This will automatically handle iron sight visibility
+        runtime.InitFromInstance(storedInstance, weaponData, attachmentLookup);
 
-        return attachSys; // Return the attachment system
+        Debug.Log($"Successfully applied {storedInstance.attachments.Count} attachments to equipped weapon via WeaponRuntime");
+
+        return runtime.attachmentSystem; // Return the attachment system from runtime
     }
 
     private InventorySlot FindSlotByID(string slotID)

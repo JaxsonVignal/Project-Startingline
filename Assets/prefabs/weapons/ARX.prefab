@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8492317422971503624}
   - component: {fileID: 5034058755447959071}
   m_Layer: 0
-  m_Name: AR_Q_Sight_Front
+  m_Name: FrontSight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
