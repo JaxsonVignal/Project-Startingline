@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Red Dot test
+  m_Name: SilencerH
   m_EditorClassIdentifier: 
-  ID: 10
+  ID: 100
   Name: 
   Description: 
   Icon: {fileID: 0}
-  maxStackSize: 0
-  id: Red_Dot
-  type: 0
-  prefab: {fileID: 3260286570259430461, guid: b534e3b0c6211f74b9084743873fac0c, type: 3}
+  maxStackSize: 1
+  id: SilenceH
+  type: 1
+  prefab: {fileID: 2110149561474135794, guid: 3e1ec2ce5659eae4ba769317c17b2ccb, type: 3}
   icon: {fileID: 0}
   description: 
-  localPosition: {x: 0, y: -0.0048, z: 0.001}
+  localPosition: {x: 0, y: 0, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
   damageBonus: 0
@@ -31,9 +31,9 @@ MonoBehaviour:
   spreadMultiplier: 1
   recoilMultiplier: 1
   magazineBonus: 0
-  scopePositionOffset: {x: 0, y: -0.004, z: 0}
+  scopePositionOffset: {x: 0, y: 0, z: 0}
   scopeRotationOffset: {x: 0, y: 0, z: 0}
-  scopeFOVOverride: 30
-  frontScrewLocalPos: {x: -0.05, y: 0.01, z: -0.025}
-  backScrewLocalPos: {x: -0.05, y: 0.01, z: 0.025}
-  screwRadius: 0.005
+  scopeFOVOverride: 0
+  frontScrewLocalPos: {x: -0.05, y: 0.05, z: -0.05}
+  backScrewLocalPos: {x: 0.05, y: 0.05, z: -0.05}
+  screwRadius: 0.015

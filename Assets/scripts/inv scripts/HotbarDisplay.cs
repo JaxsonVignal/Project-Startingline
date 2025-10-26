@@ -128,7 +128,7 @@ public class HotbarDisplay : StaticInventoryDisplay
         {
             currentWeapon = Instantiate(weapon.weaponPrefab, weaponHolder);
             currentWeapon.transform.localPosition = Vector3.zero;
-            currentWeapon.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+            currentWeapon.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
 
             var follow = currentWeapon.AddComponent<WeaponFollow>();
             follow.cameraTransform = Camera.main.transform;
