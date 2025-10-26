@@ -33,7 +33,10 @@ MonoBehaviour:
   recoilZ: 0.1
   spread: 0.001
   allowedAttachmentSlots: 0000000001000000060000000300000007000000
-  partToDisableWithSightPath: BackSight
+  partsToDisableWithSight:
+  - BackSight
+  - FrontSight
+  partToDisableWithSightPath: 
   weaponPrefab: {fileID: 5109640673244884216, guid: 99ed12a4e1b1e844293b80d2f75600a3, type: 3}
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}

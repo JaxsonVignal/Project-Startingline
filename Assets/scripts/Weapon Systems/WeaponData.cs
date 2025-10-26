@@ -41,6 +41,9 @@ public class WeaponData : InventoryItemData
     [Header("Attachment Configuration")]
     public List<AttachmentType> allowedAttachmentSlots;
 
+    [Tooltip("List of specific attachments that can be equipped on this weapon. Leave empty to allow all attachments of the allowed slot types.")]
+    public List<AttachmentData> allowedAttachments = new List<AttachmentData>();
+
     [Header("Attachment Model Management")]
     [Tooltip("List of child GameObject names or paths to disable when a scope/sight is attached (e.g., 'IronSights', 'Mesh/RearSight', 'FrontSightPost')")]
     public List<string> partsToDisableWithSight = new List<string>();
@@ -84,5 +87,25 @@ public class WeaponData : InventoryItemData
         }
 
         return allParts;
+    }
+
+    /// <summary>
+    /// Check if a specific attachment is allowed on this weapon.
+    /// If allowedAttachments list is empty, all attachments of allowed slot types are permitted.
+    /// </summary>
+    public bool IsAttachmentAllowed(AttachmentData attachment)
+    {
+        if (attachment == null)
+            return false;
+
+        // If no specific attachments are configured, allow all attachments of the allowed slot types
+        if (allowedAttachments == null || allowedAttachments.Count == 0)
+        {
+            // Check if the attachment type is in the allowed slots
+            return allowedAttachmentSlots != null && allowedAttachmentSlots.Contains(attachment.type);
+        }
+
+        // If specific attachments are configured, only allow those
+        return allowedAttachments.Contains(attachment);
     }
 }
