@@ -10,30 +10,34 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db121b31bf658f040b07ed4f74155ca0, type: 3}
-  m_Name: MP-5 (base)
+  m_Name: ARX
   m_EditorClassIdentifier: 
-  ID: 3
-  Name: 
+  ID: -1
+  Name: ARX
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 1
-  weaponId: MP5
+  weaponId: ARX
   damage: 30
-  fireRate: 0.05
+  fireRate: 0.1
   reloadTime: 2.5
   magazineSize: 30
-  bulletSpeed: 200
+  bulletSpeed: 50
   FOVChange: 40
-  requiredAmmoType: 0
+  requiredAmmoType: 4
   pelletsPerShot: 8
   spreadAngle: 5
   fireMode: 1
-  recoilX: -2
-  recoilY: 0.5
-  recoilZ: 0.4
+  recoilX: -1.5
+  recoilY: 0.3
+  recoilZ: 0.03
   spread: 0.05
-  allowedAttachmentSlots: 
-  weaponPrefab: {fileID: 7363735979975592293, guid: f6109f05b233e804298c2f93232dda2b, type: 3}
+  allowedAttachmentSlots: 0000000001000000030000000600000007000000
+  partsToDisableWithSight:
+  - RearSight
+  - FrontSight
+  partToDisableWithSightPath: RearSight
+  weaponPrefab: {fileID: 2769957187085557481, guid: 4e765fdcad1a56f4599c871843469053, type: 3}
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}
   muzzleFlashPrefab: {fileID: 0}

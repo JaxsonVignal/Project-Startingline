@@ -560,6 +560,9 @@ public class WeaponBuilderUI : MonoBehaviour
 
         runtime.InitFromInstance(previewInstance, selectedBase, attachmentLookup);
 
+        // Handle iron sight visibility based on attachments
+        HandleIronSightVisibility(pickupWeapon, selectedBase, previewInstance, attachmentLookup);
+
         // Store weapon instance
         var instanceHolder = pickupWeapon.AddComponent<WeaponInstanceHolder>();
         instanceHolder.weaponInstance = previewInstance;
@@ -603,5 +606,63 @@ public class WeaponBuilderUI : MonoBehaviour
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Disables the iron sight part if a sight attachment is equipped
+    /// Call this after equipping attachments on any weapon
+    /// </summary>
+    public static void HandleIronSightVisibility(GameObject weaponObject, WeaponData weaponData, WeaponInstance weaponInstance, Dictionary<string, AttachmentData> attachmentLookup)
+    {
+        if (weaponObject == null || weaponData == null || weaponInstance == null) return;
+
+        // Check if weapon has a sight attachment equipped
+        bool hasSightAttachment = false;
+        foreach (var entry in weaponInstance.attachments)
+        {
+            if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
+            {
+                if (att.type == AttachmentType.Sight)
+                {
+                    hasSightAttachment = true;
+                    break;
+                }
+            }
+        }
+
+        // Get all parts that should be disabled/enabled
+        var partsToToggle = weaponData.GetPartsToDisableWithSight();
+
+        if (partsToToggle == null || partsToToggle.Count == 0)
+            return;
+
+        // Process each part
+        foreach (var partPath in partsToToggle)
+        {
+            if (string.IsNullOrEmpty(partPath))
+                continue;
+
+            Transform partTransform = weaponObject.transform.Find(partPath);
+
+            if (partTransform != null)
+            {
+                if (hasSightAttachment)
+                {
+                    // Disable the part when sight is equipped
+                    partTransform.gameObject.SetActive(false);
+                    Debug.Log($"[HandleIronSightVisibility] Disabled part: {partPath}");
+                }
+                else
+                {
+                    // Re-enable the part when no sight is equipped
+                    partTransform.gameObject.SetActive(true);
+                    Debug.Log($"[HandleIronSightVisibility] Re-enabled part: {partPath}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[HandleIronSightVisibility] Could not find part at path: {partPath}");
+            }
+        }
     }
 }

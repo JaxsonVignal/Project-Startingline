@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// Minigame for attaching scopes - drag to sight socket, then screw in front and back screws
@@ -51,7 +52,7 @@ public class ScopeMinigame : AttachmentMinigameBase
     private bool isZoomingOut = false;
     private Vector3 targetCameraPosition;
 
-    private GameObject weaponPartToDisable; // Retrieved from WeaponData
+    private List<GameObject> weaponPartsToDisable = new List<GameObject>(); // Retrieved from WeaponData
 
     protected override void Awake()
     {
@@ -100,44 +101,69 @@ public class ScopeMinigame : AttachmentMinigameBase
     }
 
     /// <summary>
-    /// Set the weapon part that should be disabled when the scope is attached.
-    /// Searches for the part by name within the weapon transform hierarchy.
+    /// Set multiple weapon parts that should be disabled when the scope is attached.
     /// Call this before starting the minigame.
     /// </summary>
-    public void SetWeaponPartToDisable(Transform weaponTransform, string partPath)
+    public void SetWeaponPartsToDisable(Transform weaponTransform, List<string> partPaths)
     {
-        Debug.Log($"SetWeaponPartToDisable called with weaponTransform: {(weaponTransform != null ? weaponTransform.name : "NULL")}, partPath: '{partPath}'");
+        Debug.Log($"SetWeaponPartsToDisable called with weaponTransform: {(weaponTransform != null ? weaponTransform.name : "NULL")}, partPaths count: {(partPaths != null ? partPaths.Count : 0)}");
 
-        if (string.IsNullOrEmpty(partPath) || weaponTransform == null)
+        weaponPartsToDisable.Clear();
+
+        if (partPaths == null || partPaths.Count == 0 || weaponTransform == null)
         {
-            weaponPartToDisable = null;
-            Debug.LogWarning("Part path is empty or weapon transform is null");
+            Debug.LogWarning("Part paths list is empty or weapon transform is null");
             return;
         }
 
-        // Try to find the part by name or path
-        Transform partTransform = weaponTransform.Find(partPath);
+        foreach (var partPath in partPaths)
+        {
+            if (string.IsNullOrEmpty(partPath))
+                continue;
 
-        if (partTransform == null)
-        {
-            Debug.Log($"Could not find '{partPath}' using Find(), searching recursively...");
-            // If not found by path, search all children by name
-            partTransform = FindChildByName(weaponTransform, partPath);
-        }
-        else
-        {
-            Debug.Log($"Found '{partPath}' using Find()");
+            // Try to find the part by path
+            Transform partTransform = weaponTransform.Find(partPath);
+
+            if (partTransform == null)
+            {
+                Debug.Log($"Could not find '{partPath}' using Find(), searching recursively...");
+                // If not found by path, search all children by name
+                partTransform = FindChildByName(weaponTransform, partPath);
+            }
+            else
+            {
+                Debug.Log($"Found '{partPath}' using Find()");
+            }
+
+            if (partTransform != null)
+            {
+                weaponPartsToDisable.Add(partTransform.gameObject);
+                Debug.Log($"SUCCESS: Scope will disable '{partTransform.gameObject.name}' at path: {GetFullPath(partTransform)}");
+            }
+            else
+            {
+                Debug.LogError($"FAILED: Could not find weapon part to disable: '{partPath}'. Check the name and hierarchy.");
+            }
         }
 
-        if (partTransform != null)
+        Debug.Log($"Total weapon parts to disable: {weaponPartsToDisable.Count}");
+    }
+
+    /// <summary>
+    /// LEGACY: Set a single weapon part to disable (for backwards compatibility)
+    /// </summary>
+    public void SetWeaponPartToDisable(Transform weaponTransform, string partPath)
+    {
+        Debug.Log($"SetWeaponPartToDisable (legacy) called with weaponTransform: {(weaponTransform != null ? weaponTransform.name : "NULL")}, partPath: '{partPath}'");
+
+        if (string.IsNullOrEmpty(partPath))
         {
-            weaponPartToDisable = partTransform.gameObject;
-            Debug.Log($"SUCCESS: Scope will disable '{weaponPartToDisable.name}' at path: {GetFullPath(partTransform)}");
+            Debug.LogWarning("Part path is empty");
+            return;
         }
-        else
-        {
-            Debug.LogError($"FAILED: Could not find weapon part to disable: '{partPath}'. Check the name and hierarchy.");
-        }
+
+        var paths = new List<string> { partPath };
+        SetWeaponPartsToDisable(weaponTransform, paths);
     }
 
     private Transform FindChildByName(Transform parent, string name)
@@ -449,16 +475,27 @@ public class ScopeMinigame : AttachmentMinigameBase
         SetScrewColor(frontScrewVisual, Color.green);
         SetScrewColor(backScrewVisual, Color.green);
 
-        // Disable the weapon part (e.g., iron sights) when scope is attached
-        if (weaponPartToDisable != null)
+        // Disable all weapon parts (e.g., iron sights) when scope is attached
+        if (weaponPartsToDisable != null && weaponPartsToDisable.Count > 0)
         {
-            Debug.Log($"Attempting to disable weapon part: {weaponPartToDisable.name}, currently active: {weaponPartToDisable.activeSelf}");
-            weaponPartToDisable.SetActive(false);
-            Debug.Log($"Weapon part disabled. Now active: {weaponPartToDisable.activeSelf}");
+            Debug.Log($"Attempting to disable {weaponPartsToDisable.Count} weapon part(s)");
+            foreach (var part in weaponPartsToDisable)
+            {
+                if (part != null)
+                {
+                    Debug.Log($"  Disabling weapon part: {part.name}, currently active: {part.activeSelf}");
+                    part.SetActive(false);
+                    Debug.Log($"  Weapon part disabled. Now active: {part.activeSelf}");
+                }
+                else
+                {
+                    Debug.LogWarning("  Found NULL weapon part in list!");
+                }
+            }
         }
         else
         {
-            Debug.LogWarning("weaponPartToDisable is NULL - cannot disable weapon part!");
+            Debug.LogWarning("weaponPartsToDisable is empty or NULL - no weapon parts to disable!");
         }
 
         if (mainCamera != null)
@@ -482,11 +519,18 @@ public class ScopeMinigame : AttachmentMinigameBase
             Debug.Log("Camera reset on cancel");
         }
 
-        // Re-enable the weapon part if minigame was cancelled
-        if (weaponPartToDisable != null && !weaponPartToDisable.activeSelf)
+        // Re-enable all weapon parts if minigame was cancelled
+        if (weaponPartsToDisable != null && weaponPartsToDisable.Count > 0)
         {
-            weaponPartToDisable.SetActive(true);
-            Debug.Log($"Re-enabled weapon part: {weaponPartToDisable.name}");
+            Debug.Log($"Re-enabling {weaponPartsToDisable.Count} weapon part(s) after cancel");
+            foreach (var part in weaponPartsToDisable)
+            {
+                if (part != null && !part.activeSelf)
+                {
+                    part.SetActive(true);
+                    Debug.Log($"  Re-enabled weapon part: {part.name}");
+                }
+            }
         }
 
         base.CancelMinigame();

@@ -42,7 +42,11 @@ public class WeaponData : InventoryItemData
     public List<AttachmentType> allowedAttachmentSlots;
 
     [Header("Attachment Model Management")]
-    [Tooltip("Name or path of child GameObject to disable when a scope/sight is attached (e.g., 'IronSights' or 'Mesh/IronSights')")]
+    [Tooltip("List of child GameObject names or paths to disable when a scope/sight is attached (e.g., 'IronSights', 'Mesh/RearSight', 'FrontSightPost')")]
+    public List<string> partsToDisableWithSight = new List<string>();
+
+    [Header("Legacy Support (Deprecated)")]
+    [Tooltip("DEPRECATED: Use partsToDisableWithSight list instead. This field is kept for backwards compatibility.")]
     public string partToDisableWithSightPath;
 
     [Header("3D Model")]
@@ -57,5 +61,28 @@ public class WeaponData : InventoryItemData
     public override void UseItem()
     {
         Debug.Log($"Firing {Name}!");
+    }
+
+    /// <summary>
+    /// Gets all parts that should be disabled when a sight is attached.
+    /// Combines the new list with the legacy single path for backwards compatibility.
+    /// </summary>
+    public List<string> GetPartsToDisableWithSight()
+    {
+        List<string> allParts = new List<string>();
+
+        // Add all parts from the new list
+        if (partsToDisableWithSight != null && partsToDisableWithSight.Count > 0)
+        {
+            allParts.AddRange(partsToDisableWithSight);
+        }
+
+        // Add legacy path if it exists and isn't already in the list
+        if (!string.IsNullOrEmpty(partToDisableWithSightPath) && !allParts.Contains(partToDisableWithSightPath))
+        {
+            allParts.Add(partToDisableWithSightPath);
+        }
+
+        return allParts;
     }
 }

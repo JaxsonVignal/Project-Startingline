@@ -31,7 +31,7 @@ MonoBehaviour:
   spreadMultiplier: 1
   recoilMultiplier: 1
   magazineBonus: 0
-  scopePositionOffset: {x: 0, y: -0.004, z: 0}
+  scopePositionOffset: {x: 0, y: 0, z: 0}
   scopeRotationOffset: {x: 0, y: 0, z: 0}
   scopeFOVOverride: 30
   frontScrewLocalPos: {x: -0.05, y: 0.01, z: -0.025}
