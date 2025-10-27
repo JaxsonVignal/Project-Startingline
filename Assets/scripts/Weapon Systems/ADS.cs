@@ -14,6 +14,8 @@ public class ADS : MonoBehaviour
     public float aimSpeed = 10f;
     public float adsFOV = 45f;
     public float scopeFOV = 20f;
+    [Tooltip("If true, hide crosshair when aiming down sights without a scope")]
+    public bool hideCrosshairWhenADS = true;
 
     private float defaultFOV;
     private bool isAiming;
@@ -178,21 +180,23 @@ public class ADS : MonoBehaviour
             return;
         }
 
-        // Check if we should show a scope reticle
-        bool showingScopeReticle = isAiming && hasScopeEquipped && currentScope != null && currentScope.scopeReticle != null;
-
-        if (showingScopeReticle)
+        // If aiming with a scope that has a custom reticle, show it
+        if (isAiming && hasScopeEquipped && currentScope != null && currentScope.scopeReticle != null)
         {
-            // Show the scope's custom reticle
             CrosshairManager.Instance.ShowScopeReticle(
                 currentScope.scopeReticle,
                 currentScope.reticleScale,
                 currentScope.reticleColor
             );
         }
+        // If aiming without a scope and hideCrosshairWhenADS is enabled, hide all crosshairs
+        else if (isAiming && !hasScopeEquipped && hideCrosshairWhenADS)
+        {
+            CrosshairManager.Instance.HideAllCrosshairs();
+        }
+        // Otherwise show default crosshair (hip fire or not aiming)
         else
         {
-            // Show default crosshair
             CrosshairManager.Instance.ShowDefaultCrosshair();
         }
     }
