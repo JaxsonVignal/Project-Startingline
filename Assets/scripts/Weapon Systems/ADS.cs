@@ -25,6 +25,7 @@ public class ADS : MonoBehaviour
     private string currentEquippedScopeId;
     private Vector3 scopePositionModifier = Vector3.zero;
     private Quaternion scopeRotationModifier = Quaternion.identity;
+    private AttachmentData currentScope;
 
     private void Awake()
     {
@@ -48,6 +49,9 @@ public class ADS : MonoBehaviour
             originalScopePosition = scopeAdsPosition.localPosition;
             originalScopeRotation = scopeAdsPosition.localRotation;
         }
+
+        // Initialize crosshair state
+        UpdateCrosshairVisibility();
     }
 
     private void Update()
@@ -84,6 +88,8 @@ public class ADS : MonoBehaviour
             {
                 ResetScopeTransform();
                 currentEquippedScopeId = null;
+                currentScope = null;
+                UpdateCrosshairVisibility();
             }
             return;
         }
@@ -99,8 +105,10 @@ public class ADS : MonoBehaviour
                 if (currentEquippedScopeId != att.id)
                 {
                     currentEquippedScopeId = att.id;
+                    currentScope = att;
                     Debug.Log($"Scope equipped: {att.id}, offset: {att.scopePositionOffset}");
                     ApplyScopeModifiers(att);
+                    UpdateCrosshairVisibility();
                 }
                 break;
             }
@@ -111,6 +119,8 @@ public class ADS : MonoBehaviour
             Debug.Log("No scope equipped, resetting");
             ResetScopeTransform();
             currentEquippedScopeId = null;
+            currentScope = null;
+            UpdateCrosshairVisibility();
         }
     }
 
@@ -160,19 +170,61 @@ public class ADS : MonoBehaviour
         }
     }
 
+    private void UpdateCrosshairVisibility()
+    {
+        if (CrosshairManager.Instance == null)
+        {
+            Debug.LogWarning("CrosshairManager not found in scene!");
+            return;
+        }
+
+        // Check if we should show a scope reticle
+        bool showingScopeReticle = isAiming && hasScopeEquipped && currentScope != null && currentScope.scopeReticle != null;
+
+        if (showingScopeReticle)
+        {
+            // Show the scope's custom reticle
+            CrosshairManager.Instance.ShowScopeReticle(
+                currentScope.scopeReticle,
+                currentScope.reticleScale,
+                currentScope.reticleColor
+            );
+        }
+        else
+        {
+            // Show default crosshair
+            CrosshairManager.Instance.ShowDefaultCrosshair();
+        }
+    }
+
     public void SetAttachmentSystem(WeaponAttachmentSystem attachSys)
     {
         attachmentSystem = attachSys;
         UpdateScopeStatus();
     }
 
-    private void StartAim() => isAiming = true;
-    private void StopAim() => isAiming = false;
+    private void StartAim()
+    {
+        isAiming = true;
+        UpdateCrosshairVisibility();
+    }
+
+    private void StopAim()
+    {
+        isAiming = false;
+        UpdateCrosshairVisibility();
+    }
 
     private void OnDisable()
     {
         input.Player.Aim.performed -= ctx => StartAim();
         input.Player.Aim.canceled -= ctx => StopAim();
         input.Disable();
+
+        // Reset to default crosshair when weapon is disabled
+        if (CrosshairManager.Instance != null)
+        {
+            CrosshairManager.Instance.ShowDefaultCrosshair();
+        }
     }
 }
