@@ -222,7 +222,38 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        foreach (var att in availableAttachments)
+        // Filter attachments to only show those compatible with the selected weapon
+        List<AttachmentData> compatibleAttachments = new List<AttachmentData>();
+
+        if (selectedBase != null)
+        {
+            foreach (var att in availableAttachments)
+            {
+                if (selectedBase.IsAttachmentAllowed(att))
+                {
+                    compatibleAttachments.Add(att);
+                }
+            }
+        }
+        else
+        {
+            // No weapon selected, show all attachments
+            compatibleAttachments = availableAttachments;
+        }
+
+        if (compatibleAttachments.Count == 0)
+        {
+            // Create a "No compatible attachments" text object
+            GameObject textGO = new GameObject("NoCompatibleAttachmentsText");
+            textGO.transform.SetParent(attachmentListPanel, false);
+            var text = textGO.AddComponent<TextMeshProUGUI>();
+            text.text = "No compatible attachments for this weapon";
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = Color.gray;
+            return;
+        }
+
+        foreach (var att in compatibleAttachments)
         {
             var btnGO = Instantiate(attachmentButtonPrefab, attachmentListPanel);
             var btn = btnGO.GetComponent<Button>();
@@ -261,6 +292,13 @@ public class WeaponBuilderUI : MonoBehaviour
         if (att == null || previewRuntime == null) return;
 
         Debug.Log($"AddAttachmentToPreview called for: {att.name} (Type: {att.type})");
+
+        // Check if this attachment is compatible with the selected weapon
+        if (selectedBase != null && !selectedBase.IsAttachmentAllowed(att))
+        {
+            Debug.LogWarning($"Attachment {att.name} is not compatible with {selectedBase.name}!");
+            return;
+        }
 
         // Check if we have this attachment available
         if (GetAvailableAttachmentCount(att) <= 0)

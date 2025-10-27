@@ -14,6 +14,8 @@ public class ADS : MonoBehaviour
     public float aimSpeed = 10f;
     public float adsFOV = 45f;
     public float scopeFOV = 20f;
+    [Tooltip("If true, hide crosshair when aiming down sights without a scope")]
+    public bool hideCrosshairWhenADS = true;
 
     private float defaultFOV;
     private bool isAiming;
@@ -25,6 +27,7 @@ public class ADS : MonoBehaviour
     private string currentEquippedScopeId;
     private Vector3 scopePositionModifier = Vector3.zero;
     private Quaternion scopeRotationModifier = Quaternion.identity;
+    private AttachmentData currentScope;
 
     private void Awake()
     {
@@ -48,6 +51,9 @@ public class ADS : MonoBehaviour
             originalScopePosition = scopeAdsPosition.localPosition;
             originalScopeRotation = scopeAdsPosition.localRotation;
         }
+
+        // Initialize crosshair state
+        UpdateCrosshairVisibility();
     }
 
     private void Update()
@@ -84,6 +90,8 @@ public class ADS : MonoBehaviour
             {
                 ResetScopeTransform();
                 currentEquippedScopeId = null;
+                currentScope = null;
+                UpdateCrosshairVisibility();
             }
             return;
         }
@@ -99,8 +107,10 @@ public class ADS : MonoBehaviour
                 if (currentEquippedScopeId != att.id)
                 {
                     currentEquippedScopeId = att.id;
+                    currentScope = att;
                     Debug.Log($"Scope equipped: {att.id}, offset: {att.scopePositionOffset}");
                     ApplyScopeModifiers(att);
+                    UpdateCrosshairVisibility();
                 }
                 break;
             }
@@ -111,6 +121,8 @@ public class ADS : MonoBehaviour
             Debug.Log("No scope equipped, resetting");
             ResetScopeTransform();
             currentEquippedScopeId = null;
+            currentScope = null;
+            UpdateCrosshairVisibility();
         }
     }
 
@@ -160,19 +172,63 @@ public class ADS : MonoBehaviour
         }
     }
 
+    private void UpdateCrosshairVisibility()
+    {
+        if (CrosshairManager.Instance == null)
+        {
+            Debug.LogWarning("CrosshairManager not found in scene!");
+            return;
+        }
+
+        // If aiming with a scope that has a custom reticle, show it
+        if (isAiming && hasScopeEquipped && currentScope != null && currentScope.scopeReticle != null)
+        {
+            CrosshairManager.Instance.ShowScopeReticle(
+                currentScope.scopeReticle,
+                currentScope.reticleScale,
+                currentScope.reticleColor
+            );
+        }
+        // If aiming without a scope and hideCrosshairWhenADS is enabled, hide all crosshairs
+        else if (isAiming && !hasScopeEquipped && hideCrosshairWhenADS)
+        {
+            CrosshairManager.Instance.HideAllCrosshairs();
+        }
+        // Otherwise show default crosshair (hip fire or not aiming)
+        else
+        {
+            CrosshairManager.Instance.ShowDefaultCrosshair();
+        }
+    }
+
     public void SetAttachmentSystem(WeaponAttachmentSystem attachSys)
     {
         attachmentSystem = attachSys;
         UpdateScopeStatus();
     }
 
-    private void StartAim() => isAiming = true;
-    private void StopAim() => isAiming = false;
+    private void StartAim()
+    {
+        isAiming = true;
+        UpdateCrosshairVisibility();
+    }
+
+    private void StopAim()
+    {
+        isAiming = false;
+        UpdateCrosshairVisibility();
+    }
 
     private void OnDisable()
     {
         input.Player.Aim.performed -= ctx => StartAim();
         input.Player.Aim.canceled -= ctx => StopAim();
         input.Disable();
+
+        // Reset to default crosshair when weapon is disabled
+        if (CrosshairManager.Instance != null)
+        {
+            CrosshairManager.Instance.ShowDefaultCrosshair();
+        }
     }
 }
