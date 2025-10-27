@@ -603,7 +603,7 @@ GameObject:
   - component: {fileID: 3936529639573149375}
   - component: {fileID: 1182000476537689104}
   m_Layer: 0
-  m_Name: AR_M_Sight_Front
+  m_Name: FrontSight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
