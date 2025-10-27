@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: M4A1
   m_EditorClassIdentifier: 
   ID: -1
-  Name: 
+  Name: M4A1
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 1
@@ -33,6 +33,9 @@ MonoBehaviour:
   recoilZ: 0.1
   spread: 0.001
   allowedAttachmentSlots: 0000000001000000060000000300000007000000
+  allowedAttachments:
+  - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
+  - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
   partsToDisableWithSight:
   - BackSight
   - FrontSight
