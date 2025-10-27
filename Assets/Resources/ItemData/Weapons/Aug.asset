@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db121b31bf658f040b07ed4f74155ca0, type: 3}
+  m_Name: Aug
+  m_EditorClassIdentifier: 
+  ID: -1
+  Name: Aug
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 1
+  weaponId: Aug
+  damage: 30
+  fireRate: 0.1
+  reloadTime: 2.5
+  magazineSize: 30
+  bulletSpeed: 50
+  FOVChange: 40
+  requiredAmmoType: 4
+  pelletsPerShot: 8
+  spreadAngle: 5
+  fireMode: 1
+  recoilX: -1.5
+  recoilY: 0.3
+  recoilZ: 0.03
+  spread: 0.05
+  allowedAttachmentSlots: 00000000010000000300000006000000
+  partsToDisableWithSight:
+  - RearSight
+  - FrontSight
+  partToDisableWithSightPath: 
+  weaponPrefab: {fileID: 8980373184202089600, guid: e0eb2cc62e6732f478bf4db097fafe63, type: 3}
+  shootSound: {fileID: 0}
+  reloadSound: {fileID: 0}
+  muzzleFlashPrefab: {fileID: 0}
+  ShootingSoundDelay: 0
