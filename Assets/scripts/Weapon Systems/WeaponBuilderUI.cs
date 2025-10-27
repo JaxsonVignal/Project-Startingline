@@ -338,8 +338,9 @@ public class WeaponBuilderUI : MonoBehaviour
     {
         switch (att.type)
         {
-            case AttachmentType.Barrel: // Silencers
-            case AttachmentType.Sight:  // Scopes
+            case AttachmentType.Barrel:      // Silencers
+            case AttachmentType.Sight:       // Scopes
+            case AttachmentType.Underbarrel: // Underbarrel attachments
                 return true;
             // Add more types that require minigames
             default:
@@ -589,13 +590,30 @@ public class WeaponBuilderUI : MonoBehaviour
         attachSys.weaponData = selectedBase;
         runtime.attachmentSystem = attachSys;
 
-        // Apply ALL attachments (including pre-existing ones)
+        // Debug log all attachments before applying
+        Debug.Log($"Applying {previewInstance.attachments.Count} attachments to finalized weapon:");
         foreach (var entry in previewInstance.attachments)
         {
-            if (!attachmentLookup.TryGetValue(entry.attachmentId, out var att)) continue;
+            if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
+            {
+                Debug.Log($"  - {att.name} (Type: {att.type}, ID: {entry.attachmentId})");
+            }
+        }
+
+        // Apply ALL attachments (including pre-existing ones) BEFORE initializing runtime
+        foreach (var entry in previewInstance.attachments)
+        {
+            if (!attachmentLookup.TryGetValue(entry.attachmentId, out var att))
+            {
+                Debug.LogWarning($"Could not find attachment with ID: {entry.attachmentId}");
+                continue;
+            }
+
+            Debug.Log($"Equipping attachment: {att.name} at socket type: {att.type}");
             attachSys.EquipAttachment(att, entry);
         }
 
+        // Initialize runtime AFTER attachments are equipped
         runtime.InitFromInstance(previewInstance, selectedBase, attachmentLookup);
 
         // Handle iron sight visibility based on attachments
