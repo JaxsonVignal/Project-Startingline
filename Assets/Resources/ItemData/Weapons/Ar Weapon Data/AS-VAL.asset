@@ -33,6 +33,9 @@ MonoBehaviour:
   recoilZ: 0.03
   spread: 0.05
   allowedAttachmentSlots: 0000000003000000010000000600000007000000
+  allowedAttachments:
+  - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
+  - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
   partsToDisableWithSight:
   - RearSight
   partToDisableWithSightPath: 

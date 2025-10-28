@@ -13,30 +13,33 @@ MonoBehaviour:
   m_Name: M1014
   m_EditorClassIdentifier: 
   ID: -1
-  Name: 
+  Name: M1014
   Description: 
   Icon: {fileID: 0}
-  maxStackSize: 0
-  weaponId: 
+  maxStackSize: 1
+  weaponId: M1014
   damage: 30
-  fireRate: 0.1
+  fireRate: 0.7
   reloadTime: 2.5
   magazineSize: 30
   bulletSpeed: 50
   FOVChange: 40
-  requiredAmmoType: 0
+  requiredAmmoType: 6
   pelletsPerShot: 8
   spreadAngle: 5
-  fireMode: 0
-  recoilX: 1.5
-  recoilY: 1.5
-  recoilZ: 1.5
+  fireMode: 3
+  recoilX: -1.5
+  recoilY: 0.3
+  recoilZ: 0.03
   spread: 0.05
-  allowedAttachmentSlots: 
-  allowedAttachments: []
-  partsToDisableWithSight: []
+  allowedAttachmentSlots: 000000000100000006000000
+  allowedAttachments:
+  - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
+  - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
+  partsToDisableWithSight:
+  - RearSight
   partToDisableWithSightPath: 
-  weaponPrefab: {fileID: 0}
+  weaponPrefab: {fileID: 1855927077955854144, guid: f94a99b118c78ec4b8a206bf6cc7eb69, type: 3}
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}
   muzzleFlashPrefab: {fileID: 0}

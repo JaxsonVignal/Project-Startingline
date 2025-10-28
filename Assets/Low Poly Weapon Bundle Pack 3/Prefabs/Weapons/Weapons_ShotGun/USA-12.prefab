@@ -440,7 +440,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2215371409135096534}
   m_Layer: 0
-  m_Name: ShotGun_M
+  m_Name: USA-12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

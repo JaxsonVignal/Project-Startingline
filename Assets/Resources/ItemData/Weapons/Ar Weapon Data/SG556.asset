@@ -32,10 +32,13 @@ MonoBehaviour:
   recoilY: 1.5
   recoilZ: 1.5
   spread: 0.05
-  allowedAttachmentSlots: 
+  allowedAttachmentSlots: 0000000001000000030000000600000007000000
+  allowedAttachments:
+  - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
+  - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
   partsToDisableWithSight: []
   partToDisableWithSightPath: 
-  weaponPrefab: {fileID: 0}
+  weaponPrefab: {fileID: 410818685978139887, guid: ebfc6b6293b4b104dafc99345aa9245a, type: 3}
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}
   muzzleFlashPrefab: {fileID: 0}
