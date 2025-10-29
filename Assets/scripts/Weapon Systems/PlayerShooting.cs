@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerShooting : MonoBehaviour
 {
@@ -26,6 +27,9 @@ public class PlayerShooting : MonoBehaviour
 
     private Recoil recoil;
 
+    // Fire mode switching
+    private FireMode currentFireMode;
+
     private void Update()
     {
         recoil = transform.Find("cameraHolder/CameraRecoil").GetComponent<Recoil>();
@@ -42,7 +46,7 @@ public class PlayerShooting : MonoBehaviour
                     : currentWeapon.fireRate;
                 nextFireTime = Time.time + fireRate;
 
-                if (currentWeapon.fireMode != FireMode.FullAuto)
+                if (currentFireMode != FireMode.FullAuto)
                     isFiring = false;
             }
         }
@@ -71,14 +75,19 @@ public class PlayerShooting : MonoBehaviour
             return;
         }
 
+        // Set initial fire mode
+        currentFireMode = weapon.fireMode;
+
         if (firePoint != null)
         {
             weaponAudio = firePoint.GetComponent<AudioSource>();
             if (weaponAudio == null)
                 weaponAudio = firePoint.gameObject.AddComponent<AudioSource>();
 
-            weaponAudio.clip = weapon.shootSound;
-            weaponAudio.loop = weapon.fireMode == FireMode.FullAuto;
+            // Use appropriate audio clip based on fire mode
+            AudioClip clipToUse = GetCurrentShootSound();
+            weaponAudio.clip = clipToUse;
+            weaponAudio.loop = currentFireMode == FireMode.FullAuto;
             weaponAudio.playOnAwake = false;
             weaponAudio.spatialBlend = 1f;
         }
@@ -97,7 +106,7 @@ public class PlayerShooting : MonoBehaviour
         if (recoilScript != null)
             recoilScript.SetWeaponData(weapon);
 
-        Debug.Log($"Equipped {weapon.Name} (Slot: {slotID}) - Ammo: {currentAmmo}/{maxMagazine}");
+        Debug.Log($"Equipped {weapon.Name} (Slot: {slotID}) - Ammo: {currentAmmo}/{maxMagazine} - Fire Mode: {currentFireMode}");
     }
 
     public void SetAttachmentSystem(WeaponAttachmentSystem attachmentSystem)
@@ -126,7 +135,7 @@ public class PlayerShooting : MonoBehaviour
 
         if (Time.time < nextFireTime) return;
 
-        if (currentWeapon.fireMode == FireMode.SemiAuto || currentWeapon.fireMode == FireMode.Shotgun)
+        if (currentFireMode == FireMode.SemiAuto || currentFireMode == FireMode.Shotgun)
         {
             Fire();
             float fireRate = currentAttachmentSystem != null
@@ -144,8 +153,44 @@ public class PlayerShooting : MonoBehaviour
     {
         isFiring = false;
 
-        if (weaponAudio != null && currentWeapon != null && currentWeapon.fireMode == FireMode.FullAuto)
+        if (weaponAudio != null && currentWeapon != null && currentFireMode == FireMode.FullAuto)
             StartCoroutine(StopWeaponAudioDelayed(currentWeapon.ShootingSoundDelay));
+    }
+
+    /// <summary>
+    /// Switches between Semi-Auto and Full-Auto fire modes if the weapon supports it
+    /// </summary>
+    public void SwitchFireMode(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+
+        if (currentWeapon == null) return;
+
+        if (!currentWeapon.canSwitchFireMode)
+        {
+            Debug.Log($"{currentWeapon.Name} does not support fire mode switching");
+            return;
+        }
+
+        // Only switch between Semi and Full Auto
+        if (currentFireMode == FireMode.SemiAuto)
+        {
+            currentFireMode = FireMode.FullAuto;
+            Debug.Log($"Fire mode switched to: Full Auto");
+        }
+        else if (currentFireMode == FireMode.FullAuto)
+        {
+            currentFireMode = FireMode.SemiAuto;
+            Debug.Log($"Fire mode switched to: Semi Auto");
+        }
+
+        // Update audio settings for the new fire mode
+        if (weaponAudio != null && currentWeapon != null)
+        {
+            AudioClip clipToUse = GetCurrentShootSound();
+            weaponAudio.clip = clipToUse;
+            weaponAudio.loop = currentFireMode == FireMode.FullAuto;
+        }
     }
 
     private void Fire()
@@ -167,19 +212,21 @@ public class PlayerShooting : MonoBehaviour
         // Play shooting sound
         if (weaponAudio != null)
         {
-            if (currentWeapon.fireMode == FireMode.FullAuto)
+            AudioClip clipToUse = GetCurrentShootSound();
+
+            if (currentFireMode == FireMode.FullAuto)
             {
                 if (!weaponAudio.isPlaying)
                     weaponAudio.Play();
             }
             else
             {
-                weaponAudio.PlayOneShot(currentWeapon.shootSound);
+                weaponAudio.PlayOneShot(clipToUse);
             }
         }
 
         // Determine number of bullets to fire
-        int pellets = currentWeapon.fireMode == FireMode.Shotgun ? currentWeapon.pelletsPerShot : 1;
+        int pellets = currentFireMode == FireMode.Shotgun ? currentWeapon.pelletsPerShot : 1;
 
         for (int i = 0; i < pellets; i++)
         {
@@ -187,14 +234,30 @@ public class PlayerShooting : MonoBehaviour
             {
                 GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
-                Vector3 shootDirection = playerCamera.transform.forward;
+                // Raycast from camera center to get accurate aim point
+                Vector3 targetPoint;
+                Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+
+                if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+                {
+                    // Hit something - aim at that point
+                    targetPoint = hit.point;
+                }
+                else
+                {
+                    // Didn't hit anything - aim far away in that direction
+                    targetPoint = ray.GetPoint(1000f);
+                }
+
+                // Calculate direction from firePoint to target
+                Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
 
                 // Use modified spread from attachments
                 float spread = currentAttachmentSystem != null
                     ? currentAttachmentSystem.CurrentSpread
                     : currentWeapon.spread;
 
-                if (currentWeapon.fireMode == FireMode.Shotgun)
+                if (currentFireMode == FireMode.Shotgun)
                 {
                     float spreadX = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
                     float spreadY = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
@@ -334,5 +397,24 @@ public class PlayerShooting : MonoBehaviour
         if (playerInventory == null) return 0;
 
         return playerInventory.PrimaryInventorySystem.GetAmmoCount(currentWeapon.requiredAmmoType);
+    }
+
+    public FireMode GetCurrentFireMode() => currentFireMode;
+
+    /// <summary>
+    /// Gets the appropriate shoot sound based on current fire mode
+    /// </summary>
+    private AudioClip GetCurrentShootSound()
+    {
+        if (currentWeapon == null) return null;
+
+        // If in full-auto and a separate full-auto sound exists, use it
+        if (currentFireMode == FireMode.FullAuto && currentWeapon.shootSoundFullAuto != null)
+        {
+            return currentWeapon.shootSoundFullAuto;
+        }
+
+        // Otherwise use the default shoot sound
+        return currentWeapon.shootSound;
     }
 }

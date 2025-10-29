@@ -62,6 +62,7 @@ public class AttachmentMinigameManager : MonoBehaviour
                 minigame = attachmentObj.AddComponent<SilencerMinigame>();
                 Debug.Log("Added SilencerMinigame component");
                 break;
+
             case AttachmentType.Sight:
                 minigame = attachmentObj.AddComponent<ScopeMinigame>();
                 Debug.Log("Added ScopeMinigame component");
@@ -75,6 +76,12 @@ public class AttachmentMinigameManager : MonoBehaviour
                     scopeMinigame.SetWeaponPartsToDisable(socket.root, weapon.GetPartsToDisableWithSight());
                 }
                 break;
+
+            case AttachmentType.Underbarrel:
+                minigame = attachmentObj.AddComponent<UnderbarrelMinigame>();
+                Debug.Log("Added UnderbarrelMinigame component");
+                break;
+
             // Add more cases for other attachment types
             default:
                 Debug.LogWarning($"No minigame implementation for {attachment.type}");
@@ -119,6 +126,9 @@ public class AttachmentMinigameManager : MonoBehaviour
                 return true;
             case AttachmentType.Sight:
                 Debug.Log("Sight has minigame implementation");
+                return true;
+            case AttachmentType.Underbarrel:
+                Debug.Log("Underbarrel has minigame implementation");
                 return true;
             // Add more types as you implement them
             default:

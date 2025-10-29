@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: GlockRedDot
+  m_Name: UnderbarrelTest
   m_EditorClassIdentifier: 
-  ID: 50
-  Name: Glock Red Dot
+  ID: 200
+  Name: Forgrip
   Description: 
   Icon: {fileID: 0}
-  maxStackSize: 0
-  id: GRDS
-  type: 0
-  prefab: {fileID: 7960101205374357589, guid: 962201bbd8a926249829f60fd5575831, type: 3}
+  maxStackSize: 1
+  id: Forgrip
+  type: 6
+  prefab: {fileID: 4770272102782942065, guid: 1f1bbbfa80eb33f49ace9be7a6c75c3e, type: 3}
   icon: {fileID: 0}
   description: 
   localPosition: {x: 0, y: 0, z: 0}
@@ -29,14 +29,14 @@ MonoBehaviour:
   fireRateMultiplier: 1
   reloadTimeMultiplier: 1
   spreadMultiplier: 1
-  recoilMultiplier: 1
+  recoilMultiplier: 0.5
   magazineBonus: 0
   scopePositionOffset: {x: 0, y: 0, z: 0}
   scopeRotationOffset: {x: 0, y: 0, z: 0}
-  scopeFOVOverride: 30
+  scopeFOVOverride: 0
   scopeReticle: {fileID: 0}
   reticleScale: 1
   reticleColor: {r: 1, g: 0, b: 0, a: 1}
-  frontScrewLocalPos: {x: -0.05, y: 0.05, z: -0.05}
-  backScrewLocalPos: {x: 0.05, y: 0.05, z: -0.05}
-  screwRadius: 0.015
+  frontScrewLocalPos: {x: -0.05, y: 0, z: -0.03}
+  backScrewLocalPos: {x: -0.05, y: 0, z: 0.02}
+  screwRadius: 0.005
