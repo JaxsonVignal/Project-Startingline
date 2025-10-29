@@ -21,6 +21,7 @@ public class WeaponData : InventoryItemData
     public int magazineSize = 30;
     public int bulletSpeed = 50;
     public float FOVChange = 40;
+    public float Value = 0;
 
     [Header("Ammo Configuration")]
     public AmmoType requiredAmmoType; // What ammo type this weapon uses
@@ -32,6 +33,9 @@ public class WeaponData : InventoryItemData
     [Header("Fire Settings")]
     public FireMode fireMode = FireMode.SemiAuto;
 
+    [Tooltip("Enable this to allow switching between Semi-Auto and Full-Auto fire modes")]
+    public bool canSwitchFireMode = false;
+
     [Header("Recoil & Accuracy")]
     public float recoilX = 1.5f;
     public float recoilY = 1.5f;
@@ -40,7 +44,6 @@ public class WeaponData : InventoryItemData
 
     [Header("Attachment Configuration")]
     public List<AttachmentType> allowedAttachmentSlots;
-
     [Tooltip("List of specific attachments that can be equipped on this weapon. Leave empty to allow all attachments of the allowed slot types.")]
     public List<AttachmentData> allowedAttachments = new List<AttachmentData>();
 
@@ -56,7 +59,12 @@ public class WeaponData : InventoryItemData
     public GameObject weaponPrefab;
 
     [Header("Audio & VFX")]
+    [Tooltip("Sound for semi-auto fire (single shots). If shootSoundFullAuto is not set, this will be used for both modes.")]
     public AudioClip shootSound;
+
+    [Tooltip("Optional: Different sound for full-auto fire (continuous/looping). Leave empty to use shootSound for both.")]
+    public AudioClip shootSoundFullAuto;
+
     public AudioClip reloadSound;
     public GameObject muzzleFlashPrefab;
     public float ShootingSoundDelay;

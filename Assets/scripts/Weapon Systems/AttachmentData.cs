@@ -10,6 +10,7 @@ public class AttachmentData : InventoryItemData
     public GameObject prefab;
     public Sprite icon;
     [TextArea] public string description;
+    public float Value = 0;
 
     [Header("Local transform when parented to socket")]
     public Vector3 localPosition;
