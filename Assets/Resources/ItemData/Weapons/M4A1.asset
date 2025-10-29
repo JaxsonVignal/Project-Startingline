@@ -10,35 +10,37 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db121b31bf658f040b07ed4f74155ca0, type: 3}
-  m_Name: SG556
+  m_Name: M4A1
   m_EditorClassIdentifier: 
   ID: -1
-  Name: 
+  Name: M4A1
   Description: 
   Icon: {fileID: 0}
-  maxStackSize: 0
-  weaponId: 
+  maxStackSize: 1
+  weaponId: M4A1
   damage: 30
   fireRate: 0.1
   reloadTime: 2.5
   magazineSize: 30
   bulletSpeed: 50
   FOVChange: 40
-  requiredAmmoType: 0
+  requiredAmmoType: 4
   pelletsPerShot: 8
   spreadAngle: 5
-  fireMode: 0
-  recoilX: 1.5
-  recoilY: 1.5
-  recoilZ: 1.5
-  spread: 0.05
-  allowedAttachmentSlots: 0000000001000000030000000600000007000000
+  fireMode: 1
+  recoilX: -1.5
+  recoilY: 0.3
+  recoilZ: 0.1
+  spread: 0.001
+  allowedAttachmentSlots: 0000000001000000060000000300000007000000
   allowedAttachments:
   - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
   - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
-  partsToDisableWithSight: []
+  partsToDisableWithSight:
+  - BackSight
+  - FrontSight
   partToDisableWithSightPath: 
-  weaponPrefab: {fileID: 410818685978139887, guid: ebfc6b6293b4b104dafc99345aa9245a, type: 3}
+  weaponPrefab: {fileID: 5109640673244884216, guid: 99ed12a4e1b1e844293b80d2f75600a3, type: 3}
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}
   muzzleFlashPrefab: {fileID: 0}
