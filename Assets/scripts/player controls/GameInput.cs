@@ -206,6 +206,15 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Switch Fire"",
+                    ""type"": ""Button"",
+                    ""id"": ""04d72aad-f3fd-4e46-a08a-3de305924486"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -494,6 +503,84 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""action"": ""Aim"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""23bdc854-747d-4790-aa14-616a6d79325c"",
+                    ""path"": ""<Keyboard>/n"",
+                    ""interactions"": ""Press"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Switch Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""New action map"",
+            ""id"": ""e7f78ca0-de82-4b7b-ba3c-492ff15c90a4"",
+            ""actions"": [
+                {
+                    ""name"": ""Phone"",
+                    ""type"": ""Button"",
+                    ""id"": ""4313a390-a568-475b-a52a-f83551cb3587"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""36c2a734-2d24-4420-8abc-5ec480ce422d"",
+                    ""path"": ""<Keyboard>/tab"",
+                    ""interactions"": ""Press"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Phone"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bc694291-7e9f-433d-8199-093ce1f2ae60"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Phone"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""New action map1"",
+            ""id"": ""3c3eae06-e2b1-484e-bbc7-31d6b11c0704"",
+            ""actions"": [
+                {
+                    ""name"": ""New action"",
+                    ""type"": ""Button"",
+                    ""id"": ""f9ba831d-f048-40bf-8e88-00020ca5899f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""d0502fbc-45bc-4efd-8423-eb84683f92f5"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""New action"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -522,11 +609,20 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         m_Player_MouseWheel = m_Player.FindAction("MouseWheel", throwIfNotFound: true);
         m_Player_Reload = m_Player.FindAction("Reload", throwIfNotFound: true);
         m_Player_Aim = m_Player.FindAction("Aim", throwIfNotFound: true);
+        m_Player_SwitchFire = m_Player.FindAction("Switch Fire", throwIfNotFound: true);
+        // New action map
+        m_Newactionmap = asset.FindActionMap("New action map", throwIfNotFound: true);
+        m_Newactionmap_Phone = m_Newactionmap.FindAction("Phone", throwIfNotFound: true);
+        // New action map1
+        m_Newactionmap1 = asset.FindActionMap("New action map1", throwIfNotFound: true);
+        m_Newactionmap1_Newaction = m_Newactionmap1.FindAction("New action", throwIfNotFound: true);
     }
 
     ~@GameInput()
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, GameInput.Player.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Newactionmap.enabled, "This will cause a leak and performance issues, GameInput.Newactionmap.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Newactionmap1.enabled, "This will cause a leak and performance issues, GameInput.Newactionmap1.Disable() has not been called.");
     }
 
     public void Dispose()
@@ -608,6 +704,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_MouseWheel;
     private readonly InputAction m_Player_Reload;
     private readonly InputAction m_Player_Aim;
+    private readonly InputAction m_Player_SwitchFire;
     public struct PlayerActions
     {
         private @GameInput m_Wrapper;
@@ -632,6 +729,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         public InputAction @MouseWheel => m_Wrapper.m_Player_MouseWheel;
         public InputAction @Reload => m_Wrapper.m_Player_Reload;
         public InputAction @Aim => m_Wrapper.m_Player_Aim;
+        public InputAction @SwitchFire => m_Wrapper.m_Player_SwitchFire;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -701,6 +799,9 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @Aim.started += instance.OnAim;
             @Aim.performed += instance.OnAim;
             @Aim.canceled += instance.OnAim;
+            @SwitchFire.started += instance.OnSwitchFire;
+            @SwitchFire.performed += instance.OnSwitchFire;
+            @SwitchFire.canceled += instance.OnSwitchFire;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -765,6 +866,9 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @Aim.started -= instance.OnAim;
             @Aim.performed -= instance.OnAim;
             @Aim.canceled -= instance.OnAim;
+            @SwitchFire.started -= instance.OnSwitchFire;
+            @SwitchFire.performed -= instance.OnSwitchFire;
+            @SwitchFire.canceled -= instance.OnSwitchFire;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -782,6 +886,98 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         }
     }
     public PlayerActions @Player => new PlayerActions(this);
+
+    // New action map
+    private readonly InputActionMap m_Newactionmap;
+    private List<INewactionmapActions> m_NewactionmapActionsCallbackInterfaces = new List<INewactionmapActions>();
+    private readonly InputAction m_Newactionmap_Phone;
+    public struct NewactionmapActions
+    {
+        private @GameInput m_Wrapper;
+        public NewactionmapActions(@GameInput wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Phone => m_Wrapper.m_Newactionmap_Phone;
+        public InputActionMap Get() { return m_Wrapper.m_Newactionmap; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(NewactionmapActions set) { return set.Get(); }
+        public void AddCallbacks(INewactionmapActions instance)
+        {
+            if (instance == null || m_Wrapper.m_NewactionmapActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_NewactionmapActionsCallbackInterfaces.Add(instance);
+            @Phone.started += instance.OnPhone;
+            @Phone.performed += instance.OnPhone;
+            @Phone.canceled += instance.OnPhone;
+        }
+
+        private void UnregisterCallbacks(INewactionmapActions instance)
+        {
+            @Phone.started -= instance.OnPhone;
+            @Phone.performed -= instance.OnPhone;
+            @Phone.canceled -= instance.OnPhone;
+        }
+
+        public void RemoveCallbacks(INewactionmapActions instance)
+        {
+            if (m_Wrapper.m_NewactionmapActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(INewactionmapActions instance)
+        {
+            foreach (var item in m_Wrapper.m_NewactionmapActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_NewactionmapActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public NewactionmapActions @Newactionmap => new NewactionmapActions(this);
+
+    // New action map1
+    private readonly InputActionMap m_Newactionmap1;
+    private List<INewactionmap1Actions> m_Newactionmap1ActionsCallbackInterfaces = new List<INewactionmap1Actions>();
+    private readonly InputAction m_Newactionmap1_Newaction;
+    public struct Newactionmap1Actions
+    {
+        private @GameInput m_Wrapper;
+        public Newactionmap1Actions(@GameInput wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Newaction => m_Wrapper.m_Newactionmap1_Newaction;
+        public InputActionMap Get() { return m_Wrapper.m_Newactionmap1; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(Newactionmap1Actions set) { return set.Get(); }
+        public void AddCallbacks(INewactionmap1Actions instance)
+        {
+            if (instance == null || m_Wrapper.m_Newactionmap1ActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_Newactionmap1ActionsCallbackInterfaces.Add(instance);
+            @Newaction.started += instance.OnNewaction;
+            @Newaction.performed += instance.OnNewaction;
+            @Newaction.canceled += instance.OnNewaction;
+        }
+
+        private void UnregisterCallbacks(INewactionmap1Actions instance)
+        {
+            @Newaction.started -= instance.OnNewaction;
+            @Newaction.performed -= instance.OnNewaction;
+            @Newaction.canceled -= instance.OnNewaction;
+        }
+
+        public void RemoveCallbacks(INewactionmap1Actions instance)
+        {
+            if (m_Wrapper.m_Newactionmap1ActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(INewactionmap1Actions instance)
+        {
+            foreach (var item in m_Wrapper.m_Newactionmap1ActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_Newactionmap1ActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public Newactionmap1Actions @Newactionmap1 => new Newactionmap1Actions(this);
     public interface IPlayerActions
     {
         void OnMove(InputAction.CallbackContext context);
@@ -804,5 +1000,14 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         void OnMouseWheel(InputAction.CallbackContext context);
         void OnReload(InputAction.CallbackContext context);
         void OnAim(InputAction.CallbackContext context);
+        void OnSwitchFire(InputAction.CallbackContext context);
+    }
+    public interface INewactionmapActions
+    {
+        void OnPhone(InputAction.CallbackContext context);
+    }
+    public interface INewactionmap1Actions
+    {
+        void OnNewaction(InputAction.CallbackContext context);
     }
 }
