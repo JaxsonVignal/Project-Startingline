@@ -59,7 +59,12 @@ public class WeaponData : InventoryItemData
     public GameObject weaponPrefab;
 
     [Header("Audio & VFX")]
+    [Tooltip("Sound for semi-auto fire (single shots). If shootSoundFullAuto is not set, this will be used for both modes.")]
     public AudioClip shootSound;
+
+    [Tooltip("Optional: Different sound for full-auto fire (continuous/looping). Leave empty to use shootSound for both.")]
+    public AudioClip shootSoundFullAuto;
+
     public AudioClip reloadSound;
     public GameObject muzzleFlashPrefab;
     public float ShootingSoundDelay;

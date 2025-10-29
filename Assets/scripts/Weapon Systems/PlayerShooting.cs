@@ -84,7 +84,9 @@ public class PlayerShooting : MonoBehaviour
             if (weaponAudio == null)
                 weaponAudio = firePoint.gameObject.AddComponent<AudioSource>();
 
-            weaponAudio.clip = weapon.shootSound;
+            // Use appropriate audio clip based on fire mode
+            AudioClip clipToUse = GetCurrentShootSound();
+            weaponAudio.clip = clipToUse;
             weaponAudio.loop = currentFireMode == FireMode.FullAuto;
             weaponAudio.playOnAwake = false;
             weaponAudio.spatialBlend = 1f;
@@ -182,9 +184,11 @@ public class PlayerShooting : MonoBehaviour
             Debug.Log($"Fire mode switched to: Semi Auto");
         }
 
-        // Update audio loop setting
-        if (weaponAudio != null)
+        // Update audio settings for the new fire mode
+        if (weaponAudio != null && currentWeapon != null)
         {
+            AudioClip clipToUse = GetCurrentShootSound();
+            weaponAudio.clip = clipToUse;
             weaponAudio.loop = currentFireMode == FireMode.FullAuto;
         }
     }
@@ -208,6 +212,8 @@ public class PlayerShooting : MonoBehaviour
         // Play shooting sound
         if (weaponAudio != null)
         {
+            AudioClip clipToUse = GetCurrentShootSound();
+
             if (currentFireMode == FireMode.FullAuto)
             {
                 if (!weaponAudio.isPlaying)
@@ -215,7 +221,7 @@ public class PlayerShooting : MonoBehaviour
             }
             else
             {
-                weaponAudio.PlayOneShot(currentWeapon.shootSound);
+                weaponAudio.PlayOneShot(clipToUse);
             }
         }
 
@@ -228,7 +234,23 @@ public class PlayerShooting : MonoBehaviour
             {
                 GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
-                Vector3 shootDirection = playerCamera.transform.forward;
+                // Raycast from camera center to get accurate aim point
+                Vector3 targetPoint;
+                Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+
+                if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+                {
+                    // Hit something - aim at that point
+                    targetPoint = hit.point;
+                }
+                else
+                {
+                    // Didn't hit anything - aim far away in that direction
+                    targetPoint = ray.GetPoint(1000f);
+                }
+
+                // Calculate direction from firePoint to target
+                Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
 
                 // Use modified spread from attachments
                 float spread = currentAttachmentSystem != null
@@ -378,4 +400,21 @@ public class PlayerShooting : MonoBehaviour
     }
 
     public FireMode GetCurrentFireMode() => currentFireMode;
+
+    /// <summary>
+    /// Gets the appropriate shoot sound based on current fire mode
+    /// </summary>
+    private AudioClip GetCurrentShootSound()
+    {
+        if (currentWeapon == null) return null;
+
+        // If in full-auto and a separate full-auto sound exists, use it
+        if (currentFireMode == FireMode.FullAuto && currentWeapon.shootSoundFullAuto != null)
+        {
+            return currentWeapon.shootSoundFullAuto;
+        }
+
+        // Otherwise use the default shoot sound
+        return currentWeapon.shootSound;
+    }
 }
