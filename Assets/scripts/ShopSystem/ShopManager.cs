@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Cinemachine;
 
 public class ShopManager : MonoBehaviour
 {
@@ -14,7 +15,7 @@ public class ShopManager : MonoBehaviour
         public Sprite icon;
 
         [Header("Inventory Link")]
-        public InventoryItemData itemData; // Links directly to your item ScriptableObject
+        public InventoryItemData itemData;
     }
 
     [Header("Shop Settings")]
@@ -33,36 +34,64 @@ public class ShopManager : MonoBehaviour
     public TextMeshProUGUI playerMoneyText;
     public MonoBehaviour playerMovementScript;
 
+    [Header("Cinemachine Cameras")]
+    public CinemachineVirtualCamera mainVCam;
+    public CinemachineVirtualCamera shopVCam;
+
+    [Header("Cinemachine Priority Settings")]
+    public int mainPriority = 20; // Main camera has higher default priority
+    public int shopPriority = 10;
+
     private bool shopOpen = false;
+
+    [Header("NPC Dialogue Lines (Set in Inspector)")]
+    public List<string> npcLines = new List<string>();
+    public TextMeshProUGUI npcDialogueText;
+    public Button nextDialogueButton;
+
+    private int currentLineIndex = 0;
 
     private void Start()
     {
+        // Populate shop and UI
         PopulateShop();
         UpdateMoneyUI();
-        shopUI.SetActive(false);
 
+        // Ensure shop is closed at start
+        ToggleShop(false);
+
+        // Set up button events
         if (exitButton != null)
             exitButton.onClick.AddListener(() => ToggleShop(false));
+
+        if (nextDialogueButton != null)
+            nextDialogueButton.onClick.AddListener(NextDialogue);
     }
 
     private void Update()
     {
-        // Allow ESC to close shop
+        // ESC closes shop
         if (shopOpen && Input.GetKeyDown(KeyCode.Escape))
             ToggleShop(false);
+
+        // Spacebar shows next dialogue line
+        if (shopOpen && Input.GetKeyDown(KeyCode.Space))
+            NextDialogue();
     }
 
     private void PopulateShop()
     {
+        // Clear existing buttons
         foreach (Transform child in shopContentParent)
             Destroy(child.gameObject);
 
+        // Add shop items
         foreach (ShopItem item in shopItems)
         {
             GameObject buttonObj = Instantiate(shopItemButtonPrefab, shopContentParent);
             buttonObj.name = $"ShopButton_{item.itemName}";
 
-            // Text fields
+            // Update texts
             TextMeshProUGUI[] texts = buttonObj.GetComponentsInChildren<TextMeshProUGUI>();
             foreach (var text in texts)
             {
@@ -70,7 +99,7 @@ public class ShopManager : MonoBehaviour
                 if (text.name == "Price") text.text = "$" + item.price;
             }
 
-            // Icon
+            // Update icon
             Image iconImage = buttonObj.GetComponentInChildren<Image>();
             if (iconImage != null && item.icon != null)
                 iconImage.sprite = item.icon;
@@ -100,7 +129,6 @@ public class ShopManager : MonoBehaviour
 
         if (item.prefab != null && spawnPoint != null)
         {
-            // Random offset
             Vector3 spawnPos = spawnPoint.position + new Vector3(
                 Random.Range(-0.5f, 0.5f),
                 0f,
@@ -113,25 +141,15 @@ public class ShopManager : MonoBehaviour
             // Add ItemPickup automatically
             ItemPickup pickup = spawned.GetComponent<ItemPickup>();
             if (pickup == null)
-            {
                 pickup = spawned.AddComponent<ItemPickup>();
-                Debug.Log($"Added ItemPickup script to {spawned.name}");
-            }
 
-            // Assign InventoryItemData from ShopItem
+            // Assign InventoryItemData
             if (item.itemData != null)
-            {
                 pickup.ItemData = item.itemData;
-            }
-            else
-            {
-                Debug.LogWarning($"No InventoryItemData assigned for {item.itemName}");
-            }
 
-            // Ensure required components exist
+            // Ensure required components
             if (spawned.GetComponent<SphereCollider>() == null)
                 spawned.AddComponent<SphereCollider>();
-
             if (spawned.GetComponent<UniqueID>() == null)
                 spawned.AddComponent<UniqueID>();
         }
@@ -154,5 +172,40 @@ public class ShopManager : MonoBehaviour
 
         Cursor.visible = state;
         Cursor.lockState = state ? CursorLockMode.None : CursorLockMode.Locked;
+
+        if (state)
+        {
+            // Open shop shop camera active
+            shopVCam.Priority = mainPriority + 1; // higher than main
+            shopVCam.MoveToTopOfPrioritySubqueue();
+            mainVCam.Priority = mainPriority;
+
+            NextDialogue();
+        }
+        else
+        {
+            // Close shop main camera active
+            mainVCam.Priority = mainPriority + 1;
+            mainVCam.MoveToTopOfPrioritySubqueue();
+            shopVCam.Priority = shopPriority;
+
+            // Clear dialogue
+            if (npcDialogueText != null)
+                npcDialogueText.text = "";
+        }
+    }
+
+    private void NextDialogue()
+    {
+        if (npcLines.Count == 0)
+        {
+            if (npcDialogueText != null)
+                npcDialogueText.text = "…";
+            return;
+        }
+
+        currentLineIndex = Random.Range(0, npcLines.Count);
+        if (npcDialogueText != null)
+            npcDialogueText.text = npcLines[currentLineIndex];
     }
 }
