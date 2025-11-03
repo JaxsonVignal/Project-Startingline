@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db121b31bf658f040b07ed4f74155ca0, type: 3}
-  m_Name: AR33
+  m_Name: SG556
   m_EditorClassIdentifier: 
   ID: 7
-  Name: AR33
+  Name: GROZA
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 1
-  weaponId: AR33
+  weaponId: GROZA
   damage: 30
   fireRate: 0.1
   reloadTime: 2.5
@@ -34,7 +34,7 @@ MonoBehaviour:
   recoilY: 0.3
   recoilZ: 0.1
   spread: 0.001
-  allowedAttachmentSlots: 00000000010000000600000003000000
+  allowedAttachmentSlots: 0000000001000000060000000300000007000000
   allowedAttachments:
   - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
   - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
@@ -43,7 +43,7 @@ MonoBehaviour:
   - RearSight
   - FrontSight
   partToDisableWithSightPath: 
-  weaponPrefab: {fileID: 8297385703750001226, guid: d7a6bcb1303a845468a27729049d6605, type: 3}
+  weaponPrefab: {fileID: 2902277125390600404, guid: 9eca19f992a2f6248bae776f258cafd0, type: 3}
   shootSound: {fileID: 8300000, guid: 2f7f3e00e8c06d24fa20a985522f9674, type: 3}
   shootSoundFullAuto: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
   reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
