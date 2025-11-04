@@ -72,4 +72,39 @@ public class DayNightCycleManager : MonoBehaviour
 
     public int GetHour() => Mathf.FloorToInt(currentTimeOfDay);
     public int GetMinute() => Mathf.FloorToInt((currentTimeOfDay % 1f) * 60f);
+
+    /// <summary>
+    /// Convert real-time seconds to in-game hours based on your day/night cycle speed
+    /// </summary>
+    /// <param name="realTimeSeconds">Real-time in seconds</param>
+    /// <returns>In-game hours</returns>
+    public float GetGameTimeFromRealTime(float realTimeSeconds)
+    {
+        // Example: If your full day cycle is 20 minutes (1200 seconds) in real-time
+        // Then 1200 real seconds = 24 game hours
+        // So: gameHours = (realSeconds / secondsPerFullDay) * 24
+
+        // ADJUST THIS VALUE based on your day/night cycle settings
+        float secondsPerFullDay = 1200f; // Change this to match your actual day length
+
+        float gameHours = (realTimeSeconds / secondsPerFullDay) * 24f;
+
+        return gameHours;
+    }
+
+    /// <summary>
+    /// Convert in-game hours to real-time seconds
+    /// </summary>
+    /// <param name="gameHours">In-game hours</param>
+    /// <returns>Real-time seconds</returns>
+    public float GetRealTimeFromGameTime(float gameHours)
+    {
+        // ADJUST THIS VALUE based on your day/night cycle settings
+        float secondsPerFullDay = 1200f; // Change this to match your actual day length
+
+        float realSeconds = (gameHours / 24f) * secondsPerFullDay;
+
+        return realSeconds;
+    }
 }
+
