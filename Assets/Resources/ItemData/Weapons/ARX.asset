@@ -24,10 +24,12 @@ MonoBehaviour:
   magazineSize: 30
   bulletSpeed: 50
   FOVChange: 40
+  Value: 0
   requiredAmmoType: 4
   pelletsPerShot: 8
   spreadAngle: 5
   fireMode: 1
+  canSwitchFireMode: 0
   recoilX: -1.5
   recoilY: 0.03
   recoilZ: 0.03
@@ -35,13 +37,14 @@ MonoBehaviour:
   allowedAttachmentSlots: 0000000001000000030000000600000007000000
   allowedAttachments:
   - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
-  - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
+  - {fileID: 11400000, guid: 6c79adfea28736f4594495fba5db7b57, type: 2}
   partsToDisableWithSight:
   - RearSight
   - FrontSight
   partToDisableWithSightPath: RearSight
   weaponPrefab: {fileID: 2769957187085557481, guid: 4e765fdcad1a56f4599c871843469053, type: 3}
   shootSound: {fileID: 0}
+  shootSoundFullAuto: {fileID: 0}
   reloadSound: {fileID: 0}
   muzzleFlashPrefab: {fileID: 0}
   ShootingSoundDelay: 0
