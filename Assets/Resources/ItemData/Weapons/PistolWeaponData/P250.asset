@@ -41,7 +41,7 @@ MonoBehaviour:
   partsToDisableWithSight:
   - RearSight
   partToDisableWithSightPath: 
-  weaponPrefab: {fileID: 5442034252894913738, guid: 67ad42abcc7a8464b896cb7b90aa1009, type: 3}
+  weaponPrefab: {fileID: 3016950689543692171, guid: 5b828271cc3415449a93e10be8f57365, type: 3}
   shootSound: {fileID: 8300000, guid: 2f7f3e00e8c06d24fa20a985522f9674, type: 3}
   shootSoundFullAuto: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
   reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
