@@ -16,26 +16,19 @@ public class CivilianMovementController : MonoBehaviour
 
     public Transform CurrentTarget => currentTarget;
 
-    /// <summary>
-    /// Move to a target. If alwaysUpdate is true, the agent will continuously update the destination.
-    /// </summary>
     public void MoveTo(Transform target, bool alwaysUpdate = false)
     {
         if (target == null || overrideMovement)
             return;
 
-        // Only skip updating if not forced
         if (!alwaysUpdate && currentTarget == target)
             return;
 
         currentTarget = target;
-        agent.SetDestination(target.position);
         agent.isStopped = false;
+        agent.SetDestination(target.position);
     }
 
-    /// <summary>
-    /// Temporarily override movement to a fixed position for duration seconds
-    /// </summary>
     public void OverrideMovementTemporarily(Transform target, float duration)
     {
         StopAllCoroutines();
@@ -45,26 +38,24 @@ public class CivilianMovementController : MonoBehaviour
     private IEnumerator OverrideRoutine(Transform target, float duration)
     {
         overrideMovement = true;
-
-        // Teleport and reset path
-        agent.Warp(target.position);
+        agent.isStopped = true;
         agent.ResetPath();
-        currentTarget = target;
+
+        // Position once
+        transform.position = target.position;
 
         float timer = 0f;
         while (timer < duration)
         {
-            agent.Warp(target.position); // keep agent at target
+            transform.position = target.position; // keep them there
             timer += Time.deltaTime;
             yield return null;
         }
 
         overrideMovement = false;
+        agent.isStopped = false;
     }
 
-    /// <summary>
-    /// Stops movement immediately
-    /// </summary>
     public void StopMovement()
     {
         agent.isStopped = true;
@@ -76,14 +67,12 @@ public class CivilianMovementController : MonoBehaviour
     {
         if (agent == null || overrideMovement) return;
 
-        // Create a temporary GameObject to hold the position
         GameObject tempTarget = new GameObject("TempTarget");
         tempTarget.transform.position = position;
 
         MoveTo(tempTarget.transform);
 
-        // Destroy temp target after reaching it
-        StartCoroutine(DestroyTempTarget(tempTarget)); // destroy after 5 seconds max
+        StartCoroutine(DestroyTempTarget(tempTarget));
     }
 
     private IEnumerator DestroyTempTarget(GameObject temp)

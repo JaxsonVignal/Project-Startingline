@@ -26,7 +26,7 @@ public class PhoneUI : MonoBehaviour
 
     [Header("Price Offer UI")]
     public Slider priceSlider;
-    public Slider timeSlider;
+    public Slider timeSlider; // NOW HOURS
     public TextMeshProUGUI priceText;
     public TextMeshProUGUI timeText;
     public Button sendOfferButton;
@@ -39,7 +39,6 @@ public class PhoneUI : MonoBehaviour
     private string currentConversationNPC;
     private Dictionary<string, GameObject> contactButtons = new Dictionary<string, GameObject>();
 
-
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -48,22 +47,33 @@ public class PhoneUI : MonoBehaviour
 
     private void Start()
     {
-        phoneMainPanel.SetActive(false);
-        contactListPanel.SetActive(false);
-        conversationPanel.SetActive(false);
-        priceOfferPanel.SetActive(false);
+        // Ensure references exist to avoid null refs on startup
+        if (phoneMainPanel != null) phoneMainPanel.SetActive(false);
+        if (contactListPanel != null) contactListPanel.SetActive(false);
+        if (conversationPanel != null) conversationPanel.SetActive(false);
+        if (priceOfferPanel != null) priceOfferPanel.SetActive(false);
+        if (homePanel != null) homePanel.SetActive(true);
 
-        priceSlider.minValue = 0;
-        priceSlider.maxValue = 50000;
-        priceSlider.value = 10000;
-        priceSlider.onValueChanged.AddListener(OnPriceChanged);
+        // PRICE SLIDER
+        if (priceSlider != null)
+        {
+            priceSlider.minValue = 0;
+            priceSlider.maxValue = 50000;
+            priceSlider.value = 10000;
+            priceSlider.onValueChanged.AddListener(OnPriceChanged);
+        }
 
-        timeSlider.minValue = 1;
-        timeSlider.maxValue = 60;
-        timeSlider.value = 10;
-        timeSlider.onValueChanged.AddListener(OnTimeChanged);
+        // TIME SLIDER (IN-GAME HOURS)
+        if (timeSlider != null)
+        {
+            timeSlider.minValue = 0.1f;   // 0.1 hours = 6 min
+            timeSlider.maxValue = 8f;     // max 8 in-game hours
+            timeSlider.value = 1f;        // default 1 hour
+            timeSlider.onValueChanged.AddListener(OnTimeChanged);
+        }
 
-        sendOfferButton.onClick.AddListener(SendPriceOffer);
+        if (sendOfferButton != null)
+            sendOfferButton.onClick.AddListener(SendPriceOffer);
 
         UpdatePriceText();
         UpdateTimeText();
@@ -103,37 +113,52 @@ public class PhoneUI : MonoBehaviour
 
     public void OpenPhone()
     {
-        phoneMainPanel.SetActive(true);
+        if (phoneMainPanel != null)
+            phoneMainPanel.SetActive(true);
     }
 
     public void ClosePhone()
     {
-        phoneMainPanel.SetActive(false);
-        contactListPanel.SetActive(false);
-        conversationPanel.SetActive(false);
-        priceOfferPanel.SetActive(false);
+        if (phoneMainPanel != null) phoneMainPanel.SetActive(false);
+        if (contactListPanel != null) contactListPanel.SetActive(false);
+        if (conversationPanel != null) conversationPanel.SetActive(false);
+        if (priceOfferPanel != null) priceOfferPanel.SetActive(false);
+        if (homePanel != null) homePanel.SetActive(true);
     }
 
     public void OpenContactList()
     {
-        contactListPanel.SetActive(true);
-        conversationPanel.SetActive(false);
-        priceOfferPanel.SetActive(false);
-        homePanel.SetActive(false);
+        if (contactListPanel != null) contactListPanel.SetActive(true);
+        if (conversationPanel != null) conversationPanel.SetActive(false);
+        if (priceOfferPanel != null) priceOfferPanel.SetActive(false);
+        if (homePanel != null) homePanel.SetActive(false);
         RefreshContactList();
     }
 
     private void RefreshContactList()
     {
-        foreach (Transform child in contactListContent)
-            Destroy(child.gameObject);
+        if (contactListContent != null)
+        {
+            foreach (Transform child in contactListContent)
+                Destroy(child.gameObject);
+        }
 
         contactButtons.Clear();
 
-        List<string> conversations = TextingManager.Instance.GetAllConversationNames();
+        // Safely get conversations from TextingManager
+        List<string> conversations = new List<string>();
+        if (TextingManager.Instance != null)
+        {
+            var conv = TextingManager.Instance.GetAllConversationNames();
+            if (conv != null)
+                conversations = conv;
+        }
 
+        // If no conversations, optionally show nothing
         foreach (string npcName in conversations)
         {
+            if (contactButtonPrefab == null || contactListContent == null) break;
+
             GameObject contactBtn = Instantiate(contactButtonPrefab, contactListContent);
 
             TextMeshProUGUI buttonText = contactBtn.GetComponentInChildren<TextMeshProUGUI>();
@@ -141,7 +166,21 @@ public class PhoneUI : MonoBehaviour
             {
                 buttonText.text = npcName;
 
-                if (TextingManager.Instance.HasUnreadMessages(npcName))
+                // Null-safe unread check
+                bool hasUnread = false;
+                if (TextingManager.Instance != null)
+                {
+                    try
+                    {
+                        hasUnread = TextingManager.Instance.HasUnreadMessages(npcName);
+                    }
+                    catch
+                    {
+                        hasUnread = false;
+                    }
+                }
+
+                if (hasUnread)
                 {
                     buttonText.text += " •";
                     buttonText.color = Color.yellow;
@@ -149,8 +188,9 @@ public class PhoneUI : MonoBehaviour
             }
 
             Button btn = contactBtn.GetComponent<Button>();
-            string npcNameCopy = npcName;
-            btn.onClick.AddListener(() => OpenConversation(npcNameCopy));
+            string npcCopy = npcName;
+            if (btn != null)
+                btn.onClick.AddListener(() => OpenConversation(npcCopy));
 
             contactButtons[npcName] = contactBtn;
         }
@@ -158,54 +198,72 @@ public class PhoneUI : MonoBehaviour
 
     public void OpenConversation(string npcName)
     {
-        currentConversationNPC = npcName;
-        conversationPanel.SetActive(true);
-        contactListPanel.SetActive(false);
-        priceOfferPanel.SetActive(false);
+        if (string.IsNullOrEmpty(npcName)) return;
 
-        conversationHeaderText.text = npcName;
+        currentConversationNPC = npcName;
+        if (conversationPanel != null) conversationPanel.SetActive(true);
+        if (contactListPanel != null) contactListPanel.SetActive(false);
+        if (priceOfferPanel != null) priceOfferPanel.SetActive(false);
+
+        if (conversationHeaderText != null)
+            conversationHeaderText.text = npcName;
+
         RefreshConversation();
     }
 
     private void RefreshConversation()
     {
-        foreach (Transform child in messageListContent)
-            Destroy(child.gameObject);
-
-        TextConversation conversation = TextingManager.Instance.GetConversation(currentConversationNPC);
-
-        if (conversation != null)
+        if (messageListContent != null)
         {
-            foreach (TextMessage message in conversation.messages)
+            foreach (Transform child in messageListContent)
+                Destroy(child.gameObject);
+        }
+
+        // Null-safe conversation fetch
+        TextConversation convo = null;
+        if (TextingManager.Instance != null && !string.IsNullOrEmpty(currentConversationNPC))
+            convo = TextingManager.Instance.GetConversation(currentConversationNPC);
+
+        if (convo != null && messageListContent != null)
+        {
+            foreach (TextMessage msg in convo.messages)
             {
-                GameObject messagePrefab = message.isPlayerMessage ? playerMessagePrefab : npcMessagePrefab;
-                GameObject messageObj = Instantiate(messagePrefab, messageListContent);
+                GameObject prefab = msg.isPlayerMessage ? playerMessagePrefab : npcMessagePrefab;
+                if (prefab == null) continue;
 
-                TextMeshProUGUI messageText = messageObj.GetComponentInChildren<TextMeshProUGUI>();
+                GameObject obj = Instantiate(prefab, messageListContent);
+
+                TextMeshProUGUI messageText = obj.GetComponentInChildren<TextMeshProUGUI>();
                 if (messageText != null)
-                    messageText.text = message.messageContent;
+                    messageText.text = msg.messageContent;
 
-                TextMeshProUGUI timestampText = messageObj.transform.Find("Timestamp")?.GetComponent<TextMeshProUGUI>();
-                if (timestampText != null)
-                    timestampText.text = message.timestamp.ToString("HH:mm");
+                TextMeshProUGUI timestamp = obj.transform.Find("Timestamp")?.GetComponent<TextMeshProUGUI>();
+                if (timestamp != null)
+                    timestamp.text = msg.timestamp.ToString("HH:mm");
             }
         }
 
-        WeaponOrder activeOrder = TextingManager.Instance.GetActiveOrderForNPC(currentConversationNPC);
+        // Null-safe check for active order
+        WeaponOrder activeOrder = null;
+        if (TextingManager.Instance != null && !string.IsNullOrEmpty(currentConversationNPC))
+            activeOrder = TextingManager.Instance.GetActiveOrderForNPC(currentConversationNPC);
+
         if (activeOrder != null && !activeOrder.isPriceSet)
         {
             ShowPriceOfferOption();
+        }
+        else
+        {
+            // Ensure price panel hidden if no active order
+            if (priceOfferPanel != null && (activeOrder == null || activeOrder.isPriceSet))
+                priceOfferPanel.SetActive(false);
         }
     }
 
     private void ShowPriceOfferOption()
     {
-        priceOfferPanel.SetActive(true);
-    }
-
-    public void OpenPriceOfferPanel()
-    {
-        priceOfferPanel.SetActive(true);
+        if (priceOfferPanel != null)
+            priceOfferPanel.SetActive(true);
     }
 
     private void OnPriceChanged(float value)
@@ -220,47 +278,59 @@ public class PhoneUI : MonoBehaviour
 
     private void UpdatePriceText()
     {
-        priceText.text = $"${priceSlider.value:F0}";
+        if (priceText != null)
+            priceText.text = $"${(priceSlider != null ? priceSlider.value : 0f):F0}";
     }
 
     private void UpdateTimeText()
     {
-        timeText.text = $"{timeSlider.value:F0} min";
+        if (timeText != null)
+            timeText.text = $"{(timeSlider != null ? timeSlider.value : 0f):F1} hours";
     }
 
     private void SendPriceOffer()
     {
-        float price = priceSlider.value;
-        float time = timeSlider.value;
+        if (string.IsNullOrEmpty(currentConversationNPC))
+            return;
 
-        string offerMessage = $"I can get you that for ${price:F0}. Pick up in {time:F0} minutes.";
-        TextingManager.Instance.SendMessage(currentConversationNPC, offerMessage, true, TextMessage.MessageType.PriceOffer);
+        float price = priceSlider != null ? priceSlider.value : 0f;
+        float hours = timeSlider != null ? timeSlider.value : 1f; // DO NOT CONVERT — pure in-game hours
 
-        TextingManager.Instance.SendPriceOffer(currentConversationNPC, price, time);
+        // Player message inside chat
+        string offerMessage = $"I can get you that for ${price:F0}. Pick up in {hours:F1} hours.";
+        if (TextingManager.Instance != null)
+            TextingManager.Instance.SendMessage(currentConversationNPC, offerMessage, true, TextMessage.MessageType.PriceOffer);
 
-        priceOfferPanel.SetActive(false);
+        // Send to TextingManager (in-game hours)
+        if (TextingManager.Instance != null)
+            TextingManager.Instance.SendPriceOffer(currentConversationNPC, price, hours);
+
+        if (priceOfferPanel != null)
+            priceOfferPanel.SetActive(false);
+
         RefreshConversation();
     }
 
     public void OnNewMessage(string npcName)
     {
-        if (contactListPanel.activeSelf)
+        if (contactListPanel != null && contactListPanel.activeSelf)
             RefreshContactList();
-        else if (conversationPanel.activeSelf && currentConversationNPC == npcName)
+        else if (conversationPanel != null && conversationPanel.activeSelf && currentConversationNPC == npcName)
             RefreshConversation();
     }
 
     public void BackToContactList()
     {
-        conversationPanel.SetActive(false);
-        priceOfferPanel.SetActive(false);
+        if (conversationPanel != null) conversationPanel.SetActive(false);
+        if (priceOfferPanel != null) priceOfferPanel.SetActive(false);
         OpenContactList();
     }
 
     public void BackToMainPhone()
     {
-        contactListPanel.SetActive(false);
-        conversationPanel.SetActive(false);
-        priceOfferPanel.SetActive(false);
+        if (contactListPanel != null) contactListPanel.SetActive(false);
+        if (conversationPanel != null) conversationPanel.SetActive(false);
+        if (priceOfferPanel != null) priceOfferPanel.SetActive(false);
+        if (homePanel != null) homePanel.SetActive(true);
     }
 }

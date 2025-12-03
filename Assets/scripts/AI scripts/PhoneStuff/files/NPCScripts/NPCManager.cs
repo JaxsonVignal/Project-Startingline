@@ -4,7 +4,15 @@ using System.Collections;
 [RequireComponent(typeof(Animator), typeof(CivilianMovementController))]
 public class NPCManager : MonoBehaviour
 {
-    public enum NPCState { Sleeping, Eating, Working, Idle, GoingToMeeting }
+    public enum NPCState
+    {
+        Sleeping,
+        Eating,
+        Working,
+        Idle,
+        GoingToMeeting,
+        Fleeing
+    }
 
     [Header("NPC Info")]
     public string npcName = "Civilian";
@@ -17,7 +25,6 @@ public class NPCManager : MonoBehaviour
     public float sleepTime = 22f;
     public float breakStartTime = 12f;
     public float breakEndTime = 13f;
-    public float fleeDuration = 20f; // how long the NPC runs away
 
     [Header("Waypoints")]
     public Transform bedLocation;
@@ -26,20 +33,33 @@ public class NPCManager : MonoBehaviour
     public Transform idleLocation;
 
     [Header("Weapon Deal Settings")]
-    public float meetingWaitTime = 300f; // 5 minutes to wait at location
+    public float meetingWaitTime = 300f;
+
+    [Header("Flee Settings")]
+    public float fleeDistance = 20f;
+    public float fleeDuration = 10f;
 
     private Animator animator;
     private CivilianMovementController movement;
 
-    // Weapon deal tracking
     private bool hasScheduledMeeting = false;
     private Transform meetingLocation;
     private float meetingTime;
-    private float arrivalTime; // When to start walking (1 hour before)
+    private float arrivalTime;
     private NPCState stateBeforeMeeting;
 
-    private void OnEnable() => DayNightCycleManager.OnTimeChanged += HandleTimeUpdate;
-    private void OnDisable() => DayNightCycleManager.OnTimeChanged -= HandleTimeUpdate;
+    private bool isFleeing = false;
+    private float fleeEndTime;
+
+    private void OnEnable()
+    {
+        DayNightCycleManager.OnTimeChanged += HandleTimeUpdate;
+    }
+
+    private void OnDisable()
+    {
+        DayNightCycleManager.OnTimeChanged -= HandleTimeUpdate;
+    }
 
     private void Start()
     {
@@ -47,23 +67,45 @@ public class NPCManager : MonoBehaviour
         movement = GetComponent<CivilianMovementController>();
     }
 
+    private void Update()
+    {
+        // Check if flee duration has ended
+        if (isFleeing && Time.time >= fleeEndTime)
+        {
+            isFleeing = false;
+
+            // Return to normal schedule
+            float now = DayNightCycleManager.Instance != null ?
+                DayNightCycleManager.Instance.currentTimeOfDay : 12f;
+            SwitchState(DetermineState(now));
+        }
+    }
+
     private void HandleTimeUpdate(float hour)
     {
-        // Check if we need to go to meeting
-        if (hasScheduledMeeting && hour >= arrivalTime && hour < meetingTime)
+        // Don't update schedule while fleeing
+        if (isFleeing)
+            return;
+
+        if (hasScheduledMeeting)
         {
-            if (currentState != NPCState.GoingToMeeting)
+            if (currentState != NPCState.GoingToMeeting &&
+                IsTimeBetween(hour, arrivalTime, meetingTime))
             {
                 GoToMeeting();
+                return;
+            }
+
+            float meetingEnd = meetingTime + (meetingWaitTime / 3600f);
+
+            if (IsTimePast(hour, meetingEnd))
+            {
+                CompleteMeeting();
+                return;
             }
         }
-        // Check if meeting time has passed and we need to resume schedule
-        else if (hasScheduledMeeting && hour >= meetingTime + (meetingWaitTime / 3600f))
-        {
-            CompleteMeeting();
-        }
-        // Normal schedule
-        else if (!hasScheduledMeeting || currentState != NPCState.GoingToMeeting)
+
+        if (!hasScheduledMeeting || currentState != NPCState.GoingToMeeting)
         {
             NPCState newState = DetermineState(hour);
             if (newState != currentState)
@@ -71,29 +113,48 @@ public class NPCManager : MonoBehaviour
         }
     }
 
+    private bool IsTimeBetween(float now, float start, float end)
+    {
+        if (start < end)
+            return now >= start && now < end;
+
+        return now >= start || now < end;
+    }
+
+    private bool IsTimePast(float now, float target)
+    {
+        if (target >= 24f) target -= 24f;
+        if (now >= target) return true;
+
+        if (target < 2f && now > 22f)
+            return true;
+
+        return false;
+    }
+
     private NPCState DetermineState(float hour)
     {
         if (hour >= sleepTime || hour < wakeUpTime)
             return NPCState.Sleeping;
-        else if (hour >= breakStartTime && hour < breakEndTime)
+
+        if (hour >= breakStartTime && hour < breakEndTime)
             return NPCState.Eating;
-        else if (hour >= workStartTime && hour < workEndTime)
+
+        if (hour >= workStartTime && hour < workEndTime)
             return NPCState.Working;
-        else
-            return NPCState.Idle;
+
+        return NPCState.Idle;
     }
 
     private void SwitchState(NPCState newState)
     {
-        if (newState == currentState) return; // Prevent unnecessary MoveTo
+        if (newState == currentState)
+            return;
 
         currentState = newState;
-        Debug.Log($"{npcName} switched to {newState}");
 
-        // Animation trigger
-        if (animator) animator.SetTrigger(newState.ToString());
+        animator?.SetTrigger(newState.ToString());
 
-        // Movement target
         switch (newState)
         {
             case NPCState.Sleeping:
@@ -111,147 +172,168 @@ public class NPCManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Schedule a weapon deal meeting at a specific location and time
-    /// </summary>
-    /// <param name="location">Where to meet</param>
-    /// <param name="pickupTime">Real-time seconds until meeting</param>
-    public void ScheduleWeaponMeeting(Transform location, float pickupTime)
+    // ---------------------
+    // MEETING SYSTEM
+    // ---------------------
+    public void ScheduleWeaponMeeting(Transform location, float pickupHours)
     {
-        if (location == null)
-        {
-            Debug.LogWarning($"{npcName} received null meeting location!");
-            return;
-        }
-
         meetingLocation = location;
+        hasScheduledMeeting = true;
 
-        // Convert real-time seconds to in-game hours
-        float realTimeToGameTime = DayNightCycleManager.Instance.GetGameTimeFromRealTime(pickupTime);
-        float currentGameTime = DayNightCycleManager.Instance.currentTimeOfDay;
+        float now = DayNightCycleManager.Instance.currentTimeOfDay;
 
-        meetingTime = currentGameTime + realTimeToGameTime;
-
-        // Wrap around if it goes past 24 hours
+        meetingTime = now + pickupHours;
         if (meetingTime >= 24f)
             meetingTime -= 24f;
 
-        // Set arrival time to 1 in-game hour before meeting
         arrivalTime = meetingTime - 1f;
         if (arrivalTime < 0f)
             arrivalTime += 24f;
 
-        hasScheduledMeeting = true;
         stateBeforeMeeting = currentState;
 
-        Debug.Log($"{npcName} scheduled meeting at {location.name}. Current time: {currentGameTime:F2}, Arrival: {arrivalTime:F2}, Meeting: {meetingTime:F2}");
+        Debug.Log($"{npcName} meeting: NOW {now:F2}, ARR {arrivalTime:F2}, MEET {meetingTime:F2}");
 
-        // If the arrival time is very soon or already passed, go immediately
-        if (Mathf.Abs(currentGameTime - arrivalTime) < 0.1f ||
-            (currentGameTime > arrivalTime && currentGameTime < meetingTime))
-        {
+        if (IsTimeBetween(now, arrivalTime, meetingTime))
             GoToMeeting();
-        }
     }
 
     private void GoToMeeting()
     {
-        if (currentState == NPCState.GoingToMeeting) return;
+        if (currentState == NPCState.GoingToMeeting)
+            return;
 
         currentState = NPCState.GoingToMeeting;
 
-        Debug.Log($"{npcName} is now heading to meeting at {meetingLocation.name}");
-
-        // Move to meeting location
         movement?.MoveTo(meetingLocation);
-
-        // Set animation if you have one for walking/moving
-        if (animator) animator.SetTrigger("Walking");
+        animator?.SetTrigger("Walking");
     }
 
     private void CompleteMeeting()
     {
-        Debug.Log($"{npcName} completed meeting at {meetingLocation.name}");
-
         hasScheduledMeeting = false;
         meetingLocation = null;
 
-        // Resume normal schedule
-        float currentHour = DayNightCycleManager.Instance.currentTimeOfDay;
-        NPCState newState = DetermineState(currentHour);
-        SwitchState(newState);
+        float now = DayNightCycleManager.Instance.currentTimeOfDay;
+        SwitchState(DetermineState(now));
     }
 
-    /// <summary>
-    /// Check if NPC is currently at the meeting location and waiting
-    /// </summary>
-    public bool IsAtMeetingLocation()
-    {
-        if (!hasScheduledMeeting || meetingLocation == null)
-            return false;
-
-        float distance = Vector3.Distance(transform.position, meetingLocation.position);
-        return distance < 3f && currentState == NPCState.GoingToMeeting;
-    }
-
-    /// <summary>
-    /// Called when player successfully delivers the weapon
-    /// </summary>
     public void CompleteWeaponDeal()
     {
         if (hasScheduledMeeting)
-        {
-            Debug.Log($"{npcName} received weapon delivery!");
             CompleteMeeting();
-        }
     }
 
-    public void ResetToBed()
+    // ---------------------
+    // FLEE SYSTEM
+    // ---------------------
+    public void RunAwayFromPlayer()
     {
-        if (bedLocation == null)
+        if (isFleeing)
         {
-            Debug.LogWarning($"{npcName} has no bed assigned!");
-            return;
+            Debug.Log($"{npcName} is already fleeing!");
+            return; // Already fleeing
         }
 
-        // Cancel any scheduled meetings
-        hasScheduledMeeting = false;
+        Debug.Log($"{npcName} RunAwayFromPlayer() called!");
 
-        // Stop NavMeshAgent and teleport
-        if (movement != null)
+        isFleeing = true;
+        fleeEndTime = Time.time + fleeDuration;
+        currentState = NPCState.Fleeing;
+
+        // Find player - try multiple methods
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player == null)
         {
-            movement.OverrideMovementTemporarily(bedLocation, 2f); // hold at bed for 2 seconds
+            // Try finding by name if tag doesn't work
+            player = GameObject.Find("Player");
+        }
+
+        if (player == null)
+        {
+            // Try finding FPSController
+            player = GameObject.Find("FPSController");
+        }
+
+        if (player == null)
+        {
+            // Last resort: find any camera and use its parent
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
+                player = mainCam.transform.root.gameObject;
+        }
+
+        if (player != null)
+        {
+            Debug.Log($"{npcName} found player at {player.transform.position}");
+
+            // Calculate flee direction (away from player)
+            Vector3 directionAwayFromPlayer = (transform.position - player.transform.position).normalized;
+            Vector3 fleePosition = transform.position + directionAwayFromPlayer * fleeDistance;
+
+            // Make sure the flee position is on the ground
+            if (Physics.Raycast(fleePosition + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f))
+            {
+                fleePosition = hit.point;
+            }
+
+            Debug.Log($"{npcName} fleeing to position: {fleePosition}");
+
+            // Move to flee position
+            if (movement != null)
+            {
+                // Create a temporary transform for the flee location
+                GameObject tempFleePoint = new GameObject("TempFleePoint_" + npcName);
+                tempFleePoint.transform.position = fleePosition;
+                movement.MoveTo(tempFleePoint.transform);
+                Destroy(tempFleePoint, 2f); // Clean up after movement starts
+            }
+            else
+            {
+                Debug.LogWarning($"{npcName} has no movement controller!");
+            }
+
+            animator?.SetTrigger("Running");
+
+            Debug.Log($"{npcName} is fleeing from player!");
         }
         else
         {
+            Debug.LogError($"{npcName} couldn't find player to flee from!");
+            isFleeing = false;
+        }
+    }
+
+    // ---------------------
+    // RESET SYSTEM
+    // ---------------------
+    public void ResetToBed()
+    {
+        // Cancel any ongoing activities
+        hasScheduledMeeting = false;
+        meetingLocation = null;
+        isFleeing = false;
+
+        // Force NPC to bed
+        currentState = NPCState.Sleeping;
+
+        if (bedLocation != null)
+        {
+            // Teleport to bed immediately
             transform.position = bedLocation.position;
+            transform.rotation = bedLocation.rotation;
+
+            // Update movement controller
+            movement?.MoveTo(bedLocation);
+        }
+        else
+        {
+            Debug.LogWarning($"{npcName} has no bed location assigned!");
         }
 
-        currentState = NPCState.Sleeping;
+        animator?.SetTrigger("Sleeping");
+
         Debug.Log($"{npcName} has been reset to bed.");
-    }
-
-    public void RunAwayFromPlayer()
-    {
-        GameObject player = GameObject.FindWithTag("Player");
-        if (player == null || movement == null) return;
-
-        Vector3 fleeDir = (transform.position - player.transform.position).normalized;
-        Vector3 fleeTarget = transform.position + fleeDir * 10f;
-
-        movement.MoveToPosition(fleeTarget);
-        Debug.Log($"{name} is running away from the player!");
-
-        // Start timer to resume schedule
-        StopCoroutine("ResumeSchedule");
-        StartCoroutine(ResumeSchedule());
-    }
-
-    private IEnumerator ResumeSchedule()
-    {
-        yield return new WaitForSeconds(fleeDuration);
-
-        // Let the schedule system take over
-        HandleTimeUpdate(DayNightCycleManager.Instance.currentTimeOfDay);
     }
 }

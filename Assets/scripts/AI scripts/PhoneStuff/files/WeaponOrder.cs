@@ -16,7 +16,8 @@ public class WeaponOrder
     public bool isPriceSet;
     public bool isAccepted;
     public bool isCompleted;
-    
+    public float pickupTimeGameHour;
+
     public WeaponOrder(string npc, WeaponData weapon, Transform location)
     {
         npcName = npc;
