@@ -16205,7 +16205,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dayLengthInMinutes: 24
   startHour: 6
-  directionalLight: {fileID: 0}
+  directionalLight: {fileID: 705507994}
   lightColor:
     serializedVersion: 2
     key0: {r: 1, g: 1, b: 1, a: 1}
