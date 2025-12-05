@@ -8,9 +8,13 @@ public class ItemPickup : MonoBehaviour
 {
     public float pickUpRadius = 1;
     public InventoryItemData ItemData;
+
     private SphereCollider myCollider;
     [SerializeField] private ItemPickUpSaveData itemSaveData;
     private string id;
+    private bool playerInRange = false;
+    private PlayerInventoryHolder playerInventory;
+    private PlayerInputHandler playerInputHandler;
 
     private void Awake()
     {
@@ -25,6 +29,15 @@ public class ItemPickup : MonoBehaviour
     private void Start()
     {
         SaveGameManager.data.activeItems.Add(id, itemSaveData);
+    }
+
+    private void Update()
+    {
+        // Check for interact input while player is in range
+        if (playerInRange && playerInputHandler != null && playerInputHandler.InteractPressed)
+        {
+            TryPickupItem();
+        }
     }
 
     private void LoadGame(SaveData data)
@@ -49,19 +62,47 @@ public class ItemPickup : MonoBehaviour
         var inventory = other.GetComponent<PlayerInventoryHolder>();
         if (!inventory) return;
 
-        Debug.Log("Player detected, attempting to add item: " + ItemData.name);
+        // Get the player's input handler
+        playerInputHandler = other.GetComponent<PlayerInputHandler>();
+        if (playerInputHandler == null)
+        {
+            Debug.LogError("PlayerInputHandler not found on player!");
+            return;
+        }
+
+        playerInRange = true;
+        playerInventory = inventory;
+        Debug.Log($"Press Interact (E) to pick up: {ItemData.name}");
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        var inventory = other.GetComponent<PlayerInventoryHolder>();
+        if (!inventory) return;
+
+        playerInRange = false;
+        playerInventory = null;
+        playerInputHandler = null;
+        Debug.Log("Left pickup range");
+    }
+
+    private void TryPickupItem()
+    {
+        if (playerInventory == null) return;
+
+        Debug.Log("Player attempting to pick up item: " + ItemData.name);
 
         // Store weapon instance BEFORE pickup (in case we need to find the slot after)
         var instanceHolder = GetComponent<WeaponInstanceHolder>();
         WeaponInstance weaponInstance = instanceHolder?.weaponInstance;
 
-        if (inventory.AddToInventory(ItemData, 1))
+        if (playerInventory.AddToInventory(ItemData, 1))
         {
-            // NEW: Transfer weapon attachment data if this is a weapon with attachments
+            // Transfer weapon attachment data if this is a weapon with attachments
             if (weaponInstance != null)
             {
                 // Find the slot that contains this weapon
-                InventorySlot targetSlot = FindSlotWithWeapon(inventory, ItemData);
+                InventorySlot targetSlot = FindSlotWithWeapon(playerInventory, ItemData);
                 if (targetSlot != null)
                 {
                     WeaponInstanceStorage.StoreInstance(targetSlot.UniqueSlotID, weaponInstance);
@@ -71,6 +112,10 @@ public class ItemPickup : MonoBehaviour
 
             SaveGameManager.data.collectedItems.Add(id);
             Destroy(this.gameObject);
+        }
+        else
+        {
+            Debug.Log("Inventory full or item cannot be added");
         }
     }
 
@@ -82,7 +127,6 @@ public class ItemPickup : MonoBehaviour
             if (slot.ItemData == weaponData)
                 return slot;
         }
-
         return null;
     }
 }
