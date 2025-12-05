@@ -34,10 +34,21 @@ public class PlayerInputHandler : MonoBehaviour
 
         gameInput.Player.Interact.performed += ctx => InteractPressed = true;
         gameInput.Player.Interact.canceled += ctx => InteractPressed = false;
+
+        // Fire mode switching
+        gameInput.Player.SwitchFire.performed += OnSwitchFireMode;
     }
 
     private void OnEnable() => gameInput.Enable();
     private void OnDisable() => gameInput.Disable();
+
+    private void OnSwitchFireMode(InputAction.CallbackContext context)
+    {
+        if (PlayerShooting.Instance != null)
+        {
+            PlayerShooting.Instance.SwitchFireMode(context);
+        }
+    }
 
     // Optional: reset one-shot inputs (like UI toggle) after reading
     public void ResetToggleUI() => ToggleUIPressed = false;

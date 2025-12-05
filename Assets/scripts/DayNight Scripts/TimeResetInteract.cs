@@ -6,25 +6,22 @@ public class TimeResetInteractable : MonoBehaviour, IInteractable
     [Header("Time Settings")]
     public float morningHour = 6f;
 
-    public UnityAction<IInteractable> OnInteractionComplete { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+    public UnityAction<IInteractable> OnInteractionComplete { get; set; }
 
     public void EndInteraction()
     {
-        throw new System.NotImplementedException();
+        // Not needed for instant interactions
     }
 
     public void Interact(Interactor interactor, out bool interactSuccessful)
     {
-        interactSuccessful = false;
-
         // Reset time
         var dayNight = GameObject.FindObjectOfType<DayNightCycleManager>();
         if (dayNight != null)
             dayNight.SetTime(morningHour);
 
-        // Save game
-        SaveData data = new SaveData();
-        SaveLoad.Save(data);
+        // Save game using the existing save data
+        SaveGameManager.SaveData();
 
         // Reset all NPCs to bed
         var allNpcs = GameObject.FindObjectsOfType<NPCManager>();
@@ -33,8 +30,8 @@ public class TimeResetInteractable : MonoBehaviour, IInteractable
             npc.ResetToBed();
         }
 
-        interactSuccessful = true;
+        interactSuccessful = false; // Don't hold the interaction
+
         Debug.Log("Time reset, game saved, and all NPCs reset to bed.");
     }
-
 }
