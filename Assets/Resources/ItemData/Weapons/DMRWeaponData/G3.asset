@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db121b31bf658f040b07ed4f74155ca0, type: 3}
-  m_Name: ARX
+  m_Name: G3
   m_EditorClassIdentifier: 
-  ID: -1
-  Name: ARX
+  ID: 7
+  Name: G3
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 1
-  weaponId: ARX
+  weaponId: G3
   damage: 30
   fireRate: 0.1
   reloadTime: 2.5
@@ -28,23 +28,23 @@ MonoBehaviour:
   requiredAmmoType: 4
   pelletsPerShot: 8
   spreadAngle: 5
-  fireMode: 1
-  canSwitchFireMode: 0
+  fireMode: 0
+  canSwitchFireMode: 1
   recoilX: -1.5
-  recoilY: 0.03
-  recoilZ: 0.03
-  spread: 0.01
-  allowedAttachmentSlots: 0000000001000000030000000600000007000000
+  recoilY: 0.3
+  recoilZ: 0.1
+  spread: 0.001
+  allowedAttachmentSlots: 0000000001000000060000000300000007000000
   allowedAttachments:
+  - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
   - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
   - {fileID: 11400000, guid: 6c79adfea28736f4594495fba5db7b57, type: 2}
   partsToDisableWithSight:
   - RearSight
-  - FrontSight
-  partToDisableWithSightPath: RearSight
-  weaponPrefab: {fileID: 2769957187085557481, guid: 4e765fdcad1a56f4599c871843469053, type: 3}
-  shootSound: {fileID: 0}
-  shootSoundFullAuto: {fileID: 0}
-  reloadSound: {fileID: 0}
+  partToDisableWithSightPath: 
+  weaponPrefab: {fileID: 2444858878568088739, guid: 73744771ffac26444b9087ce7eb9e148, type: 3}
+  shootSound: {fileID: 8300000, guid: 2f7f3e00e8c06d24fa20a985522f9674, type: 3}
+  shootSoundFullAuto: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
+  reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
   muzzleFlashPrefab: {fileID: 0}
   ShootingSoundDelay: 0
