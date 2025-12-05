@@ -48,7 +48,6 @@ public class HotbarDisplay : StaticInventoryDisplay
         _gameInput.Player.Hotbar9.performed += ctx => SetIndex(8);
         _gameInput.Player.Hotbar10.performed += ctx => SetIndex(9);
 
-        // NEW: Track aiming state
         _gameInput.Player.Aim.performed += ctx => isAiming = true;
         _gameInput.Player.Aim.canceled += ctx => isAiming = false;
     }
@@ -73,7 +72,6 @@ public class HotbarDisplay : StaticInventoryDisplay
         _gameInput.Player.Hotbar9.performed -= ctx => SetIndex(8);
         _gameInput.Player.Hotbar10.performed -= ctx => SetIndex(9);
 
-        // NEW: Unsubscribe from aim events
         _gameInput.Player.Aim.performed -= ctx => isAiming = true;
         _gameInput.Player.Aim.canceled -= ctx => isAiming = false;
     }
@@ -87,7 +85,6 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     private void SetIndex(int newIndex)
     {
-        // NEW: Prevent switching while aiming
         if (isAiming)
         {
             Debug.Log("Cannot switch items while aiming!");
@@ -109,7 +106,6 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     private void ChangeIndex(int direction)
     {
-        // NEW: Prevent switching while aiming
         if (isAiming)
             return;
 
@@ -130,16 +126,9 @@ public class HotbarDisplay : StaticInventoryDisplay
             currentWeapon.transform.localPosition = Vector3.zero;
             currentWeapon.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
 
-            var follow = currentWeapon.AddComponent<WeaponFollow>();
-            follow.cameraTransform = Camera.main.transform;
-            follow.smoothSpeed = 10f;
-            follow.swayAmount = 0f;
-            follow.swaySmooth = 4f;
-
             PlayerShooting.Instance.firePoint = currentWeapon.transform.Find("FirePoint");
             PlayerShooting.Instance.EquipWeapon(weapon, slotID);
 
-            // Attach ADS system
             var ads = currentWeapon.AddComponent<ADS>();
             ads.weaponRoot = currentWeapon.transform;
             ads.playerCamera = Camera.main;
@@ -147,10 +136,8 @@ public class HotbarDisplay : StaticInventoryDisplay
             ads.adsPosition = currentWeapon.transform.Find("ADSPosition");
             ads.scopeAdsPosition = currentWeapon.transform.Find("ScopeAdsPosition");
 
-            // Apply attachments from WeaponInstance if available
             var attachSys = ApplyStoredAttachments(currentWeapon, slotID, weapon);
 
-            // Set the attachment system on PlayerShooting to apply modifiers
             if (attachSys != null)
             {
                 PlayerShooting.Instance.SetAttachmentSystem(attachSys);
@@ -161,15 +148,13 @@ public class HotbarDisplay : StaticInventoryDisplay
 
     private WeaponAttachmentSystem ApplyStoredAttachments(GameObject weaponObject, string slotID, WeaponData weaponData)
     {
-        // Get the WeaponInstance stored for this slot
         WeaponInstance storedInstance = WeaponInstanceStorage.GetInstance(slotID);
         if (storedInstance == null || storedInstance.attachments.Count == 0)
         {
             Debug.Log($"No stored attachments found for slot {slotID}");
-            return null; // No stored attachments
+            return null;
         }
 
-        // Build attachment lookup from Resources
         var allAttachments = Resources.LoadAll<AttachmentData>("Attachments");
         var attachmentLookup = new Dictionary<string, AttachmentData>();
         foreach (var att in allAttachments)
@@ -178,20 +163,17 @@ public class HotbarDisplay : StaticInventoryDisplay
                 attachmentLookup[att.id] = att;
         }
 
-        // Add or get WeaponRuntime component and initialize it properly
         var runtime = weaponObject.GetComponent<WeaponRuntime>();
         if (runtime == null)
         {
             runtime = weaponObject.AddComponent<WeaponRuntime>();
         }
 
-        // Initialize WeaponRuntime with the stored instance
-        // This will automatically handle iron sight visibility
         runtime.InitFromInstance(storedInstance, weaponData, attachmentLookup);
 
         Debug.Log($"Successfully applied {storedInstance.attachments.Count} attachments to equipped weapon via WeaponRuntime");
 
-        return runtime.attachmentSystem; // Return the attachment system from runtime
+        return runtime.attachmentSystem;
     }
 
     private InventorySlot FindSlotByID(string slotID)

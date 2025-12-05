@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db121b31bf658f040b07ed4f74155ca0, type: 3}
+  m_Name: SHAKER
+  m_EditorClassIdentifier: 
+  ID: 7
+  Name: SHAKER
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 1
+  weaponId: SHAKER
+  damage: 30
+  fireRate: 0.1
+  reloadTime: 2.5
+  magazineSize: 30
+  bulletSpeed: 50
+  FOVChange: 40
+  Value: 0
+  requiredAmmoType: 6
+  pelletsPerShot: 8
+  spreadAngle: 5
+  fireMode: 3
+  canSwitchFireMode: 1
+  recoilX: -1.5
+  recoilY: 0.3
+  recoilZ: 0.1
+  spread: 0.001
+  allowedAttachmentSlots: 00000000010000000600000003000000
+  allowedAttachments:
+  - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
+  - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
+  - {fileID: 11400000, guid: 6c79adfea28736f4594495fba5db7b57, type: 2}
+  partsToDisableWithSight: []
+  partToDisableWithSightPath: 
+  weaponPrefab: {fileID: 4829418371800124875, guid: cd692908a004272469d477af458a12f1, type: 3}
+  shootSound: {fileID: 8300000, guid: 2f7f3e00e8c06d24fa20a985522f9674, type: 3}
+  shootSoundFullAuto: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
+  reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
+  muzzleFlashPrefab: {fileID: 0}
+  ShootingSoundDelay: 0

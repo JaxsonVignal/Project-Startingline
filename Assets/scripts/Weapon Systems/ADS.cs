@@ -74,8 +74,9 @@ public class ADS : MonoBehaviour
             targetPos = hipPosition;
         }
 
-        weaponRoot.position = Vector3.Lerp(weaponRoot.position, targetPos.position, Time.deltaTime * aimSpeed);
-        weaponRoot.rotation = Quaternion.Lerp(weaponRoot.rotation, targetPos.rotation, Time.deltaTime * aimSpeed);
+        // Use LOCAL position and rotation instead of world
+        weaponRoot.localPosition = Vector3.Lerp(weaponRoot.localPosition, targetPos.localPosition, Time.deltaTime * aimSpeed);
+        weaponRoot.localRotation = Quaternion.Lerp(weaponRoot.localRotation, targetPos.localRotation, Time.deltaTime * aimSpeed);
 
         float targetFOV = GetCurrentFOV();
         playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, targetFOV, Time.deltaTime * aimSpeed);
