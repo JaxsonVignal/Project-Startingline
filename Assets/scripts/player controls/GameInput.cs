@@ -215,6 +215,15 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""PickUp"",
+                    ""type"": ""Button"",
+                    ""id"": ""ff1d4322-e1c9-4819-a8b0-fd76308be283"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": ""Press"",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -514,6 +523,17 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""action"": ""Switch Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b85d57f9-ba64-4ea9-ada5-d34f08c7300f"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PickUp"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -610,6 +630,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         m_Player_Reload = m_Player.FindAction("Reload", throwIfNotFound: true);
         m_Player_Aim = m_Player.FindAction("Aim", throwIfNotFound: true);
         m_Player_SwitchFire = m_Player.FindAction("Switch Fire", throwIfNotFound: true);
+        m_Player_PickUp = m_Player.FindAction("PickUp", throwIfNotFound: true);
         // New action map
         m_Newactionmap = asset.FindActionMap("New action map", throwIfNotFound: true);
         m_Newactionmap_Phone = m_Newactionmap.FindAction("Phone", throwIfNotFound: true);
@@ -705,6 +726,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Reload;
     private readonly InputAction m_Player_Aim;
     private readonly InputAction m_Player_SwitchFire;
+    private readonly InputAction m_Player_PickUp;
     public struct PlayerActions
     {
         private @GameInput m_Wrapper;
@@ -730,6 +752,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         public InputAction @Reload => m_Wrapper.m_Player_Reload;
         public InputAction @Aim => m_Wrapper.m_Player_Aim;
         public InputAction @SwitchFire => m_Wrapper.m_Player_SwitchFire;
+        public InputAction @PickUp => m_Wrapper.m_Player_PickUp;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -802,6 +825,9 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @SwitchFire.started += instance.OnSwitchFire;
             @SwitchFire.performed += instance.OnSwitchFire;
             @SwitchFire.canceled += instance.OnSwitchFire;
+            @PickUp.started += instance.OnPickUp;
+            @PickUp.performed += instance.OnPickUp;
+            @PickUp.canceled += instance.OnPickUp;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -869,6 +895,9 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @SwitchFire.started -= instance.OnSwitchFire;
             @SwitchFire.performed -= instance.OnSwitchFire;
             @SwitchFire.canceled -= instance.OnSwitchFire;
+            @PickUp.started -= instance.OnPickUp;
+            @PickUp.performed -= instance.OnPickUp;
+            @PickUp.canceled -= instance.OnPickUp;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -1001,6 +1030,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         void OnReload(InputAction.CallbackContext context);
         void OnAim(InputAction.CallbackContext context);
         void OnSwitchFire(InputAction.CallbackContext context);
+        void OnPickUp(InputAction.CallbackContext context);
     }
     public interface INewactionmapActions
     {
