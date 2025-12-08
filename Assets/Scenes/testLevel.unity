@@ -42696,7 +42696,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3619873539459473678, guid: bb4c74c96ad0b9f46b35a34868d03522, type: 3}
       propertyPath: m_Name
-      value: M4A1 RedDot
+      value: Red Dot A
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -67842,7 +67842,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2903061439780271850, guid: 17b116f806601a9458c5aabecbac8bbf, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.25121784
+      value: 6.86
       objectReference: {fileID: 0}
     - target: {fileID: 2903061439780271850, guid: 17b116f806601a9458c5aabecbac8bbf, type: 3}
       propertyPath: m_LocalPosition.y
