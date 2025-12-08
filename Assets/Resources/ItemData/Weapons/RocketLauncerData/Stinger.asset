@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db121b31bf658f040b07ed4f74155ca0, type: 3}
+  m_Name: Stinger
+  m_EditorClassIdentifier: 
+  ID: 7
+  Name: Stinger
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 1
+  weaponId: Stinger
+  damage: 30
+  fireRate: 0.1
+  reloadTime: 2.5
+  magazineSize: 30
+  bulletSpeed: 50
+  FOVChange: 40
+  Value: 0
+  requiredAmmoType: 4
+  pelletsPerShot: 8
+  spreadAngle: 5
+  explosionRadius: 5
+  explosionDamage: 100
+  explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
+  explosionSound: {fileID: 0}
+  rocketPrefab: {fileID: 7505444404776257389, guid: d69e5f3b020aad042999d3b7d9dc3347, type: 3}
+  fireMode: 4
+  canSwitchFireMode: 0
+  recoilX: -1.5
+  recoilY: 0.3
+  recoilZ: 0.1
+  spread: 0.001
+  allowedAttachmentSlots: 
+  allowedAttachments: []
+  partsToDisableWithSight: []
+  partToDisableWithSightPath: 
+  weaponPrefab: {fileID: 5978691583080562986, guid: 2072ca010ec310041a7e4c22977ef836, type: 3}
+  shootSound: {fileID: 8300000, guid: 2f7f3e00e8c06d24fa20a985522f9674, type: 3}
+  shootSoundFullAuto: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
+  reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
+  muzzleFlashPrefab: {fileID: 0}
+  ShootingSoundDelay: 0
