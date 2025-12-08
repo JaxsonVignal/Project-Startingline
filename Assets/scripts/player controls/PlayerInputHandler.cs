@@ -12,6 +12,7 @@ public class PlayerInputHandler : MonoBehaviour
     public bool SprintHeld { get; private set; }
     public bool ToggleUIPressed { get; private set; }
     public bool InteractPressed { get; private set; }
+    public bool PickUpPressed { get; private set; }
 
     private void Awake()
     {
@@ -34,6 +35,9 @@ public class PlayerInputHandler : MonoBehaviour
 
         gameInput.Player.Interact.performed += ctx => InteractPressed = true;
         gameInput.Player.Interact.canceled += ctx => InteractPressed = false;
+
+        gameInput.Player.PickUp.performed += ctx => PickUpPressed = true;
+        gameInput.Player.PickUp.canceled += ctx => PickUpPressed = false;
 
         // Fire mode switching
         gameInput.Player.SwitchFire.performed += OnSwitchFireMode;

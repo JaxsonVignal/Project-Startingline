@@ -135,7 +135,7 @@ public class PlayerShooting : MonoBehaviour
 
         if (Time.time < nextFireTime) return;
 
-        if (currentFireMode == FireMode.SemiAuto || currentFireMode == FireMode.Shotgun)
+        if (currentFireMode == FireMode.SemiAuto || currentFireMode == FireMode.Shotgun || currentFireMode == FireMode.Rocket)
         {
             Fire();
             float fireRate = currentAttachmentSystem != null
@@ -157,9 +157,6 @@ public class PlayerShooting : MonoBehaviour
             StartCoroutine(StopWeaponAudioDelayed(currentWeapon.ShootingSoundDelay));
     }
 
-    /// <summary>
-    /// Switches between Semi-Auto and Full-Auto fire modes if the weapon supports it
-    /// </summary>
     public void SwitchFireMode(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
@@ -225,6 +222,14 @@ public class PlayerShooting : MonoBehaviour
             }
         }
 
+        // Handle rocket fire mode
+        if (currentFireMode == FireMode.Rocket)
+        {
+            FireRocket();
+            recoil.RecoilFire();
+            return;
+        }
+
         // Determine number of bullets to fire
         int pellets = currentFireMode == FireMode.Shotgun ? currentWeapon.pelletsPerShot : 1;
 
@@ -240,12 +245,10 @@ public class PlayerShooting : MonoBehaviour
 
                 if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
                 {
-                    // Hit something - aim at that point
                     targetPoint = hit.point;
                 }
                 else
                 {
-                    // Didn't hit anything - aim far away in that direction
                     targetPoint = ray.GetPoint(1000f);
                 }
 
@@ -297,6 +300,63 @@ public class PlayerShooting : MonoBehaviour
             Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
 
         recoil.RecoilFire();
+    }
+
+    private void FireRocket()
+    {
+        if (firePoint == null || playerCamera == null) return;
+
+        // Use rocket prefab if available, otherwise use bullet prefab
+        GameObject projectilePrefab = currentWeapon.rocketPrefab != null ? currentWeapon.rocketPrefab : bulletPrefab;
+
+        if (projectilePrefab == null)
+        {
+            Debug.LogWarning("No rocket or bullet prefab assigned!");
+            return;
+        }
+
+        GameObject rocketObj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+
+        // Raycast from camera center to get accurate aim point
+        Vector3 targetPoint;
+        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+
+        if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+        {
+            targetPoint = hit.point;
+        }
+        else
+        {
+            targetPoint = ray.GetPoint(1000f);
+        }
+
+        // Calculate direction from firePoint to target
+        Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
+        rocketObj.transform.forward = shootDirection;
+
+        // Assign WeaponData to rocket
+        RocketProjectile rocket = rocketObj.GetComponent<RocketProjectile>();
+        if (rocket != null)
+        {
+            rocket.weaponData = currentWeapon;
+        }
+        else
+        {
+            // Add component if it doesn't exist
+            rocket = rocketObj.AddComponent<RocketProjectile>();
+            rocket.weaponData = currentWeapon;
+        }
+
+        // Apply speed from WeaponData
+        Rigidbody rb = rocketObj.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.AddForce(shootDirection * currentWeapon.bulletSpeed, ForceMode.Impulse);
+        }
+
+        // Spawn muzzle flash
+        if (currentWeapon.muzzleFlashPrefab)
+            Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
     }
 
     public void Reload()
@@ -401,9 +461,6 @@ public class PlayerShooting : MonoBehaviour
 
     public FireMode GetCurrentFireMode() => currentFireMode;
 
-    /// <summary>
-    /// Gets the appropriate shoot sound based on current fire mode
-    /// </summary>
     private AudioClip GetCurrentShootSound()
     {
         if (currentWeapon == null) return null;

@@ -6,7 +6,8 @@ public enum FireMode
     SemiAuto,
     FullAuto,
     Burst,
-    Shotgun
+    Shotgun,
+    Rocket
 }
 
 [CreateAssetMenu(menuName = "Inventory System/Weapon")]
@@ -24,11 +25,23 @@ public class WeaponData : InventoryItemData
     public float Value = 0;
 
     [Header("Ammo Configuration")]
-    public AmmoType requiredAmmoType; // What ammo type this weapon uses
+    public AmmoType requiredAmmoType;
 
     [Header("Shotgun Settings")]
     public int pelletsPerShot = 8;
     public float spreadAngle = 5f;
+
+    [Header("Rocket Settings")]
+    [Tooltip("Explosion radius for rocket fire mode")]
+    public float explosionRadius = 5f;
+    [Tooltip("Explosion damage (uses weapon damage if set to 0)")]
+    public float explosionDamage = 100f;
+    [Tooltip("Explosion particle effect prefab")]
+    public GameObject explosionEffectPrefab;
+    [Tooltip("Explosion sound effect")]
+    public AudioClip explosionSound;
+    [Tooltip("Rocket projectile prefab (optional - uses bulletPrefab if not set)")]
+    public GameObject rocketPrefab;
 
     [Header("Fire Settings")]
     public FireMode fireMode = FireMode.SemiAuto;
@@ -74,21 +87,15 @@ public class WeaponData : InventoryItemData
         Debug.Log($"Firing {Name}!");
     }
 
-    /// <summary>
-    /// Gets all parts that should be disabled when a sight is attached.
-    /// Combines the new list with the legacy single path for backwards compatibility.
-    /// </summary>
     public List<string> GetPartsToDisableWithSight()
     {
         List<string> allParts = new List<string>();
 
-        // Add all parts from the new list
         if (partsToDisableWithSight != null && partsToDisableWithSight.Count > 0)
         {
             allParts.AddRange(partsToDisableWithSight);
         }
 
-        // Add legacy path if it exists and isn't already in the list
         if (!string.IsNullOrEmpty(partToDisableWithSightPath) && !allParts.Contains(partToDisableWithSightPath))
         {
             allParts.Add(partToDisableWithSightPath);
@@ -97,23 +104,16 @@ public class WeaponData : InventoryItemData
         return allParts;
     }
 
-    /// <summary>
-    /// Check if a specific attachment is allowed on this weapon.
-    /// If allowedAttachments list is empty, all attachments of allowed slot types are permitted.
-    /// </summary>
     public bool IsAttachmentAllowed(AttachmentData attachment)
     {
         if (attachment == null)
             return false;
 
-        // If no specific attachments are configured, allow all attachments of the allowed slot types
         if (allowedAttachments == null || allowedAttachments.Count == 0)
         {
-            // Check if the attachment type is in the allowed slots
             return allowedAttachmentSlots != null && allowedAttachmentSlots.Contains(attachment.type);
         }
 
-        // If specific attachments are configured, only allow those
         return allowedAttachments.Contains(attachment);
     }
 }

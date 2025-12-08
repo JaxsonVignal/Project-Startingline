@@ -28,8 +28,13 @@ MonoBehaviour:
   requiredAmmoType: 4
   pelletsPerShot: 8
   spreadAngle: 5
-  fireMode: 0
-  canSwitchFireMode: 1
+  explosionRadius: 15
+  explosionDamage: 1000
+  explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
+  explosionSound: {fileID: 0}
+  rocketPrefab: {fileID: 7505444404776257389, guid: d69e5f3b020aad042999d3b7d9dc3347, type: 3}
+  fireMode: 4
+  canSwitchFireMode: 0
   recoilX: -1.5
   recoilY: 0.3
   recoilZ: 0.1
