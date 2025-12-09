@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8811657496093285869}
   - component: {fileID: 3966729381523798546}
   m_Layer: 0
-  m_Name: M4A1 RedDot C
+  m_Name: Infa Red Dot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

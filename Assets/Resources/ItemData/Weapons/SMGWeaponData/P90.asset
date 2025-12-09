@@ -43,7 +43,6 @@ MonoBehaviour:
   allowedAttachments:
   - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
   - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
-  - {fileID: 11400000, guid: 6c79adfea28736f4594495fba5db7b57, type: 2}
   scopeOffsets:
   - scope: {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
     positionOffset: {x: -0.45, y: 0.07, z: 0}
