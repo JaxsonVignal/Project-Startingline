@@ -21,12 +21,11 @@ public class ADS : MonoBehaviour
     private bool isAiming;
     private GameInput input;
     private WeaponAttachmentSystem attachmentSystem;
+    private WeaponData currentWeaponData;
     private bool hasScopeEquipped;
     private Vector3 originalScopePosition;
     private Quaternion originalScopeRotation;
     private string currentEquippedScopeId;
-    private Vector3 scopePositionModifier = Vector3.zero;
-    private Quaternion scopeRotationModifier = Quaternion.identity;
     private AttachmentData currentScope;
 
     private void Awake()
@@ -64,6 +63,10 @@ public class ADS : MonoBehaviour
         if (isAiming && hasScopeEquipped && scopeAdsPosition != null)
         {
             targetPos = scopeAdsPosition;
+            if (Time.frameCount % 60 == 0) // Log every 60 frames
+            {
+                Debug.Log($"[ADS Update] Using scopeAdsPosition: {scopeAdsPosition.localPosition}");
+            }
         }
         else if (isAiming)
         {
@@ -109,7 +112,7 @@ public class ADS : MonoBehaviour
                 {
                     currentEquippedScopeId = att.id;
                     currentScope = att;
-                    Debug.Log($"Scope equipped: {att.id}, offset: {att.scopePositionOffset}");
+                    Debug.Log($"Scope equipped: {att.id}");
                     ApplyScopeModifiers(att);
                     UpdateCrosshairVisibility();
                 }
@@ -129,13 +132,61 @@ public class ADS : MonoBehaviour
 
     private void ApplyScopeModifiers(AttachmentData scope)
     {
-        if (scope == null || scopeAdsPosition == null) return;
+        Debug.Log($"[ADS] ====== ApplyScopeModifiers START ======");
+        Debug.Log($"[ADS] Scope: {(scope != null ? scope.id : "NULL")}");
+        Debug.Log($"[ADS] scopeAdsPosition: {(scopeAdsPosition != null ? "EXISTS" : "NULL")}");
 
-        // Apply offsets relative to the original position stored at Start
-        scopeAdsPosition.localPosition = originalScopePosition + scope.scopePositionOffset;
-        scopeAdsPosition.localRotation = originalScopeRotation * Quaternion.Euler(scope.scopeRotationOffset);
+        if (scope == null || scopeAdsPosition == null)
+        {
+            Debug.LogWarning("[ADS] Scope or scopeAdsPosition is null, returning early");
+            return;
+        }
 
-        Debug.Log($"Scope modifiers applied. Position: {scopeAdsPosition.localPosition}, Offset was: {scope.scopePositionOffset}");
+        Debug.Log($"[ADS] originalScopePosition: {originalScopePosition}");
+        Debug.Log($"[ADS] Current weapon data: {(currentWeaponData != null ? currentWeaponData.weaponId : "NULL")}");
+
+        // Get the weapon-specific offset for this scope from the weapon data
+        ScopeOffsetData offsetData = null;
+        if (currentWeaponData != null)
+        {
+            offsetData = currentWeaponData.GetScopeOffset(scope);
+            Debug.Log($"[ADS] Offset data found: {(offsetData != null ? "YES" : "NO")}");
+
+            if (offsetData != null)
+            {
+                Debug.Log($"[ADS] Found offset - Pos: {offsetData.positionOffset}, Rot: {offsetData.rotationOffset}");
+            }
+        }
+        else
+        {
+            Debug.LogError("[ADS] currentWeaponData is NULL! You need to call SetWeaponData() when equipping the weapon!");
+        }
+
+        if (offsetData != null)
+        {
+            Vector3 newPos = originalScopePosition + offsetData.positionOffset;
+            Quaternion newRot = originalScopeRotation * Quaternion.Euler(offsetData.rotationOffset);
+
+            Debug.Log($"[ADS] APPLYING OFFSET!");
+            Debug.Log($"[ADS] Original position: {originalScopePosition}");
+            Debug.Log($"[ADS] Offset: {offsetData.positionOffset}");
+            Debug.Log($"[ADS] New position: {newPos}");
+            Debug.Log($"[ADS] Setting scopeAdsPosition.localPosition to: {newPos}");
+
+            scopeAdsPosition.localPosition = newPos;
+            scopeAdsPosition.localRotation = newRot;
+
+            Debug.Log($"[ADS] After setting - scopeAdsPosition.localPosition is: {scopeAdsPosition.localPosition}");
+        }
+        else
+        {
+            // No weapon-specific offset found, use default position
+            scopeAdsPosition.localPosition = originalScopePosition;
+            scopeAdsPosition.localRotation = originalScopeRotation;
+            Debug.LogWarning($"[ADS] No offset found for scope {scope.id} on weapon {(currentWeaponData != null ? currentWeaponData.weaponId : "unknown")}. Using default position: {originalScopePosition}");
+        }
+
+        Debug.Log($"[ADS] ====== ApplyScopeModifiers END ======");
     }
 
     private void ResetScopeTransform()
@@ -204,8 +255,35 @@ public class ADS : MonoBehaviour
 
     public void SetAttachmentSystem(WeaponAttachmentSystem attachSys)
     {
+        Debug.Log($"[ADS] SetAttachmentSystem called");
         attachmentSystem = attachSys;
         UpdateScopeStatus();
+    }
+
+    /// <summary>
+    /// Set the current weapon data to retrieve weapon-specific scope offsets
+    /// Call this when equipping a new weapon
+    /// </summary>
+    public void SetWeaponData(WeaponData weaponData)
+    {
+        currentWeaponData = weaponData;
+        Debug.Log($"[ADS] SetWeaponData called with: {(weaponData != null ? weaponData.weaponId : "NULL")}");
+
+        if (weaponData != null && weaponData.scopeOffsets != null)
+        {
+            Debug.Log($"[ADS] Weapon has {weaponData.scopeOffsets.Count} scope offset entries");
+            foreach (var offset in weaponData.scopeOffsets)
+            {
+                Debug.Log($"[ADS]   - Scope: {(offset.scope != null ? offset.scope.id : "NULL")}, Pos Offset: {offset.positionOffset}, Rot Offset: {offset.rotationOffset}");
+            }
+        }
+
+        // Reapply scope modifiers if a scope is currently equipped
+        if (hasScopeEquipped && currentScope != null)
+        {
+            Debug.Log($"[ADS] Reapplying scope modifiers for currently equipped scope: {currentScope.id}");
+            ApplyScopeModifiers(currentScope);
+        }
     }
 
     private void StartAim()

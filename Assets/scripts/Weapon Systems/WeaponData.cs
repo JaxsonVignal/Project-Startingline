@@ -10,6 +10,19 @@ public enum FireMode
     Rocket
 }
 
+[System.Serializable]
+public class ScopeOffsetData
+{
+    [Tooltip("The scope attachment")]
+    public AttachmentData scope;
+
+    [Tooltip("Position offset for this scope on this weapon")]
+    public Vector3 positionOffset = Vector3.zero;
+
+    [Tooltip("Rotation offset for this scope on this weapon")]
+    public Vector3 rotationOffset = Vector3.zero;
+}
+
 [CreateAssetMenu(menuName = "Inventory System/Weapon")]
 public class WeaponData : InventoryItemData
 {
@@ -45,7 +58,6 @@ public class WeaponData : InventoryItemData
 
     [Header("Fire Settings")]
     public FireMode fireMode = FireMode.SemiAuto;
-
     [Tooltip("Enable this to allow switching between Semi-Auto and Full-Auto fire modes")]
     public bool canSwitchFireMode = false;
 
@@ -59,6 +71,10 @@ public class WeaponData : InventoryItemData
     public List<AttachmentType> allowedAttachmentSlots;
     [Tooltip("List of specific attachments that can be equipped on this weapon. Leave empty to allow all attachments of the allowed slot types.")]
     public List<AttachmentData> allowedAttachments = new List<AttachmentData>();
+
+    [Header("Scope/Sight ADS Offsets for This Weapon")]
+    [Tooltip("List of scopes with their position and rotation offsets specific to this weapon")]
+    public List<ScopeOffsetData> scopeOffsets = new List<ScopeOffsetData>();
 
     [Header("Attachment Model Management")]
     [Tooltip("List of child GameObject names or paths to disable when a scope/sight is attached (e.g., 'IronSights', 'Mesh/RearSight', 'FrontSightPost')")]
@@ -74,10 +90,8 @@ public class WeaponData : InventoryItemData
     [Header("Audio & VFX")]
     [Tooltip("Sound for semi-auto fire (single shots). If shootSoundFullAuto is not set, this will be used for both modes.")]
     public AudioClip shootSound;
-
     [Tooltip("Optional: Different sound for full-auto fire (continuous/looping). Leave empty to use shootSound for both.")]
     public AudioClip shootSoundFullAuto;
-
     public AudioClip reloadSound;
     public GameObject muzzleFlashPrefab;
     public float ShootingSoundDelay;
@@ -90,17 +104,14 @@ public class WeaponData : InventoryItemData
     public List<string> GetPartsToDisableWithSight()
     {
         List<string> allParts = new List<string>();
-
         if (partsToDisableWithSight != null && partsToDisableWithSight.Count > 0)
         {
             allParts.AddRange(partsToDisableWithSight);
         }
-
         if (!string.IsNullOrEmpty(partToDisableWithSightPath) && !allParts.Contains(partToDisableWithSightPath))
         {
             allParts.Add(partToDisableWithSightPath);
         }
-
         return allParts;
     }
 
@@ -108,12 +119,27 @@ public class WeaponData : InventoryItemData
     {
         if (attachment == null)
             return false;
-
         if (allowedAttachments == null || allowedAttachments.Count == 0)
         {
             return allowedAttachmentSlots != null && allowedAttachmentSlots.Contains(attachment.type);
         }
-
         return allowedAttachments.Contains(attachment);
+    }
+
+    /// <summary>
+    /// Gets the scope offset data for a specific attachment on this weapon
+    /// </summary>
+    public ScopeOffsetData GetScopeOffset(AttachmentData attachment)
+    {
+        if (scopeOffsets == null || attachment == null)
+            return null;
+
+        foreach (var offset in scopeOffsets)
+        {
+            if (offset.scope == attachment)
+                return offset;
+        }
+
+        return null;
     }
 }
