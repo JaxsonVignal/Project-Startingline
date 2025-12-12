@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
   m_Name: 2x Scope
   m_EditorClassIdentifier: 
-  ID: 10
-  Name: Red Dot A
+  ID: -1
+  Name: 2x Scope
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 5
-  id: M4A1_RedDot_A
+  id: 2x Scope
   type: 0
-  prefab: {fileID: 3619873539459473678, guid: bb4c74c96ad0b9f46b35a34868d03522, type: 3}
+  prefab: {fileID: 6932709100645628459, guid: 5ed862d8db0427448a4b80aa15a953b6, type: 3}
   icon: {fileID: 0}
   description: 
   Value: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   spreadMultiplier: 1
   recoilMultiplier: 1
   magazineBonus: 0
-  scopeFOVOverride: 30
+  scopeFOVOverride: 20
   scopeReticle: {fileID: 21300000, guid: 8da27cc3f73884047a9bc7d379a079c4, type: 3}
   reticleScale: 0.2
   reticleColor: {r: 1, g: 1, b: 1, a: 1}
