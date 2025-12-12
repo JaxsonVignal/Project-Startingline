@@ -33,8 +33,8 @@ public class ItemPickup : MonoBehaviour
 
     private void Update()
     {
-        // Check for interact input while player is in range
-        if (playerInRange && playerInputHandler != null && playerInputHandler.InteractPressed)
+        // Check for PickUp input while player is in range
+        if (playerInRange && playerInputHandler != null && playerInputHandler.PickUpPressed)
         {
             TryPickupItem();
         }
@@ -72,7 +72,7 @@ public class ItemPickup : MonoBehaviour
 
         playerInRange = true;
         playerInventory = inventory;
-        Debug.Log($"Press Interact (E) to pick up: {ItemData.name}");
+        Debug.Log($"Press PickUp to pick up: {ItemData.name}");
     }
 
     private void OnTriggerExit(Collider other)

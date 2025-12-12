@@ -6,7 +6,21 @@ public enum FireMode
     SemiAuto,
     FullAuto,
     Burst,
-    Shotgun
+    Shotgun,
+    Rocket
+}
+
+[System.Serializable]
+public class ScopeOffsetData
+{
+    [Tooltip("The scope attachment")]
+    public AttachmentData scope;
+
+    [Tooltip("Position offset for this scope on this weapon")]
+    public Vector3 positionOffset = Vector3.zero;
+
+    [Tooltip("Rotation offset for this scope on this weapon")]
+    public Vector3 rotationOffset = Vector3.zero;
 }
 
 [CreateAssetMenu(menuName = "Inventory System/Weapon")]
@@ -24,15 +38,26 @@ public class WeaponData : InventoryItemData
     public float Value = 0;
 
     [Header("Ammo Configuration")]
-    public AmmoType requiredAmmoType; // What ammo type this weapon uses
+    public AmmoType requiredAmmoType;
 
     [Header("Shotgun Settings")]
     public int pelletsPerShot = 8;
     public float spreadAngle = 5f;
 
+    [Header("Rocket Settings")]
+    [Tooltip("Explosion radius for rocket fire mode")]
+    public float explosionRadius = 5f;
+    [Tooltip("Explosion damage (uses weapon damage if set to 0)")]
+    public float explosionDamage = 100f;
+    [Tooltip("Explosion particle effect prefab")]
+    public GameObject explosionEffectPrefab;
+    [Tooltip("Explosion sound effect")]
+    public AudioClip explosionSound;
+    [Tooltip("Rocket projectile prefab (optional - uses bulletPrefab if not set)")]
+    public GameObject rocketPrefab;
+
     [Header("Fire Settings")]
     public FireMode fireMode = FireMode.SemiAuto;
-
     [Tooltip("Enable this to allow switching between Semi-Auto and Full-Auto fire modes")]
     public bool canSwitchFireMode = false;
 
@@ -46,6 +71,10 @@ public class WeaponData : InventoryItemData
     public List<AttachmentType> allowedAttachmentSlots;
     [Tooltip("List of specific attachments that can be equipped on this weapon. Leave empty to allow all attachments of the allowed slot types.")]
     public List<AttachmentData> allowedAttachments = new List<AttachmentData>();
+
+    [Header("Scope/Sight ADS Offsets for This Weapon")]
+    [Tooltip("List of scopes with their position and rotation offsets specific to this weapon")]
+    public List<ScopeOffsetData> scopeOffsets = new List<ScopeOffsetData>();
 
     [Header("Attachment Model Management")]
     [Tooltip("List of child GameObject names or paths to disable when a scope/sight is attached (e.g., 'IronSights', 'Mesh/RearSight', 'FrontSightPost')")]
@@ -61,10 +90,8 @@ public class WeaponData : InventoryItemData
     [Header("Audio & VFX")]
     [Tooltip("Sound for semi-auto fire (single shots). If shootSoundFullAuto is not set, this will be used for both modes.")]
     public AudioClip shootSound;
-
     [Tooltip("Optional: Different sound for full-auto fire (continuous/looping). Leave empty to use shootSound for both.")]
     public AudioClip shootSoundFullAuto;
-
     public AudioClip reloadSound;
     public GameObject muzzleFlashPrefab;
     public float ShootingSoundDelay;
@@ -74,46 +101,45 @@ public class WeaponData : InventoryItemData
         Debug.Log($"Firing {Name}!");
     }
 
-    /// <summary>
-    /// Gets all parts that should be disabled when a sight is attached.
-    /// Combines the new list with the legacy single path for backwards compatibility.
-    /// </summary>
     public List<string> GetPartsToDisableWithSight()
     {
         List<string> allParts = new List<string>();
-
-        // Add all parts from the new list
         if (partsToDisableWithSight != null && partsToDisableWithSight.Count > 0)
         {
             allParts.AddRange(partsToDisableWithSight);
         }
-
-        // Add legacy path if it exists and isn't already in the list
         if (!string.IsNullOrEmpty(partToDisableWithSightPath) && !allParts.Contains(partToDisableWithSightPath))
         {
             allParts.Add(partToDisableWithSightPath);
         }
-
         return allParts;
     }
 
-    /// <summary>
-    /// Check if a specific attachment is allowed on this weapon.
-    /// If allowedAttachments list is empty, all attachments of allowed slot types are permitted.
-    /// </summary>
     public bool IsAttachmentAllowed(AttachmentData attachment)
     {
         if (attachment == null)
             return false;
-
-        // If no specific attachments are configured, allow all attachments of the allowed slot types
         if (allowedAttachments == null || allowedAttachments.Count == 0)
         {
-            // Check if the attachment type is in the allowed slots
             return allowedAttachmentSlots != null && allowedAttachmentSlots.Contains(attachment.type);
         }
-
-        // If specific attachments are configured, only allow those
         return allowedAttachments.Contains(attachment);
+    }
+
+    /// <summary>
+    /// Gets the scope offset data for a specific attachment on this weapon
+    /// </summary>
+    public ScopeOffsetData GetScopeOffset(AttachmentData attachment)
+    {
+        if (scopeOffsets == null || attachment == null)
+            return null;
+
+        foreach (var offset in scopeOffsets)
+        {
+            if (offset.scope == attachment)
+                return offset;
+        }
+
+        return null;
     }
 }
