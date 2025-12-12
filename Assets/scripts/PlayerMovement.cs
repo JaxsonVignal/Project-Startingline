@@ -21,7 +21,7 @@ public class PlayerMovement : MonoBehaviour
     private float speed;
     private float verticalLookRotation = 0f;
     private bool uiMode = false;
-
+    public bool isWanted = false;
     private void Start()
     {
         cc = GetComponent<CharacterController>();
@@ -37,7 +37,7 @@ public class PlayerMovement : MonoBehaviour
             else SetGameplayMode();
             inputHandler.ResetToggleUI();
         }
-
+       
         if (interactor.isInteracting)
         {
             SetUIMode();

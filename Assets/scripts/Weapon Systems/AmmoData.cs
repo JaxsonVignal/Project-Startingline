@@ -11,6 +11,7 @@ public enum AmmoType
     Shotgun_Buck,
     Sniper,
     SMG,
+    Rockets
     
 }
 
