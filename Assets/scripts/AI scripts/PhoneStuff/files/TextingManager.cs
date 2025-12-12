@@ -189,6 +189,10 @@ public class TextingManager : MonoBehaviour
             TextMessage.MessageType.Acceptance
         );
 
+        // Add task to HUD
+        if (TaskNotificationUI.Instance != null)
+            TaskNotificationUI.Instance.AddTask(order);
+
         Debug.Log($"Order accepted: {npcName}, price ${price}, pickup in {pickupHours}h (at game hour {order.pickupTimeGameHour:F2})");
     }
 
@@ -245,7 +249,7 @@ public class TextingManager : MonoBehaviour
         Debug.Log($"Spawned {order.npcName} for meeting at {order.meetingLocation.name}");
     }
 
-    // ===== MISSING PUBLIC METHODS =====
+    // ===== PUBLIC METHODS =====
 
     public List<string> GetAllConversationNames()
     {
@@ -295,6 +299,10 @@ public class TextingManager : MonoBehaviour
                 npc.CompleteWeaponDeal();
 
             SendMessage(npcName, "Thanks! Pleasure doing business.", false, TextMessage.MessageType.General);
+
+            // Remove task from HUD
+            if (TaskNotificationUI.Instance != null)
+                TaskNotificationUI.Instance.RemoveTask(npcName);
 
             Debug.Log($"Completed delivery to {npcName}");
         }
