@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 81428289171040151}
   - component: {fileID: 3774612670672201236}
   m_Layer: 0
-  m_Name: M4A1 Sniper Scope
+  m_Name: Sniper Scope A
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

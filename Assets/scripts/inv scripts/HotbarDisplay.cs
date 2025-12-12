@@ -141,11 +141,15 @@ public class HotbarDisplay : StaticInventoryDisplay
             if (attachSys != null)
             {
                 PlayerShooting.Instance.SetAttachmentSystem(attachSys);
+                ads.SetAttachmentSystem(attachSys);
                 Debug.Log($"Attachment system set on PlayerShooting - modifiers now active");
             }
+
+            Debug.Log($"[HotbarDisplay] About to call SetWeaponData with weapon: {weapon.weaponId}");
+            ads.SetWeaponData(weapon);
+            Debug.Log($"[HotbarDisplay] SetWeaponData called successfully");
         }
     }
-
     private WeaponAttachmentSystem ApplyStoredAttachments(GameObject weaponObject, string slotID, WeaponData weaponData)
     {
         WeaponInstance storedInstance = WeaponInstanceStorage.GetInstance(slotID);
