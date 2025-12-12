@@ -46,7 +46,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6c79adfea28736f4594495fba5db7b57, type: 2}
   scopeOffsets:
   - scope: {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
+    positionOffset: {x: -0.451, y: 0.1, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   partsToDisableWithSight:
   - BackSight
