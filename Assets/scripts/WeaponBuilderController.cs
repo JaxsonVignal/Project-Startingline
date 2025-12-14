@@ -13,6 +13,7 @@ public class WeaponBuilderController : MonoBehaviour
     [SerializeField] private Camera mainCamera;
     [SerializeField] private Camera previewCamera;
     [SerializeField] private GameObject mainUIPanel; // <-- Added
+    [SerializeField] private HotbarDisplay playerHotbar;
 
     [Header("Settings")]
     [SerializeField] private bool pauseGameWhenOpen = true;
@@ -39,6 +40,12 @@ public class WeaponBuilderController : MonoBehaviour
     {
         if (isBuilderOpen) return;
         isBuilderOpen = true;
+
+        // Unequip current weapon from player
+        if (playerHotbar != null)
+        {
+            playerHotbar.UnequipWeapon();
+        }
 
         // Hide main UI
         if (mainUIPanel != null)

@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 6427308504610255620}
   - component: {fileID: 1055321939593142362}
   - component: {fileID: 8195147149922170047}
+  - component: {fileID: 7015632223004493198}
   m_Layer: 0
   m_Name: Police
   m_TagString: Untagged
@@ -209,6 +210,20 @@ MonoBehaviour:
   maxFireDistance: 25
   shootSound: {fileID: 0}
   muzzleFlash: {fileID: 0}
+--- !u!114 &7015632223004493198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8531640637460767635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcfb9f63876f2114f990619368a78d9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  playerMovement: {fileID: 0}
 --- !u!1001 &6701705157096440141
 PrefabInstance:
   m_ObjectHideFlags: 0
