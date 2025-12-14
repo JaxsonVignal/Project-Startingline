@@ -100,7 +100,7 @@ public class PoliceManager : MonoBehaviour
 
         float distance = Vector3.Distance(transform.position, player.transform.position);
 
-        // Check if player is within sight range
+        // Check if player is within sight range AND has line of sight
         if (distance <= sightRange && CanSeePlayer())
         {
             EnterAggroState();
@@ -116,12 +116,28 @@ public class PoliceManager : MonoBehaviour
         Vector3 directionToPlayer = (playerPos - origin).normalized;
         float distanceToPlayer = Vector3.Distance(origin, playerPos);
 
+        // Draw debug ray to see what we're checking
+        Debug.DrawRay(origin, directionToPlayer * distanceToPlayer, Color.red, 0.1f);
+
         // Check if there's line of sight to player
         if (Physics.Raycast(origin, directionToPlayer, out RaycastHit hit, distanceToPlayer))
         {
-            return hit.transform == player.transform;
+            Debug.Log($"{policeName} raycast hit: {hit.transform.name} at distance {hit.distance}");
+
+            // Check if we hit the player or a child of the player
+            if (hit.transform == player.transform || hit.transform.IsChildOf(player.transform))
+            {
+                Debug.Log($"{policeName} CAN SEE PLAYER!");
+                return true;
+            }
+
+            // Hit something else
+            Debug.Log($"{policeName} LOS blocked by {hit.transform.name}");
+            return false;
         }
 
+        // If raycast didn't hit anything within range, player is visible
+        Debug.Log($"{policeName} No obstruction - player visible!");
         return true;
     }
 
