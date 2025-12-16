@@ -194,13 +194,18 @@ public class HotbarDisplay : StaticInventoryDisplay
         return null;
     }
 
-    private void UnequipWeapon()
+    public void UnequipWeapon()
     {
         if (currentWeapon != null)
+        {
+            Debug.Log("Destroying currentWeapon: " + currentWeapon.name);
             Destroy(currentWeapon);
+            currentWeapon = null; // Set to null after destroying
+        }
 
         PlayerShooting.Instance.EquipWeapon(null, null);
     }
+
 
     private void StartFiring(InputAction.CallbackContext ctx) => PlayerShooting.Instance.StartFiring();
     private void StopFiring(InputAction.CallbackContext ctx) => PlayerShooting.Instance.StopFiring();
