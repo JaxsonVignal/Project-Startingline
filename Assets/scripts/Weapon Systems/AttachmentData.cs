@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel, SideRail }
+public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel, SideRail, GrenadeLauncher }
 
 [CreateAssetMenu(menuName = "Inventory System/Attachment")]
 public class AttachmentData : InventoryItemData
@@ -45,4 +45,8 @@ public class AttachmentData : InventoryItemData
     public Vector3 backScrewLocalPos = new Vector3(0.05f, 0.05f, -0.05f);
     [Tooltip("Visual size of screw indicators")]
     public float screwRadius = 0.015f;
+
+    [Header("Grenade Launcher Settings (for Underbarrel type)")]
+    [Tooltip("If this underbarrel attachment is a grenade launcher, assign the data here")]
+    public GrenadeLauncherData grenadeLauncherData;
 }

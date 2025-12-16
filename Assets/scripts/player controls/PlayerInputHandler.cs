@@ -41,6 +41,9 @@ public class PlayerInputHandler : MonoBehaviour
 
         // Fire mode switching
         gameInput.Player.SwitchFire.performed += OnSwitchFireMode;
+
+        // Grenade launcher toggle
+        gameInput.Player.ToggleGrenadeLauncher.performed += OnToggleGrenadeLauncher;
     }
 
     private void OnEnable() => gameInput.Enable();
@@ -51,6 +54,14 @@ public class PlayerInputHandler : MonoBehaviour
         if (PlayerShooting.Instance != null)
         {
             PlayerShooting.Instance.SwitchFireMode(context);
+        }
+    }
+
+    private void OnToggleGrenadeLauncher(InputAction.CallbackContext context)
+    {
+        if (PlayerShooting.Instance != null)
+        {
+            PlayerShooting.Instance.ToggleGrenadeLauncher(context);
         }
     }
 

@@ -10,19 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: GlockRedDot
+  m_Name: 40mm Launcher
   m_EditorClassIdentifier: 
-  ID: 50
-  Name: Glock Red Dot
+  ID: 120
+  Name: 40mm Launcher
   Description: 
   Icon: {fileID: 0}
-  maxStackSize: 0
-  id: GRDS
-  type: 0
-  prefab: {fileID: 7960101205374357589, guid: 962201bbd8a926249829f60fd5575831, type: 3}
+  maxStackSize: 1
+  id: 120
+  type: 6
+  prefab: {fileID: 2497940545829557930, guid: 4cc0f879f4e091e4eb35641f69e3e57d, type: 3}
   icon: {fileID: 0}
   description: 
-  localPosition: {x: 0, y: 0, z: 0}
+  Value: 0
+  localPosition: {x: 0, y: 0.005, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
   damageBonus: 0
@@ -31,12 +32,11 @@ MonoBehaviour:
   spreadMultiplier: 1
   recoilMultiplier: 1
   magazineBonus: 0
-  scopePositionOffset: {x: 0, y: 0, z: 0}
-  scopeRotationOffset: {x: 0, y: 0, z: 0}
-  scopeFOVOverride: 30
+  scopeFOVOverride: 0
   scopeReticle: {fileID: 0}
   reticleScale: 1
   reticleColor: {r: 1, g: 0, b: 0, a: 1}
   frontScrewLocalPos: {x: -0.05, y: 0.05, z: -0.05}
   backScrewLocalPos: {x: 0.05, y: 0.05, z: -0.05}
   screwRadius: 0.015
+  grenadeLauncherData: {fileID: 11400000, guid: 8900c67fde637d441b4652c274deee77, type: 2}
