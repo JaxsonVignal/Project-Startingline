@@ -28,6 +28,11 @@ MonoBehaviour:
   requiredAmmoType: 4
   pelletsPerShot: 8
   spreadAngle: 5
+  explosionRadius: 5
+  explosionDamage: 100
+  explosionEffectPrefab: {fileID: 0}
+  explosionSound: {fileID: 0}
+  rocketPrefab: {fileID: 0}
   fireMode: 1
   canSwitchFireMode: 0
   recoilX: -1.5
@@ -38,6 +43,8 @@ MonoBehaviour:
   allowedAttachments:
   - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
   - {fileID: 11400000, guid: 6c79adfea28736f4594495fba5db7b57, type: 2}
+  - {fileID: 11400000, guid: de8e061e67c381f4d8330e788c87ee44, type: 2}
+  scopeOffsets: []
   partsToDisableWithSight:
   - RearSight
   - FrontSight

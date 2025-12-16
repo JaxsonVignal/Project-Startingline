@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22998c30fe97ffd429790a53a81554f2, type: 3}
+  m_Name: 40mm
+  m_EditorClassIdentifier: 
+  launcherName: M203 Grenade Launcher
+  launcherId: gl_m203
+  damage: 150
+  explosionRadius: 8
+  magazineSize: 1
+  reloadTime: 3
+  fireRate: 1
+  grenadeSpeed: 30
+  requiredAmmoType: 10
+  grenadePrefab: {fileID: 7085274459737078000, guid: c032fbfb7f7fe15488bdd266c0e864e4, type: 3}
+  explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
+  launchSound: {fileID: 0}
+  reloadSound: {fileID: 0}
+  explosionSound: {fileID: 0}
+  muzzleFlashPrefab: {fileID: 0}
+  recoilX: 3
+  recoilY: 2
+  recoilZ: 2
