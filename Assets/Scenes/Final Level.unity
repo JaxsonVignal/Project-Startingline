@@ -44951,6 +44951,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   silencerMinigamePrefab: {fileID: 0}
+  screwPrefab: {fileID: 2180686687860469392, guid: 4d2dbe16f755e7141ac91e55ec34c84a, type: 3}
   minigameParent: {fileID: 31003540}
   previewCamera: {fileID: 1152775642}
 --- !u!4 &1217400952
@@ -49839,19 +49840,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4609543575197056101, guid: 08618163981885e4c978c3e35fcb4c92, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4609543575197056101, guid: 08618163981885e4c978c3e35fcb4c92, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4609543575197056101, guid: 08618163981885e4c978c3e35fcb4c92, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 50
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4609543575197056101, guid: 08618163981885e4c978c3e35fcb4c92, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -19
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5401070678737955572, guid: 08618163981885e4c978c3e35fcb4c92, type: 3}
       propertyPath: m_Name

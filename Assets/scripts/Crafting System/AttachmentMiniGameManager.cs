@@ -11,6 +11,9 @@ public class AttachmentMinigameManager : MonoBehaviour
     [SerializeField] private GameObject silencerMinigamePrefab;
     // Add more minigame prefabs here for other attachment types
 
+    [Header("Scope Minigame Settings")]
+    [SerializeField] private GameObject screwPrefab; // Assign your screw model here!
+
     [Header("References")]
     [SerializeField] private Transform minigameParent; // Where to spawn minigames
     [SerializeField] private Camera previewCamera; // The camera used for weapon preview
@@ -64,22 +67,68 @@ public class AttachmentMinigameManager : MonoBehaviour
                 break;
 
             case AttachmentType.Sight:
-                minigame = attachmentObj.AddComponent<ScopeMinigame>();
+                ScopeMinigame scopeMinigame = attachmentObj.AddComponent<ScopeMinigame>();
                 Debug.Log("Added ScopeMinigame component");
 
+                // IMPORTANT: Assign the screw prefab using reflection
+                // since the field is private with [SerializeField]
+                if (screwPrefab != null)
+                {
+                    var screwPrefabField = typeof(ScopeMinigame).GetField("screwPrefab",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                    if (screwPrefabField != null)
+                    {
+                        screwPrefabField.SetValue(scopeMinigame, screwPrefab);
+                        Debug.Log($"Assigned screw prefab: {screwPrefab.name}");
+                    }
+                    else
+                    {
+                        Debug.LogError("Could not find screwPrefab field in ScopeMinigame!");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("No screw prefab assigned in AttachmentMinigameManager!");
+                }
+
                 // Configure scope-specific settings
-                ScopeMinigame scopeMinigame = minigame as ScopeMinigame;
                 if (scopeMinigame != null && weapon != null && socket != null)
                 {
                     // Set the weapon parts to disable when scope is attached
                     // Use socket.root to get the weapon's root transform
                     scopeMinigame.SetWeaponPartsToDisable(socket.root, weapon.GetPartsToDisableWithSight());
                 }
+
+                minigame = scopeMinigame;
                 break;
 
             case AttachmentType.Underbarrel:
-                minigame = attachmentObj.AddComponent<UnderbarrelMinigame>();
+                UnderbarrelMinigame underbarrelMinigame = attachmentObj.AddComponent<UnderbarrelMinigame>();
                 Debug.Log("Added UnderbarrelMinigame component");
+
+                // IMPORTANT: Assign the screw prefab using reflection
+                if (screwPrefab != null)
+                {
+                    var screwPrefabField = typeof(UnderbarrelMinigame).GetField("screwPrefab",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                    if (screwPrefabField != null)
+                    {
+                        screwPrefabField.SetValue(underbarrelMinigame, screwPrefab);
+                        Debug.Log($"Assigned screw prefab to UnderbarrelMinigame: {screwPrefab.name}");
+                    }
+                    else
+                    {
+                        Debug.LogError("Could not find screwPrefab field in UnderbarrelMinigame!");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("No screw prefab assigned for UnderbarrelMinigame!");
+                }
+
+                minigame = underbarrelMinigame;
                 break;
 
             // Add more cases for other attachment types
