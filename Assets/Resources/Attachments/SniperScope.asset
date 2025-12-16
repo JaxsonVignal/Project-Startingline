@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Red Dot A
+  m_Name: SniperScope
   m_EditorClassIdentifier: 
   ID: -1
-  Name: Red Dot A
+  Name: SniperScope
   Description: 
   Icon: {fileID: 0}
-  maxStackSize: 5
-  id: M4A1_RedDot_A
+  maxStackSize: 1
+  id: SniperScope
   type: 0
-  prefab: {fileID: 3619873539459473678, guid: bb4c74c96ad0b9f46b35a34868d03522, type: 3}
+  prefab: {fileID: 5561885083997981225, guid: 87913f5ac4031764893ec0e0c6670231, type: 3}
   icon: {fileID: 0}
   description: 
   Value: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   spreadMultiplier: 1
   recoilMultiplier: 1
   magazineBonus: 0
-  scopeFOVOverride: 30
+  scopeFOVOverride: 10
   scopeReticle: {fileID: 21300000, guid: 8da27cc3f73884047a9bc7d379a079c4, type: 3}
   reticleScale: 0.2
   reticleColor: {r: 1, g: 1, b: 1, a: 1}
