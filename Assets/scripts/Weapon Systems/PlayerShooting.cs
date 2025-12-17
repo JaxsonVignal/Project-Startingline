@@ -36,6 +36,18 @@ public class PlayerShooting : MonoBehaviour
     private bool isGrenadeLauncherMode = false;
     private bool isReloadingGrenadeLauncher = false;
     private float nextGrenadeLauncherFireTime;
+    private float lastToggleTime = 0f;
+    private const float toggleCooldown = 0.3f; // Prevent rapid toggling
+
+    // Underbarrel Shotgun System
+    private UnderbarrelShotgunData currentUnderbarrelShotgun;
+    private int currentUnderbarrelShotgunAmmo;
+    private bool isUnderbarrelShotgunMode = false;
+    private bool isReloadingUnderbarrelShotgun = false;
+    private float nextUnderbarrelShotgunFireTime;
+
+    // Generic underbarrel mode flag
+    private bool IsUnderbarrelMode => isGrenadeLauncherMode || isUnderbarrelShotgunMode;
 
     private void Update()
     {
@@ -51,6 +63,16 @@ public class PlayerShooting : MonoBehaviour
                     FireGrenade();
                     nextGrenadeLauncherFireTime = Time.time + currentGrenadeLauncher.fireRate;
                     isFiring = false; // Grenade launchers are always semi-auto
+                }
+            }
+            // Check if we're in underbarrel shotgun mode
+            else if (isUnderbarrelShotgunMode && currentUnderbarrelShotgun != null)
+            {
+                if (Time.time >= nextUnderbarrelShotgunFireTime)
+                {
+                    FireUnderbarrelShotgun();
+                    nextUnderbarrelShotgunFireTime = Time.time + currentUnderbarrelShotgun.fireRate;
+                    isFiring = false; // Underbarrel shotguns are semi-auto
                 }
             }
             else
@@ -87,18 +109,26 @@ public class PlayerShooting : MonoBehaviour
             {
                 WeaponAmmoTracker.SetAmmo(currentWeaponSlotID + "_GL", currentGrenadeAmmo);
             }
+            // Save underbarrel shotgun ammo if equipped
+            if (currentUnderbarrelShotgun != null)
+            {
+                WeaponAmmoTracker.SetAmmo(currentWeaponSlotID + "_UBS", currentUnderbarrelShotgunAmmo);
+            }
         }
 
         currentWeapon = weapon;
         currentWeaponSlotID = slotID;
         currentAttachmentSystem = null;
         currentGrenadeLauncher = null;
+        currentUnderbarrelShotgun = null;
         isGrenadeLauncherMode = false;
+        isUnderbarrelShotgunMode = false;
 
         if (weapon == null)
         {
             currentAmmo = 0;
             currentGrenadeAmmo = 0;
+            currentUnderbarrelShotgunAmmo = 0;
             return;
         }
 
@@ -155,28 +185,44 @@ public class PlayerShooting : MonoBehaviour
 
         if (currentAttachmentSystem == null)
         {
-            Debug.Log($"[UpdateGrenadeLauncherFromAttachments] No attachment system, clearing GL");
+            Debug.Log($"[UpdateGrenadeLauncherFromAttachments] No attachment system, clearing underbarrel weapons");
             currentGrenadeLauncher = null;
             currentGrenadeAmmo = 0;
             isGrenadeLauncherMode = false;
+            currentUnderbarrelShotgun = null;
+            currentUnderbarrelShotgunAmmo = 0;
+            isUnderbarrelShotgunMode = false;
             return;
         }
 
         Debug.Log($"[UpdateGrenadeLauncherFromAttachments] Equipped attachments count: {currentAttachmentSystem.equippedAttachments.Count}");
         foreach (var att in currentAttachmentSystem.equippedAttachments)
         {
-            Debug.Log($"[UpdateGrenadeLauncherFromAttachments]   - {att.name} (Type: {att.type}, HasGL: {att.grenadeLauncherData != null})");
+            Debug.Log($"[UpdateGrenadeLauncherFromAttachments]   - {att.name} (Type: {att.type}, HasGL: {att.grenadeLauncherData != null}, HasUBS: {att.underbarrelShotgunData != null})");
         }
 
-        // Find grenade launcher attachment (check underbarrel slot)
-        var glAttachment = currentAttachmentSystem.equippedAttachments.Find(a =>
-            a.type == AttachmentType.Underbarrel && a.grenadeLauncherData != null);
+        // Find underbarrel attachment (could be GL or shotgun)
+        var underbarrelAttachment = currentAttachmentSystem.equippedAttachments.Find(a => a.type == AttachmentType.Underbarrel);
 
-        Debug.Log($"[UpdateGrenadeLauncherFromAttachments] GL attachment found: {(glAttachment != null ? glAttachment.name : "NULL")}");
-
-        if (glAttachment != null && glAttachment.grenadeLauncherData != null)
+        if (underbarrelAttachment == null)
         {
-            currentGrenadeLauncher = glAttachment.grenadeLauncherData;
+            Debug.Log($"[UpdateGrenadeLauncherFromAttachments] No underbarrel attachment found");
+            currentGrenadeLauncher = null;
+            currentGrenadeAmmo = 0;
+            isGrenadeLauncherMode = false;
+            currentUnderbarrelShotgun = null;
+            currentUnderbarrelShotgunAmmo = 0;
+            isUnderbarrelShotgunMode = false;
+            return;
+        }
+
+        // Check if it's a grenade launcher
+        if (underbarrelAttachment.grenadeLauncherData != null)
+        {
+            currentGrenadeLauncher = underbarrelAttachment.grenadeLauncherData;
+            currentUnderbarrelShotgun = null;
+            currentUnderbarrelShotgunAmmo = 0;
+            isUnderbarrelShotgunMode = false;
 
             // Load grenade launcher ammo
             if (!string.IsNullOrEmpty(currentWeaponSlotID))
@@ -193,36 +239,85 @@ public class PlayerShooting : MonoBehaviour
 
             Debug.Log($"Grenade Launcher equipped: {currentGrenadeLauncher.launcherName} - Ammo: {currentGrenadeAmmo}/{currentGrenadeLauncher.magazineSize}");
         }
-        else
+        // Check if it's an underbarrel shotgun
+        else if (underbarrelAttachment.underbarrelShotgunData != null)
         {
+            currentUnderbarrelShotgun = underbarrelAttachment.underbarrelShotgunData;
             currentGrenadeLauncher = null;
             currentGrenadeAmmo = 0;
             isGrenadeLauncherMode = false;
+
+            // Load underbarrel shotgun ammo
+            if (!string.IsNullOrEmpty(currentWeaponSlotID))
+            {
+                currentUnderbarrelShotgunAmmo = WeaponAmmoTracker.GetAmmo(
+                    currentWeaponSlotID + "_UBS",
+                    currentUnderbarrelShotgun.magazineSize
+                );
+            }
+            else
+            {
+                currentUnderbarrelShotgunAmmo = currentUnderbarrelShotgun.magazineSize;
+            }
+
+            Debug.Log($"Underbarrel Shotgun equipped: {currentUnderbarrelShotgun.shotgunName} - Ammo: {currentUnderbarrelShotgunAmmo}/{currentUnderbarrelShotgun.magazineSize}");
+        }
+        else
+        {
+            // Regular underbarrel attachment (like a foregrip)
+            Debug.Log($"Regular underbarrel attachment equipped: {underbarrelAttachment.name}");
+            currentGrenadeLauncher = null;
+            currentGrenadeAmmo = 0;
+            isGrenadeLauncherMode = false;
+            currentUnderbarrelShotgun = null;
+            currentUnderbarrelShotgunAmmo = 0;
+            isUnderbarrelShotgunMode = false;
         }
     }
 
     public void ToggleGrenadeLauncher(InputAction.CallbackContext context)
     {
-        if (!context.performed) return;
-
-        if (currentGrenadeLauncher == null)
+        // Cooldown to prevent rapid toggling
+        if (Time.time - lastToggleTime < toggleCooldown)
         {
-            Debug.Log("No grenade launcher attached!");
             return;
         }
 
-        isGrenadeLauncherMode = !isGrenadeLauncherMode;
-
-        if (isGrenadeLauncherMode)
+        // Check if we have any underbarrel weapon
+        if (currentGrenadeLauncher == null && currentUnderbarrelShotgun == null)
         {
-            Debug.Log($"Switched to Grenade Launcher mode - Ammo: {currentGrenadeAmmo}/{currentGrenadeLauncher.magazineSize}");
+            Debug.Log("No underbarrel weapon attached!");
+            return;
+        }
+
+        lastToggleTime = Time.time;
+
+        // Toggle between primary weapon and underbarrel weapon
+        if (isGrenadeLauncherMode || isUnderbarrelShotgunMode)
+        {
+            // Switch back to primary weapon
+            isGrenadeLauncherMode = false;
+            isUnderbarrelShotgunMode = false;
+            Debug.Log($"Switched to Primary Weapon mode - Ammo: {currentAmmo}/{GetMaxAmmo()}");
         }
         else
         {
-            Debug.Log($"Switched to Primary Weapon mode - Ammo: {currentAmmo}/{GetMaxAmmo()}");
+            // Switch to underbarrel weapon
+            if (currentGrenadeLauncher != null)
+            {
+                isGrenadeLauncherMode = true;
+                isUnderbarrelShotgunMode = false;
+                Debug.Log($"Switched to Grenade Launcher mode - Ammo: {currentGrenadeAmmo}/{currentGrenadeLauncher.magazineSize}");
+            }
+            else if (currentUnderbarrelShotgun != null)
+            {
+                isUnderbarrelShotgunMode = true;
+                isGrenadeLauncherMode = false;
+                Debug.Log($"Switched to Underbarrel Shotgun mode - Ammo: {currentUnderbarrelShotgunAmmo}/{currentUnderbarrelShotgun.magazineSize}");
+            }
         }
 
-        // Update audio if needed
+        // Update audio
         UpdateWeaponAudio();
     }
 
@@ -234,6 +329,11 @@ public class PlayerShooting : MonoBehaviour
         {
             weaponAudio.clip = currentGrenadeLauncher.launchSound;
             weaponAudio.loop = false; // Grenade launchers are never full-auto
+        }
+        else if (isUnderbarrelShotgunMode && currentUnderbarrelShotgun != null)
+        {
+            weaponAudio.clip = currentUnderbarrelShotgun.shootSound;
+            weaponAudio.loop = false; // Underbarrel shotguns are semi-auto
         }
         else if (currentWeapon != null)
         {
@@ -259,6 +359,14 @@ public class PlayerShooting : MonoBehaviour
             if (Time.time < nextGrenadeLauncherFireTime) return;
             FireGrenade();
             nextGrenadeLauncherFireTime = Time.time + currentGrenadeLauncher.fireRate;
+            return;
+        }
+
+        if (isUnderbarrelShotgunMode && currentUnderbarrelShotgun != null)
+        {
+            if (Time.time < nextUnderbarrelShotgunFireTime) return;
+            FireUnderbarrelShotgun();
+            nextUnderbarrelShotgunFireTime = Time.time + currentUnderbarrelShotgun.fireRate;
             return;
         }
 
@@ -291,10 +399,10 @@ public class PlayerShooting : MonoBehaviour
     {
         if (!context.performed) return;
 
-        // Can't switch fire mode when in grenade launcher mode
-        if (isGrenadeLauncherMode)
+        // Can't switch fire mode when in any underbarrel mode
+        if (IsUnderbarrelMode)
         {
-            Debug.Log("Cannot switch fire mode while in grenade launcher mode");
+            Debug.Log("Cannot switch fire mode while in underbarrel weapon mode");
             return;
         }
 
@@ -403,6 +511,106 @@ public class PlayerShooting : MonoBehaviour
         }
 
         Debug.Log($"Fired grenade! Remaining: {currentGrenadeAmmo}/{currentGrenadeLauncher.magazineSize}");
+    }
+
+    private void FireUnderbarrelShotgun()
+    {
+        if (isReloadingUnderbarrelShotgun || currentUnderbarrelShotgunAmmo <= 0)
+        {
+            Debug.Log("Out of shotgun shells! Reload first.");
+            return;
+        }
+
+        currentUnderbarrelShotgunAmmo--;
+
+        // Save shotgun ammo
+        if (!string.IsNullOrEmpty(currentWeaponSlotID))
+        {
+            WeaponAmmoTracker.SetAmmo(currentWeaponSlotID + "_UBS", currentUnderbarrelShotgunAmmo);
+        }
+
+        // Play shooting sound
+        if (weaponAudio != null && currentUnderbarrelShotgun.shootSound != null)
+        {
+            weaponAudio.PlayOneShot(currentUnderbarrelShotgun.shootSound);
+        }
+
+        // Fire multiple pellets
+        for (int i = 0; i < currentUnderbarrelShotgun.pelletsPerShot; i++)
+        {
+            if (bulletPrefab && firePoint && playerCamera)
+            {
+                GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
+
+                // Raycast from camera center
+                Vector3 targetPoint;
+                Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+
+                if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+                {
+                    targetPoint = hit.point;
+                }
+                else
+                {
+                    targetPoint = ray.GetPoint(1000f);
+                }
+
+                Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
+
+                // Apply shotgun spread
+                float spreadX = Random.Range(-currentUnderbarrelShotgun.spreadAngle, currentUnderbarrelShotgun.spreadAngle);
+                float spreadY = Random.Range(-currentUnderbarrelShotgun.spreadAngle, currentUnderbarrelShotgun.spreadAngle);
+                Quaternion spreadRot = Quaternion.Euler(spreadY, spreadX, 0);
+                shootDirection = spreadRot * shootDirection;
+
+                shootDirection.Normalize();
+                bulletObj.transform.forward = shootDirection;
+
+                // Assign damage
+                Bullet bullet = bulletObj.GetComponent<Bullet>();
+                if (bullet != null)
+                {
+                    // Create temporary WeaponData for damage handling
+                    bullet.weaponData = currentWeapon;
+                    // Override damage
+                    if (currentWeapon != null)
+                    {
+                        currentWeapon.damage = currentUnderbarrelShotgun.damage;
+                    }
+                }
+
+                // Apply velocity
+                Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
+                if (rb != null)
+                    rb.AddForce(shootDirection * currentUnderbarrelShotgun.bulletSpeed, ForceMode.Impulse);
+            }
+        }
+
+        // Muzzle flash
+        if (currentUnderbarrelShotgun.muzzleFlashPrefab)
+            Instantiate(currentUnderbarrelShotgun.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
+
+        // Apply recoil
+        if (recoil != null)
+        {
+            // Temporarily override weapon recoil with shotgun recoil
+            float oldX = currentWeapon.recoilX;
+            float oldY = currentWeapon.recoilY;
+            float oldZ = currentWeapon.recoilZ;
+
+            currentWeapon.recoilX = currentUnderbarrelShotgun.recoilX;
+            currentWeapon.recoilY = currentUnderbarrelShotgun.recoilY;
+            currentWeapon.recoilZ = currentUnderbarrelShotgun.recoilZ;
+
+            recoil.RecoilFire();
+
+            // Restore original recoil
+            currentWeapon.recoilX = oldX;
+            currentWeapon.recoilY = oldY;
+            currentWeapon.recoilZ = oldZ;
+        }
+
+        Debug.Log($"Fired underbarrel shotgun! Remaining: {currentUnderbarrelShotgunAmmo}/{currentUnderbarrelShotgun.magazineSize}");
     }
 
     private void Fire()
@@ -566,6 +774,13 @@ public class PlayerShooting : MonoBehaviour
             return;
         }
 
+        // Reload underbarrel shotgun if in UBS mode
+        if (isUnderbarrelShotgunMode && currentUnderbarrelShotgun != null)
+        {
+            ReloadUnderbarrelShotgun();
+            return;
+        }
+
         // Otherwise reload primary weapon
         if (currentWeapon == null || isReloading) return;
 
@@ -645,6 +860,69 @@ public class PlayerShooting : MonoBehaviour
         isReloadingGrenadeLauncher = false;
     }
 
+    private void ReloadUnderbarrelShotgun()
+    {
+        if (isReloadingUnderbarrelShotgun) return;
+
+        if (currentUnderbarrelShotgunAmmo == currentUnderbarrelShotgun.magazineSize)
+        {
+            Debug.Log("Underbarrel shotgun is already full!");
+            return;
+        }
+
+        StartCoroutine(ReloadUnderbarrelShotgunCoroutine());
+    }
+
+    private IEnumerator ReloadUnderbarrelShotgunCoroutine()
+    {
+        isReloadingUnderbarrelShotgun = true;
+
+        var playerInventory = FindObjectOfType<PlayerInventoryHolder>();
+        if (playerInventory == null)
+        {
+            Debug.LogError("PlayerInventoryHolder not found!");
+            isReloadingUnderbarrelShotgun = false;
+            yield break;
+        }
+
+        int ammoNeeded = currentUnderbarrelShotgun.magazineSize - currentUnderbarrelShotgunAmmo;
+        int availableAmmo = playerInventory.PrimaryInventorySystem.GetAmmoCount(currentUnderbarrelShotgun.requiredAmmoType);
+
+        if (availableAmmo <= 0)
+        {
+            Debug.Log($"No {currentUnderbarrelShotgun.requiredAmmoType} ammo in inventory!");
+            isReloadingUnderbarrelShotgun = false;
+            yield break;
+        }
+
+        Debug.Log($"Reloading {currentUnderbarrelShotgun.shotgunName}... Available ammo: {availableAmmo}");
+
+        if (currentUnderbarrelShotgun.reloadSound)
+            AudioSource.PlayClipAtPoint(currentUnderbarrelShotgun.reloadSound, firePoint.position);
+
+        yield return new WaitForSeconds(currentUnderbarrelShotgun.reloadTime);
+
+        int ammoToTake = Mathf.Min(ammoNeeded, availableAmmo);
+
+        if (playerInventory.PrimaryInventorySystem.ConsumeAmmo(currentUnderbarrelShotgun.requiredAmmoType, ammoToTake))
+        {
+            currentUnderbarrelShotgunAmmo += ammoToTake;
+
+            if (!string.IsNullOrEmpty(currentWeaponSlotID))
+            {
+                WeaponAmmoTracker.SetAmmo(currentWeaponSlotID + "_UBS", currentUnderbarrelShotgunAmmo);
+            }
+
+            Debug.Log($"Reloaded {currentUnderbarrelShotgun.shotgunName}, Current Ammo: {currentUnderbarrelShotgunAmmo}/{currentUnderbarrelShotgun.magazineSize}");
+        }
+        else
+        {
+            Debug.LogError("Failed to consume shotgun ammo from inventory!");
+        }
+
+        isReloadingUnderbarrelShotgun = false;
+    }
+
     private IEnumerator ReloadCoroutine()
     {
         isReloading = true;
@@ -714,6 +992,8 @@ public class PlayerShooting : MonoBehaviour
     {
         if (isGrenadeLauncherMode && currentGrenadeLauncher != null)
             return currentGrenadeAmmo;
+        if (isUnderbarrelShotgunMode && currentUnderbarrelShotgun != null)
+            return currentUnderbarrelShotgunAmmo;
         return currentAmmo;
     }
 
@@ -721,6 +1001,8 @@ public class PlayerShooting : MonoBehaviour
     {
         if (isGrenadeLauncherMode && currentGrenadeLauncher != null)
             return currentGrenadeLauncher.magazineSize;
+        if (isUnderbarrelShotgunMode && currentUnderbarrelShotgun != null)
+            return currentUnderbarrelShotgun.magazineSize;
 
         return currentAttachmentSystem != null
             ? currentAttachmentSystem.CurrentMagazineSize
@@ -736,6 +1018,13 @@ public class PlayerShooting : MonoBehaviour
             return playerInventory.PrimaryInventorySystem.GetAmmoCount(currentGrenadeLauncher.requiredAmmoType);
         }
 
+        if (isUnderbarrelShotgunMode && currentUnderbarrelShotgun != null)
+        {
+            var playerInventory = FindObjectOfType<PlayerInventoryHolder>();
+            if (playerInventory == null) return 0;
+            return playerInventory.PrimaryInventorySystem.GetAmmoCount(currentUnderbarrelShotgun.requiredAmmoType);
+        }
+
         if (currentWeapon == null) return 0;
 
         var inventory = FindObjectOfType<PlayerInventoryHolder>();
@@ -749,6 +1038,10 @@ public class PlayerShooting : MonoBehaviour
     public bool IsGrenadeLauncherMode() => isGrenadeLauncherMode;
 
     public bool HasGrenadeLauncher() => currentGrenadeLauncher != null;
+
+    public bool HasUnderbarrelShotgun() => currentUnderbarrelShotgun != null;
+
+    public bool HasUnderbarrelWeapon() => currentGrenadeLauncher != null || currentUnderbarrelShotgun != null;
 
     private AudioClip GetCurrentShootSound()
     {
