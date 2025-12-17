@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel, SideRail, GrenadeLauncher }
+public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel, SideRail }
 
 [CreateAssetMenu(menuName = "Inventory System/Attachment")]
 public class AttachmentData : InventoryItemData
@@ -49,4 +49,8 @@ public class AttachmentData : InventoryItemData
     [Header("Grenade Launcher Settings (for Underbarrel type)")]
     [Tooltip("If this underbarrel attachment is a grenade launcher, assign the data here")]
     public GrenadeLauncherData grenadeLauncherData;
+
+    [Header("Underbarrel Shotgun Settings (for Underbarrel type)")]
+    [Tooltip("If this underbarrel attachment is a shotgun, assign the data here")]
+    public UnderbarrelShotgunData underbarrelShotgunData;
 }
