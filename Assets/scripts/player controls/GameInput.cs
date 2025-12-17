@@ -233,6 +233,15 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": ""Press"",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleFlashlight"",
+                    ""type"": ""Button"",
+                    ""id"": ""c6186edd-568b-41b7-99ad-88663a83777f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -554,6 +563,17 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""action"": ""ToggleGrenadeLauncher"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""572b649e-376d-4420-8fe6-0c7f9eb1c0a0"",
+                    ""path"": ""<Keyboard>/x"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleFlashlight"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -652,6 +672,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         m_Player_SwitchFire = m_Player.FindAction("Switch Fire", throwIfNotFound: true);
         m_Player_PickUp = m_Player.FindAction("PickUp", throwIfNotFound: true);
         m_Player_ToggleGrenadeLauncher = m_Player.FindAction("ToggleGrenadeLauncher", throwIfNotFound: true);
+        m_Player_ToggleFlashlight = m_Player.FindAction("ToggleFlashlight", throwIfNotFound: true);
         // New action map
         m_Newactionmap = asset.FindActionMap("New action map", throwIfNotFound: true);
         m_Newactionmap_Phone = m_Newactionmap.FindAction("Phone", throwIfNotFound: true);
@@ -749,6 +770,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_SwitchFire;
     private readonly InputAction m_Player_PickUp;
     private readonly InputAction m_Player_ToggleGrenadeLauncher;
+    private readonly InputAction m_Player_ToggleFlashlight;
     public struct PlayerActions
     {
         private @GameInput m_Wrapper;
@@ -776,6 +798,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         public InputAction @SwitchFire => m_Wrapper.m_Player_SwitchFire;
         public InputAction @PickUp => m_Wrapper.m_Player_PickUp;
         public InputAction @ToggleGrenadeLauncher => m_Wrapper.m_Player_ToggleGrenadeLauncher;
+        public InputAction @ToggleFlashlight => m_Wrapper.m_Player_ToggleFlashlight;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -854,6 +877,9 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @ToggleGrenadeLauncher.started += instance.OnToggleGrenadeLauncher;
             @ToggleGrenadeLauncher.performed += instance.OnToggleGrenadeLauncher;
             @ToggleGrenadeLauncher.canceled += instance.OnToggleGrenadeLauncher;
+            @ToggleFlashlight.started += instance.OnToggleFlashlight;
+            @ToggleFlashlight.performed += instance.OnToggleFlashlight;
+            @ToggleFlashlight.canceled += instance.OnToggleFlashlight;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -927,6 +953,9 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @ToggleGrenadeLauncher.started -= instance.OnToggleGrenadeLauncher;
             @ToggleGrenadeLauncher.performed -= instance.OnToggleGrenadeLauncher;
             @ToggleGrenadeLauncher.canceled -= instance.OnToggleGrenadeLauncher;
+            @ToggleFlashlight.started -= instance.OnToggleFlashlight;
+            @ToggleFlashlight.performed -= instance.OnToggleFlashlight;
+            @ToggleFlashlight.canceled -= instance.OnToggleFlashlight;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -1061,6 +1090,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         void OnSwitchFire(InputAction.CallbackContext context);
         void OnPickUp(InputAction.CallbackContext context);
         void OnToggleGrenadeLauncher(InputAction.CallbackContext context);
+        void OnToggleFlashlight(InputAction.CallbackContext context);
     }
     public interface INewactionmapActions
     {
