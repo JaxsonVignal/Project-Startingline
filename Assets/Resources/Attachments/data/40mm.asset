@@ -16,10 +16,10 @@ MonoBehaviour:
   launcherId: gl_m203
   damage: 150
   explosionRadius: 8
-  magazineSize: 1
+  magazineSize: 10
   reloadTime: 3
   fireRate: 1
-  grenadeSpeed: 30
+  grenadeSpeed: 25
   requiredAmmoType: 10
   grenadePrefab: {fileID: 7085274459737078000, guid: c032fbfb7f7fe15488bdd266c0e864e4, type: 3}
   explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
