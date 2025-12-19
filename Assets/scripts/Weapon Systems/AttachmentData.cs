@@ -45,4 +45,12 @@ public class AttachmentData : InventoryItemData
     public Vector3 backScrewLocalPos = new Vector3(0.05f, 0.05f, -0.05f);
     [Tooltip("Visual size of screw indicators")]
     public float screwRadius = 0.015f;
+
+    [Header("Grenade Launcher Settings (for Underbarrel type)")]
+    [Tooltip("If this underbarrel attachment is a grenade launcher, assign the data here")]
+    public GrenadeLauncherData grenadeLauncherData;
+
+    [Header("Underbarrel Shotgun Settings (for Underbarrel type)")]
+    [Tooltip("If this underbarrel attachment is a shotgun, assign the data here")]
+    public UnderbarrelShotgunData underbarrelShotgunData;
 }

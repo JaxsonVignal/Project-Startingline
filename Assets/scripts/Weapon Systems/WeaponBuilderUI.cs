@@ -26,6 +26,8 @@ public class WeaponBuilderUI : MonoBehaviour
     private List<AttachmentData> availableAttachments = new List<AttachmentData>();
     private Dictionary<AttachmentData, int> attachmentCounts = new Dictionary<AttachmentData, int>();
 
+    
+
     // Track which attachments were on the weapon BEFORE we started editing
     private List<string> originalAttachmentIds = new List<string>();
 
@@ -44,8 +46,11 @@ public class WeaponBuilderUI : MonoBehaviour
 
     void OnEnable()
     {
+      
         // Refresh items whenever the builder UI is opened
         RefreshAvailableItems();
+        
+        
     }
 
     /// <summary>

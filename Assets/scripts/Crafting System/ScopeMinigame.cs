@@ -15,7 +15,12 @@ public class ScopeMinigame : AttachmentMinigameBase
     [Header("Spawn Settings")]
     [SerializeField] private Vector3 spawnOffset = new Vector3(0, 0.1f, 0f);
 
-    [Header("Screw Positions (relative to scope)")]
+    [Header("Screw Prefab Settings")]
+    [SerializeField] private GameObject screwPrefab; // Assign your screw prefab here
+    [SerializeField] private float screwMoveInDistance = 0.05f; // How far screws move in when being screwed
+    [SerializeField] private float screwMoveSpeed = 2f; // Speed of screw movement
+
+    [Header("Screw Positions (fallback if no AttachmentData)")]
     [SerializeField] private Vector3 frontScrewLocalPos = new Vector3(-0.05f, 0.05f, -0.05f);
     [SerializeField] private Vector3 backScrewLocalPos = new Vector3(0.05f, 0.05f, -0.05f);
     [SerializeField] private float screwRadius = 0.015f;
@@ -42,6 +47,10 @@ public class ScopeMinigame : AttachmentMinigameBase
 
     private GameObject frontScrewVisual;
     private GameObject backScrewVisual;
+    private Vector3 frontScrewStartPos;
+    private Vector3 backScrewStartPos;
+    private Vector3 frontScrewTargetPos;
+    private Vector3 backScrewTargetPos;
 
     private Vector3 actualFrontScrewPos;
     private Vector3 actualBackScrewPos;
@@ -52,7 +61,7 @@ public class ScopeMinigame : AttachmentMinigameBase
     private bool isZoomingOut = false;
     private Vector3 targetCameraPosition;
 
-    private List<GameObject> weaponPartsToDisable = new List<GameObject>(); // Retrieved from WeaponData
+    private List<GameObject> weaponPartsToDisable = new List<GameObject>();
 
     protected override void Awake()
     {
@@ -100,10 +109,6 @@ public class ScopeMinigame : AttachmentMinigameBase
         SetColor(normalColor);
     }
 
-    /// <summary>
-    /// Set multiple weapon parts that should be disabled when the scope is attached.
-    /// Call this before starting the minigame.
-    /// </summary>
     public void SetWeaponPartsToDisable(Transform weaponTransform, List<string> partPaths)
     {
         Debug.Log($"SetWeaponPartsToDisable called with weaponTransform: {(weaponTransform != null ? weaponTransform.name : "NULL")}, partPaths count: {(partPaths != null ? partPaths.Count : 0)}");
@@ -121,13 +126,11 @@ public class ScopeMinigame : AttachmentMinigameBase
             if (string.IsNullOrEmpty(partPath))
                 continue;
 
-            // Try to find the part by path
             Transform partTransform = weaponTransform.Find(partPath);
 
             if (partTransform == null)
             {
                 Debug.Log($"Could not find '{partPath}' using Find(), searching recursively...");
-                // If not found by path, search all children by name
                 partTransform = FindChildByName(weaponTransform, partPath);
             }
             else
@@ -149,9 +152,6 @@ public class ScopeMinigame : AttachmentMinigameBase
         Debug.Log($"Total weapon parts to disable: {weaponPartsToDisable.Count}");
     }
 
-    /// <summary>
-    /// LEGACY: Set a single weapon part to disable (for backwards compatibility)
-    /// </summary>
     public void SetWeaponPartToDisable(Transform weaponTransform, string partPath)
     {
         Debug.Log($"SetWeaponPartToDisable (legacy) called with weaponTransform: {(weaponTransform != null ? weaponTransform.name : "NULL")}, partPath: '{partPath}'");
@@ -207,33 +207,72 @@ public class ScopeMinigame : AttachmentMinigameBase
         Debug.Log($"Using AttachmentData: {usingAttachmentData}");
         Debug.Log($"Creating screws at: Front={actualFrontScrewPos}, Back={actualBackScrewPos}, Radius={actualScrewRadius}");
 
-        frontScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        // Create front screw from prefab
+        if (screwPrefab != null)
+        {
+            frontScrewVisual = Instantiate(screwPrefab, transform);
+            frontScrewVisual.name = "FrontScrew";
+        }
+        else
+        {
+            // Fallback to primitive if no prefab assigned
+            frontScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            frontScrewVisual.transform.localScale = new Vector3(actualScrewRadius * 2, 0.01f, actualScrewRadius * 2);
+            Debug.LogWarning("No screw prefab assigned! Using primitive cylinder as fallback.");
+        }
+
         frontScrewVisual.transform.SetParent(transform);
         frontScrewVisual.transform.localPosition = actualFrontScrewPos;
         frontScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 90);
-        frontScrewVisual.transform.localScale = new Vector3(actualScrewRadius * 2, 0.01f, actualScrewRadius * 2);
-        Destroy(frontScrewVisual.GetComponent<Collider>());
 
-        backScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        // Store start and target positions for movement (move along X-axis)
+        frontScrewStartPos = frontScrewVisual.transform.localPosition;
+        frontScrewTargetPos = frontScrewStartPos + new Vector3(screwMoveInDistance, 0, 0);
+
+        // Remove collider if it exists (we don't want screws to be physical objects)
+        Collider frontCol = frontScrewVisual.GetComponent<Collider>();
+        if (frontCol != null) Destroy(frontCol);
+
+        // Create back screw from prefab
+        if (screwPrefab != null)
+        {
+            backScrewVisual = Instantiate(screwPrefab, transform);
+            backScrewVisual.name = "BackScrew";
+        }
+        else
+        {
+            backScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            backScrewVisual.transform.localScale = new Vector3(actualScrewRadius * 2, 0.01f, actualScrewRadius * 2);
+        }
+
         backScrewVisual.transform.SetParent(transform);
         backScrewVisual.transform.localPosition = actualBackScrewPos;
         backScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 90);
-        backScrewVisual.transform.localScale = new Vector3(actualScrewRadius * 2, 0.01f, actualScrewRadius * 2);
-        Destroy(backScrewVisual.GetComponent<Collider>());
 
+        // Store start and target positions for movement (move along X-axis)
+        backScrewStartPos = backScrewVisual.transform.localPosition;
+        backScrewTargetPos = backScrewStartPos + new Vector3(screwMoveInDistance, 0, 0);
+
+        Collider backCol = backScrewVisual.GetComponent<Collider>();
+        if (backCol != null) Destroy(backCol);
+
+        // Set initial colors
         SetScrewColor(frontScrewVisual, Color.red);
         SetScrewColor(backScrewVisual, Color.red);
     }
 
     void SetScrewColor(GameObject screw, Color color)
     {
-        if (screw != null)
+        if (screw == null) return;
+
+        // Try to find renderer in the screw or its children
+        Renderer rend = screw.GetComponent<Renderer>();
+        if (rend == null)
+            rend = screw.GetComponentInChildren<Renderer>();
+
+        if (rend != null && rend.material != null)
         {
-            Renderer rend = screw.GetComponent<Renderer>();
-            if (rend != null && rend.material != null)
-            {
-                rend.material.color = color;
-            }
+            rend.material.color = color;
         }
     }
 
@@ -243,14 +282,11 @@ public class ScopeMinigame : AttachmentMinigameBase
 
         if (isComplete)
         {
-            Debug.Log("Update: isComplete=true, returning early");
             return;
         }
 
         if ((isZooming || isZoomingOut) && mainCamera != null)
         {
-            Debug.Log($"Camera moving: isZooming={isZooming}, isZoomingOut={isZoomingOut}, targetPos={targetCameraPosition}, currentPos={mainCamera.transform.position}");
-
             mainCamera.transform.position = Vector3.Lerp(
                 mainCamera.transform.position,
                 targetCameraPosition,
@@ -260,10 +296,30 @@ public class ScopeMinigame : AttachmentMinigameBase
             if (Vector3.Distance(mainCamera.transform.position, targetCameraPosition) < 0.01f)
             {
                 mainCamera.transform.position = targetCameraPosition;
-                Debug.Log($"Camera reached target. Setting isZooming=false, isZoomingOut=false");
                 isZooming = false;
                 isZoomingOut = false;
             }
+        }
+
+        // Animate screw movement based on progress
+        if (frontScrewVisual != null && frontScrewProgress > 0f)
+        {
+            Vector3 targetPos = Vector3.Lerp(frontScrewStartPos, frontScrewTargetPos, frontScrewProgress);
+            frontScrewVisual.transform.localPosition = Vector3.Lerp(
+                frontScrewVisual.transform.localPosition,
+                targetPos,
+                Time.deltaTime * screwMoveSpeed
+            );
+        }
+
+        if (backScrewVisual != null && backScrewProgress > 0f)
+        {
+            Vector3 targetPos = Vector3.Lerp(backScrewStartPos, backScrewTargetPos, backScrewProgress);
+            backScrewVisual.transform.localPosition = Vector3.Lerp(
+                backScrewVisual.transform.localPosition,
+                targetPos,
+                Time.deltaTime * screwMoveSpeed
+            );
         }
 
         if (!isSnapped)
@@ -417,7 +473,12 @@ public class ScopeMinigame : AttachmentMinigameBase
             {
                 float requiredRotation = rotationsRequired * 360f;
                 frontScrewProgress = Mathf.Clamp01(totalRotation / requiredRotation);
-                frontScrewVisual.transform.Rotate(Vector3.up, Mathf.Abs(angleDiff), Space.Self);
+
+                // Rotate the screw visually
+                if (frontScrewVisual != null)
+                {
+                    frontScrewVisual.transform.Rotate(Vector3.up, Mathf.Abs(angleDiff), Space.Self);
+                }
 
                 Color progressColor = Color.Lerp(Color.red, Color.green, frontScrewProgress);
                 SetScrewColor(frontScrewVisual, progressColor);
@@ -428,7 +489,6 @@ public class ScopeMinigame : AttachmentMinigameBase
                     currentState = ScrewState.None;
                     isRotating = false;
 
-                    // Check if BOTH screws are now complete
                     if (backScrewProgress >= 1f && !isComplete)
                     {
                         Debug.Log("Both screws complete!");
@@ -441,7 +501,12 @@ public class ScopeMinigame : AttachmentMinigameBase
             {
                 float requiredRotation = rotationsRequired * 360f;
                 backScrewProgress = Mathf.Clamp01(totalRotation / requiredRotation);
-                backScrewVisual.transform.Rotate(Vector3.up, Mathf.Abs(angleDiff), Space.Self);
+
+                // Rotate the screw visually
+                if (backScrewVisual != null)
+                {
+                    backScrewVisual.transform.Rotate(Vector3.up, Mathf.Abs(angleDiff), Space.Self);
+                }
 
                 Color progressColor = Color.Lerp(Color.red, Color.green, backScrewProgress);
                 SetScrewColor(backScrewVisual, progressColor);
@@ -452,7 +517,6 @@ public class ScopeMinigame : AttachmentMinigameBase
                     currentState = ScrewState.None;
                     isRotating = false;
 
-                    // Check if BOTH screws are now complete
                     if (frontScrewProgress >= 1f && !isComplete)
                     {
                         Debug.Log("Both screws complete!");
@@ -533,6 +597,9 @@ public class ScopeMinigame : AttachmentMinigameBase
             }
         }
 
+        // Destroy screws before cancelling
+        DestroyScrews();
+
         base.CancelMinigame();
     }
 
@@ -543,7 +610,30 @@ public class ScopeMinigame : AttachmentMinigameBase
             yield return null;
         }
 
+        // Destroy screws after zoom out completes
+        DestroyScrews();
+
         base.CompleteMinigame();
+    }
+
+    /// <summary>
+    /// Destroys the screw visual GameObjects
+    /// </summary>
+    private void DestroyScrews()
+    {
+        if (frontScrewVisual != null)
+        {
+            Debug.Log("Destroying front screw visual");
+            Destroy(frontScrewVisual);
+            frontScrewVisual = null;
+        }
+
+        if (backScrewVisual != null)
+        {
+            Debug.Log("Destroying back screw visual");
+            Destroy(backScrewVisual);
+            backScrewVisual = null;
+        }
     }
 
     void OnDrawGizmos()

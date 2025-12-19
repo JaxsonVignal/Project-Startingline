@@ -10,18 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: GlockRedDot
+  m_Name: Infared Scope
   m_EditorClassIdentifier: 
-  ID: 50
-  Name: Glock Red Dot
+  ID: -1
+  Name: InfaredScope
   Description: 
   Icon: {fileID: 0}
-  maxStackSize: 0
-  id: GRDS
+  maxStackSize: 1
+  id: InfaredScope
   type: 0
-  prefab: {fileID: 7960101205374357589, guid: 962201bbd8a926249829f60fd5575831, type: 3}
+  prefab: {fileID: 5697292357181724961, guid: 902feb62575a4744f990d1e3aebd0f6b, type: 3}
   icon: {fileID: 0}
   description: 
+  Value: 0
   localPosition: {x: 0, y: 0, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
@@ -31,12 +32,10 @@ MonoBehaviour:
   spreadMultiplier: 1
   recoilMultiplier: 1
   magazineBonus: 0
-  scopePositionOffset: {x: 0, y: 0, z: 0}
-  scopeRotationOffset: {x: 0, y: 0, z: 0}
-  scopeFOVOverride: 30
-  scopeReticle: {fileID: 0}
-  reticleScale: 1
-  reticleColor: {r: 1, g: 0, b: 0, a: 1}
-  frontScrewLocalPos: {x: -0.05, y: 0.05, z: -0.05}
-  backScrewLocalPos: {x: 0.05, y: 0.05, z: -0.05}
-  screwRadius: 0.015
+  scopeFOVOverride: 20
+  scopeReticle: {fileID: 21300000, guid: 8da27cc3f73884047a9bc7d379a079c4, type: 3}
+  reticleScale: 0.2
+  reticleColor: {r: 1, g: 1, b: 1, a: 1}
+  frontScrewLocalPos: {x: -0.05, y: 0.01, z: -0.025}
+  backScrewLocalPos: {x: -0.05, y: 0.01, z: 0.025}
+  screwRadius: 0.005
