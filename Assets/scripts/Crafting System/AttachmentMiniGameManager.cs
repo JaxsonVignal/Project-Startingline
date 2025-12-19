@@ -62,8 +62,27 @@ public class AttachmentMinigameManager : MonoBehaviour
         switch (attachment.type)
         {
             case AttachmentType.Barrel:
-                minigame = attachmentObj.AddComponent<SilencerMinigame>();
+                SilencerMinigame silencerMinigame = attachmentObj.AddComponent<SilencerMinigame>();
                 Debug.Log("Added SilencerMinigame component");
+
+                // Configure silencer-specific settings
+                if (silencerMinigame != null && weapon != null && socket != null)
+                {
+                    // Set the weapon parts to disable when silencer is attached
+                    // Use socket.root to get the weapon's root transform
+                    var partsToDisable = weapon.GetPartsToDisableWithBarrel();
+                    if (partsToDisable != null && partsToDisable.Count > 0)
+                    {
+                        Debug.Log($"Setting {partsToDisable.Count} weapon parts to disable for silencer");
+                        silencerMinigame.SetWeaponPartsToDisable(socket.root, partsToDisable);
+                    }
+                    else
+                    {
+                        Debug.Log("No weapon parts to disable for this barrel attachment");
+                    }
+                }
+
+                minigame = silencerMinigame;
                 break;
 
             case AttachmentType.Sight:
@@ -97,7 +116,12 @@ public class AttachmentMinigameManager : MonoBehaviour
                 {
                     // Set the weapon parts to disable when scope is attached
                     // Use socket.root to get the weapon's root transform
-                    scopeMinigame.SetWeaponPartsToDisable(socket.root, weapon.GetPartsToDisableWithSight());
+                    var partsToDisable = weapon.GetPartsToDisableWithSight();
+                    if (partsToDisable != null && partsToDisable.Count > 0)
+                    {
+                        Debug.Log($"Setting {partsToDisable.Count} weapon parts to disable for scope");
+                        scopeMinigame.SetWeaponPartsToDisable(socket.root, partsToDisable);
+                    }
                 }
 
                 minigame = scopeMinigame;

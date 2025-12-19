@@ -50,6 +50,8 @@ MonoBehaviour:
   partsToDisableWithSight:
   - RearSight
   - FrontSight
+  partsToDisableWithBarrel:
+  - AR_Q_Muzzle
   partToDisableWithSightPath: RearSight
   weaponPrefab: {fileID: 2769957187085557481, guid: 4e765fdcad1a56f4599c871843469053, type: 3}
   shootSound: {fileID: 0}
