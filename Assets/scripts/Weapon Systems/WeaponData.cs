@@ -127,6 +127,18 @@ public class WeaponData : InventoryItemData
         return new List<string>();
     }
 
+    [Tooltip("List of child GameObject names or paths for the magazine to disable/remove when a new magazine is attached (e.g., 'DefaultMagazine', 'Mag_30Round')")]
+    public List<string> partsToDisableWithMagazine = new List<string>();
+
+    public List<string> GetPartsToDisableWithMagazine()
+    {
+        if (partsToDisableWithMagazine != null && partsToDisableWithMagazine.Count > 0)
+        {
+            return partsToDisableWithMagazine;
+        }
+        return new List<string>();
+    }
+
     public bool IsAttachmentAllowed(AttachmentData attachment)
     {
         if (attachment == null)
