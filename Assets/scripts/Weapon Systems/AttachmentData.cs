@@ -53,4 +53,8 @@ public class AttachmentData : InventoryItemData
     [Header("Underbarrel Shotgun Settings (for Underbarrel type)")]
     [Tooltip("If this underbarrel attachment is a shotgun, assign the data here")]
     public UnderbarrelShotgunData underbarrelShotgunData;
+
+    [Header("Flashlight Settings (for SideRail type)")]
+    [Tooltip("If this siderail attachment is a flashlight, assign the data here")]
+    public FlashlightData flashlightData;
 }
