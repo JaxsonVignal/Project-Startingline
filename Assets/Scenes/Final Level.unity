@@ -9710,6 +9710,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   morningHour: 6
+  earliestSleepTime: 18
+  cannotSleepMessage: It's too early to sleep. Come back after 6pm.
 --- !u!65 &245557436
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -58713,8 +58715,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b43c5592d093da44f99dee1fab97feea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dayLengthInMinutes: 24
+  dayLengthInMinutes: 1
   startHour: 6
+  pauseAtMidnight: 1
+  midnightPauseTime: 0
+  midnightThreshold: 0.1
   directionalLight: {fileID: 705507994}
   lightColor:
     serializedVersion: 2
