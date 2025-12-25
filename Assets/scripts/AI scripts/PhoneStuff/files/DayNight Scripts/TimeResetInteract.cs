@@ -15,16 +15,20 @@ public class TimeResetInteractable : MonoBehaviour, IInteractable
 
     public void Interact(Interactor interactor, out bool interactSuccessful)
     {
-        // Reset time
-        var dayNight = GameObject.FindObjectOfType<DayNightCycleManager>();
+        // Get day/night manager
+        var dayNight = FindObjectOfType<DayNightCycleManager>();
+
         if (dayNight != null)
-            dayNight.SetTime(morningHour);
+        {
+            // Call PlayerSlept to reset time and unpause if needed
+            dayNight.PlayerSlept(morningHour);
+        }
 
         // Save game using the existing save data
         SaveGameManager.SaveData();
 
         // Reset all NPCs to bed
-        var allNpcs = GameObject.FindObjectsOfType<NPCManager>();
+        var allNpcs = FindObjectsOfType<NPCManager>();
         foreach (var npc in allNpcs)
         {
             npc.ResetToBed();

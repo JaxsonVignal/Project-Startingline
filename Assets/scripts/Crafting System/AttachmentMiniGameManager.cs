@@ -62,8 +62,27 @@ public class AttachmentMinigameManager : MonoBehaviour
         switch (attachment.type)
         {
             case AttachmentType.Barrel:
-                minigame = attachmentObj.AddComponent<SilencerMinigame>();
+                SilencerMinigame silencerMinigame = attachmentObj.AddComponent<SilencerMinigame>();
                 Debug.Log("Added SilencerMinigame component");
+
+                // Configure silencer-specific settings
+                if (silencerMinigame != null && weapon != null && socket != null)
+                {
+                    // Set the weapon parts to disable when silencer is attached
+                    // Use socket.root to get the weapon's root transform
+                    var partsToDisable = weapon.GetPartsToDisableWithBarrel();
+                    if (partsToDisable != null && partsToDisable.Count > 0)
+                    {
+                        Debug.Log($"Setting {partsToDisable.Count} weapon parts to disable for silencer");
+                        silencerMinigame.SetWeaponPartsToDisable(socket.root, partsToDisable);
+                    }
+                    else
+                    {
+                        Debug.Log("No weapon parts to disable for this barrel attachment");
+                    }
+                }
+
+                minigame = silencerMinigame;
                 break;
 
             case AttachmentType.Sight:
@@ -97,7 +116,12 @@ public class AttachmentMinigameManager : MonoBehaviour
                 {
                     // Set the weapon parts to disable when scope is attached
                     // Use socket.root to get the weapon's root transform
-                    scopeMinigame.SetWeaponPartsToDisable(socket.root, weapon.GetPartsToDisableWithSight());
+                    var partsToDisable = weapon.GetPartsToDisableWithSight();
+                    if (partsToDisable != null && partsToDisable.Count > 0)
+                    {
+                        Debug.Log($"Setting {partsToDisable.Count} weapon parts to disable for scope");
+                        scopeMinigame.SetWeaponPartsToDisable(socket.root, partsToDisable);
+                    }
                 }
 
                 minigame = scopeMinigame;
@@ -129,6 +153,30 @@ public class AttachmentMinigameManager : MonoBehaviour
                 }
 
                 minigame = underbarrelMinigame;
+                break;
+
+            case AttachmentType.Magazine:
+                MagazineMinigame magazineMinigame = attachmentObj.AddComponent<MagazineMinigame>();
+                Debug.Log("Added MagazineMinigame component");
+
+                // Configure magazine-specific settings
+                if (magazineMinigame != null && weapon != null && socket != null)
+                {
+                    // Set the old magazine parts to remove
+                    // Use socket.root to get the weapon's root transform
+                    var partsToDisable = weapon.GetPartsToDisableWithMagazine();
+                    if (partsToDisable != null && partsToDisable.Count > 0)
+                    {
+                        Debug.Log($"Setting {partsToDisable.Count} old magazine parts to remove");
+                        magazineMinigame.SetOldMagazineParts(socket.root, partsToDisable);
+                    }
+                    else
+                    {
+                        Debug.Log("No old magazine parts to remove");
+                    }
+                }
+
+                minigame = magazineMinigame;
                 break;
 
             // Add more cases for other attachment types
@@ -178,6 +226,9 @@ public class AttachmentMinigameManager : MonoBehaviour
                 return true;
             case AttachmentType.Underbarrel:
                 Debug.Log("Underbarrel has minigame implementation");
+                return true;
+            case AttachmentType.Magazine:
+                Debug.Log("Magazine has minigame implementation");
                 return true;
             // Add more types as you implement them
             default:
