@@ -80,6 +80,9 @@ public class WeaponData : InventoryItemData
     [Tooltip("List of child GameObject names or paths to disable when a scope/sight is attached (e.g., 'IronSights', 'Mesh/RearSight', 'FrontSightPost')")]
     public List<string> partsToDisableWithSight = new List<string>();
 
+    [Tooltip("List of child GameObject names or paths to disable/unscrew when a barrel attachment (silencer) is attached (e.g., 'DefaultMuzzleBrake', 'FlashHider')")]
+    public List<string> partsToDisableWithBarrel = new List<string>();
+
     [Header("Legacy Support (Deprecated)")]
     [Tooltip("DEPRECATED: Use partsToDisableWithSight list instead. This field is kept for backwards compatibility.")]
     public string partToDisableWithSightPath;
@@ -113,6 +116,27 @@ public class WeaponData : InventoryItemData
             allParts.Add(partToDisableWithSightPath);
         }
         return allParts;
+    }
+
+    public List<string> GetPartsToDisableWithBarrel()
+    {
+        if (partsToDisableWithBarrel != null && partsToDisableWithBarrel.Count > 0)
+        {
+            return partsToDisableWithBarrel;
+        }
+        return new List<string>();
+    }
+
+    [Tooltip("List of child GameObject names or paths for the magazine to disable/remove when a new magazine is attached (e.g., 'DefaultMagazine', 'Mag_30Round')")]
+    public List<string> partsToDisableWithMagazine = new List<string>();
+
+    public List<string> GetPartsToDisableWithMagazine()
+    {
+        if (partsToDisableWithMagazine != null && partsToDisableWithMagazine.Count > 0)
+        {
+            return partsToDisableWithMagazine;
+        }
+        return new List<string>();
     }
 
     public bool IsAttachmentAllowed(AttachmentData attachment)

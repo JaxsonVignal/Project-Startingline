@@ -346,6 +346,7 @@ public class WeaponBuilderUI : MonoBehaviour
             case AttachmentType.Barrel:      // Silencers
             case AttachmentType.Sight:       // Scopes
             case AttachmentType.Underbarrel: // Underbarrel attachments
+            case AttachmentType.Magazine:    // Magazines
                 return true;
             // Add more types that require minigames
             default:

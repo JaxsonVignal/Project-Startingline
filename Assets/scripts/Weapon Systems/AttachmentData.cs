@@ -57,4 +57,5 @@ public class AttachmentData : InventoryItemData
     [Header("Flashlight Settings (for SideRail type)")]
     [Tooltip("If this siderail attachment is a flashlight, assign the data here")]
     public FlashlightData flashlightData;
+
 }
