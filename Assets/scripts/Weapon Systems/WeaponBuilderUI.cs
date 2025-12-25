@@ -454,6 +454,41 @@ public class WeaponBuilderUI : MonoBehaviour
     {
         if (previewRuntime == null) return;
 
+        // Find the attachment being removed
+        var attachmentEntry = previewInstance.attachments.Find(e => e.type == type);
+
+        if (attachmentEntry != null)
+        {
+            // Check if this was an ORIGINAL attachment (already on the weapon)
+            bool wasOriginal = originalAttachmentIds.Contains(attachmentEntry.attachmentId);
+
+            if (wasOriginal)
+            {
+                // This was a pre-existing attachment - add it back to inventory
+                if (attachmentLookup.TryGetValue(attachmentEntry.attachmentId, out var att))
+                {
+                    Debug.Log($"Removing PRE-EXISTING attachment: {att.name} - adding back to inventory");
+
+                    if (playerInventory.PrimaryInventorySystem.AddToInventory(att, 1))
+                    {
+                        Debug.Log($"Successfully added {att.name} back to inventory");
+                        // Remove from original list so it won't be kept on finalize
+                        originalAttachmentIds.Remove(attachmentEntry.attachmentId);
+                    }
+                    else
+                    {
+                        Debug.LogError($"Failed to add {att.name} back to inventory - inventory full?");
+                    }
+                }
+            }
+            else
+            {
+                // This was a newly added attachment - it's already in inventory, just being removed from preview
+                Debug.Log($"Removing NEWLY ADDED attachment: {attachmentEntry.attachmentId} - already in inventory");
+            }
+        }
+
+        // Remove from preview
         previewInstance.attachments.RemoveAll(e => e.type == type);
         previewRuntime.attachmentSystem.UnequipType(type);
 
@@ -513,21 +548,42 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
+        Debug.Log($"=== FINALIZE WEAPON DEBUG ===");
+        Debug.Log($"Total attachments in preview: {previewInstance.attachments.Count}");
+        Debug.Log($"Original attachments count: {originalAttachmentIds.Count}");
+
         // Verify we have NEW attachments that were added (don't check pre-existing ones)
         foreach (var entry in previewInstance.attachments)
         {
+            Debug.Log($"Checking attachment: {entry.attachmentId} (Type: {entry.type})");
+
             // Skip if this attachment was already on the weapon when we started editing
             if (originalAttachmentIds.Contains(entry.attachmentId))
+            {
+                Debug.Log($"  -> This is a PRE-EXISTING attachment, skipping inventory check");
                 continue;
+            }
+
+            Debug.Log($"  -> This is a NEW attachment, checking inventory...");
 
             if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
             {
+                Debug.Log($"  -> Found in lookup: {att.name}");
+
                 if (!playerInventory.PrimaryInventorySystem.ContainsItem(att, 1))
                 {
                     Debug.LogError($"Attachment {att.name} no longer in inventory!");
                     RefreshAvailableItems();
                     return;
                 }
+                else
+                {
+                    Debug.Log($"  -> Verified in inventory");
+                }
+            }
+            else
+            {
+                Debug.LogError($"  -> NOT FOUND in attachmentLookup! ID: {entry.attachmentId}");
             }
         }
 
@@ -541,28 +597,48 @@ public class WeaponBuilderUI : MonoBehaviour
         // Remove the weapon instance from storage (we'll create a new one)
         WeaponInstanceStorage.RemoveInstance(weaponSlot.UniqueSlotID);
 
+        Debug.Log($"=== REMOVING ATTACHMENTS FROM INVENTORY ===");
+
         // Remove only NEWLY ADDED attachments from inventory (not pre-existing ones)
         foreach (var entry in previewInstance.attachments)
         {
+            Debug.Log($"Processing attachment: {entry.attachmentId} (Type: {entry.type})");
+
             // Skip if this attachment was already on the weapon when we started editing
             if (originalAttachmentIds.Contains(entry.attachmentId))
             {
-                Debug.Log($"Keeping pre-existing attachment: {entry.attachmentId}");
+                Debug.Log($"  -> PRE-EXISTING: Keeping {entry.attachmentId}");
                 continue;
             }
 
+            Debug.Log($"  -> NEW ATTACHMENT: Attempting to remove from inventory...");
+
             if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
             {
+                Debug.Log($"  -> Found in lookup: {att.name} (Type: {att.type})");
+                Debug.Log($"  -> Calling RemoveFromInventory...");
+
                 if (!playerInventory.PrimaryInventorySystem.RemoveFromInventory(att, 1))
                 {
-                    Debug.LogWarning($"Failed to remove attachment {att.name} from inventory!");
+                    Debug.LogWarning($"  -> FAILED to remove attachment {att.name} from inventory!");
                 }
                 else
                 {
-                    Debug.Log($"Removed new attachment from inventory: {att.name}");
+                    Debug.Log($"  -> SUCCESS: Removed {att.name} from inventory");
+                }
+            }
+            else
+            {
+                Debug.LogError($"  -> ERROR: Could not find attachment {entry.attachmentId} in attachmentLookup!");
+                Debug.LogError($"  -> Available IDs in lookup:");
+                foreach (var kvp in attachmentLookup)
+                {
+                    Debug.LogError($"     - {kvp.Key} = {kvp.Value.name}");
                 }
             }
         }
+
+        Debug.Log($"=== CREATING FINALIZED WEAPON ===");
 
         // Create the finished weapon pickup
         Vector3 spawnPos = previewRuntime.transform.position;
@@ -631,7 +707,7 @@ public class WeaponBuilderUI : MonoBehaviour
         // Notify inventory system
         PlayerInventoryHolder.OnPlayerInventoryChanged?.Invoke();
 
-        Debug.Log($"Finalized weapon: {selectedBase.name} with {previewInstance.attachments.Count} attachments");
+        Debug.Log($"=== FINALIZED: {selectedBase.name} with {previewInstance.attachments.Count} attachments ===");
 
         // Call WeaponBuilderController to close FIRST (before disabling this GameObject)
         WeaponBuilderController controller = FindObjectOfType<WeaponBuilderController>();
