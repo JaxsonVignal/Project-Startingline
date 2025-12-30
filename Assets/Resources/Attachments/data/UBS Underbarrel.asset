@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f31639488a35ce4cba103df2ffc42c0, type: 3}
+  m_Name: UBS Underbarrel
+  m_EditorClassIdentifier: 
+  shotgunName: Masterkey Underbarrel Shotgun
+  shotgunId: ubs_masterkey
+  damage: 25
+  pelletsPerShot: 8
+  spreadAngle: 5
+  magazineSize: 4
+  reloadTime: 2
+  fireRate: 0.8
+  bulletSpeed: 50
+  requiredAmmoType: 6
+  shootSound: {fileID: 0}
+  reloadSound: {fileID: 0}
+  muzzleFlashPrefab: {fileID: 0}
+  recoilX: 4
+  recoilY: 3
+  recoilZ: 3
