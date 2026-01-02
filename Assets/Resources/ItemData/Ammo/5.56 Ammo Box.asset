@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f79f944a179857040ab849c45959f93e, type: 3}
   m_Name: 5.56 Ammo Box
   m_EditorClassIdentifier: 
-  ID: -1
+  ID: 2456
   Name: 
   Description: 
   Icon: {fileID: 0}
-  maxStackSize: 0
+  maxStackSize: 1
   ammoToGive: {fileID: 11400000, guid: d22031414aef9214b94ea156d0c4803b, type: 2}
   ammoAmount: 30

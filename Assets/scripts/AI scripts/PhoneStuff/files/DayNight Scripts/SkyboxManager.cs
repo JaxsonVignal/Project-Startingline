@@ -17,9 +17,6 @@ public class SkyboxManager : MonoBehaviour
     public bool useTransitions = true;
     public float transitionDurationInHours = 0.5f;
 
-    [Header("Debug")]
-    public bool showDebugLogs = false;
-
     private int currentSlotIndex = -1;
     private int nextSlotIndex = -1;
     private bool isTransitioning = false;
@@ -49,15 +46,6 @@ public class SkyboxManager : MonoBehaviour
         // Sort skybox slots by start hour
         System.Array.Sort(skyboxSlots, (a, b) => a.startHour.CompareTo(b.startHour));
 
-        if (showDebugLogs)
-        {
-            Debug.Log("=== Skybox Slots Configuration ===");
-            for (int i = 0; i < skyboxSlots.Length; i++)
-            {
-                Debug.Log($"Slot {i}: {skyboxSlots[i].name} starts at {skyboxSlots[i].startHour:F1}h");
-            }
-        }
-
         // Create blend material if using transitions
         if (useTransitions)
         {
@@ -71,8 +59,6 @@ public class SkyboxManager : MonoBehaviour
             if (currentSlotIndex >= 0 && currentSlotIndex < skyboxSlots.Length)
             {
                 SetSkybox(skyboxSlots[currentSlotIndex].skyboxMaterial);
-                if (showDebugLogs)
-                    Debug.Log($"Initial skybox set to slot {currentSlotIndex}: {skyboxSlots[currentSlotIndex].name}");
             }
         }
         else
@@ -98,9 +84,6 @@ public class SkyboxManager : MonoBehaviour
             blendMaterial = new Material(blendShader);
             blendMaterial.SetFloat("_Exposure", 1.0f);
             blendMaterial.SetColor("_Tint", Color.white);
-
-            if (showDebugLogs)
-                Debug.Log("SkyboxManager: Blend material created successfully");
         }
         else
         {
@@ -115,35 +98,27 @@ public class SkyboxManager : MonoBehaviour
 
         int targetSlotIndex = GetCurrentSkyboxIndex(currentTime);
 
-        Debug.Log($"[OnTimeChanged] Time: {currentTime:F2}h | CurrentSlot: {currentSlotIndex} ({(currentSlotIndex >= 0 ? skyboxSlots[currentSlotIndex].name : "none")}) | TargetSlot: {targetSlotIndex} ({skyboxSlots[targetSlotIndex].name}) | Transitioning: {isTransitioning}");
-
         // Check if we need to switch skyboxes
         if (targetSlotIndex != currentSlotIndex && targetSlotIndex >= 0)
         {
-            Debug.Log($"[SWITCH TRIGGERED] From slot {currentSlotIndex} to slot {targetSlotIndex}");
-
             if (useTransitions && blendMaterial != null && currentSlotIndex >= 0)
             {
-                Debug.Log($"[STARTING TRANSITION] {skyboxSlots[currentSlotIndex].name} -> {skyboxSlots[targetSlotIndex].name}");
                 int fromIndex = currentSlotIndex;
                 currentSlotIndex = targetSlotIndex;  // <-- UPDATE THIS IMMEDIATELY
                 StartTransition(fromIndex, targetSlotIndex, currentTime);
             }
             else
             {
-                Debug.Log($"[INSTANT SWITCH] Setting skybox to: {skyboxSlots[targetSlotIndex].name}");
                 SetSkybox(skyboxSlots[targetSlotIndex].skyboxMaterial);
                 currentSlotIndex = targetSlotIndex;
             }
         }
     }
+
     void StartTransition(int fromIndex, int toIndex, float startTime)
     {
-        Debug.Log($"[StartTransition] Called with fromIndex={fromIndex}, toIndex={toIndex}, startTime={startTime:F2}");
-
         if (fromIndex < 0 || toIndex < 0 || fromIndex >= skyboxSlots.Length || toIndex >= skyboxSlots.Length)
         {
-            Debug.LogWarning($"[StartTransition] Invalid indices, doing instant switch to {toIndex}");
             currentSlotIndex = toIndex;
             SetSkybox(skyboxSlots[toIndex].skyboxMaterial);
             return;
@@ -152,17 +127,12 @@ public class SkyboxManager : MonoBehaviour
         Material fromMat = skyboxSlots[fromIndex].skyboxMaterial;
         Material toMat = skyboxSlots[toIndex].skyboxMaterial;
 
-        Debug.Log($"[StartTransition] From material: {fromMat.name}, To material: {toMat.name}");
-
         // Get textures from panoramic materials
         Texture fromTex = GetPanoramicTexture(fromMat);
         Texture toTex = GetPanoramicTexture(toMat);
 
-        Debug.Log($"[StartTransition] From texture: {fromTex?.name}, To texture: {toTex?.name}");
-
         if (fromTex == null || toTex == null)
         {
-            Debug.LogWarning($"[StartTransition] Missing textures, doing instant switch");
             currentSlotIndex = toIndex;
             SetSkybox(toMat);
             return;
@@ -172,8 +142,6 @@ public class SkyboxManager : MonoBehaviour
         blendMaterial.SetTexture("_MainTex1", fromTex);
         blendMaterial.SetTexture("_MainTex2", toTex);
         blendMaterial.SetFloat("_Blend", 0f);
-
-        Debug.Log($"[StartTransition] Blend material textures set, blend=0");
 
         // Copy rotation values if they exist
         float rotation1 = fromMat.HasProperty("_Rotation") ? fromMat.GetFloat("_Rotation") : 0f;
@@ -193,8 +161,6 @@ public class SkyboxManager : MonoBehaviour
 
         RenderSettings.skybox = blendMaterial;
         DynamicGI.UpdateEnvironment();
-
-        Debug.Log($"[StartTransition] RenderSettings.skybox set to blend material. isTransitioning={isTransitioning}, nextSlotIndex={nextSlotIndex}");
     }
 
     void UpdateTransition(float currentTime)
@@ -216,15 +182,10 @@ public class SkyboxManager : MonoBehaviour
             DynamicGI.UpdateEnvironment();
         }
 
-        // Log every frame during transition
-        Debug.Log($"[UpdateTransition] Time: {currentTime:F2}h | Start: {transitionStartTime:F2}h | TimeSince: {timeSinceStart:F3}h | Progress: {progress:F3} | Blend: {blendMaterial?.GetFloat("_Blend"):F3}");
-
         // Transition complete
         if (progress >= 1f)
         {
             isTransitioning = false;
-
-            Debug.Log($"[UpdateTransition] TRANSITION COMPLETE - Setting to slot {nextSlotIndex}: {skyboxSlots[nextSlotIndex].name}");
 
             // IMPORTANT: Switch back to the actual skybox material, not the blend material
             if (nextSlotIndex >= 0 && nextSlotIndex < skyboxSlots.Length)
@@ -232,8 +193,6 @@ public class SkyboxManager : MonoBehaviour
                 currentSlotIndex = nextSlotIndex;
                 RenderSettings.skybox = skyboxSlots[currentSlotIndex].skyboxMaterial;
                 DynamicGI.UpdateEnvironment();
-
-                Debug.Log($"[UpdateTransition] RenderSettings.skybox = {RenderSettings.skybox.name}");
             }
         }
     }
@@ -257,8 +216,6 @@ public class SkyboxManager : MonoBehaviour
             }
         }
 
-        if (showDebugLogs)
-            Debug.LogWarning($"Could not find texture in material '{mat.name}' with shader '{mat.shader.name}'");
         return null;
     }
 
@@ -294,9 +251,6 @@ public class SkyboxManager : MonoBehaviour
             }
 
             DynamicGI.UpdateEnvironment();
-
-            if (showDebugLogs)
-                Debug.Log($"Skybox set to: {newSkybox.name}");
         }
         else
         {
@@ -312,7 +266,6 @@ public class SkyboxManager : MonoBehaviour
             currentSlotIndex = slotIndex;
             isTransitioning = false;
             SetSkybox(skyboxSlots[slotIndex].skyboxMaterial);
-            Debug.Log($"Forced skybox to slot {slotIndex}: {skyboxSlots[slotIndex].name}");
         }
     }
 

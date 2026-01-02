@@ -701,6 +701,9 @@ public class WeaponBuilderUI : MonoBehaviour
         // Handle iron sight visibility based on attachments
         HandleIronSightVisibility(pickupWeapon, selectedBase, previewInstance, attachmentLookup);
 
+        // Handle old magazine visibility based on attachments
+        HandleMagazineVisibility(pickupWeapon, selectedBase, previewInstance, attachmentLookup);
+
         // Store weapon instance
         var instanceHolder = pickupWeapon.AddComponent<WeaponInstanceHolder>();
         instanceHolder.weaponInstance = previewInstance;
@@ -724,6 +727,103 @@ public class WeaponBuilderUI : MonoBehaviour
 
             gameObject.SetActive(false);
         }
+    }
+
+    /// <summary>
+    /// Disables the old magazine parts when a new magazine attachment is equipped
+    /// Call this after equipping attachments on any weapon
+    /// </summary>
+    public static void HandleMagazineVisibility(GameObject weaponObject, WeaponData weaponData, WeaponInstance weaponInstance, Dictionary<string, AttachmentData> attachmentLookup)
+    {
+        if (weaponObject == null || weaponData == null || weaponInstance == null) return;
+
+        Debug.Log($"=== HandleMagazineVisibility called ===");
+
+        // Check if weapon has a magazine attachment equipped
+        bool hasMagazineAttachment = false;
+        foreach (var entry in weaponInstance.attachments)
+        {
+            if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
+            {
+                if (att.type == AttachmentType.Magazine)
+                {
+                    hasMagazineAttachment = true;
+                    Debug.Log($"Found magazine attachment: {att.name}");
+                    break;
+                }
+            }
+        }
+
+        Debug.Log($"Has magazine attachment: {hasMagazineAttachment}");
+
+        // Get all magazine parts that should be disabled/enabled
+        var partsToToggle = weaponData.GetPartsToDisableWithMagazine();
+
+        if (partsToToggle == null || partsToToggle.Count == 0)
+        {
+            Debug.Log("No parts to toggle for magazines");
+            return;
+        }
+
+        Debug.Log($"Parts to toggle: {partsToToggle.Count}");
+
+        // Process each part
+        foreach (var partPath in partsToToggle)
+        {
+            if (string.IsNullOrEmpty(partPath))
+                continue;
+
+            Debug.Log($"Looking for part: '{partPath}'");
+
+            Transform partTransform = weaponObject.transform.Find(partPath);
+
+            if (partTransform == null)
+            {
+                Debug.Log($"Could not find '{partPath}' using Find(), searching recursively...");
+                partTransform = FindChildByNameRecursive(weaponObject.transform, partPath);
+            }
+
+            if (partTransform != null)
+            {
+                if (hasMagazineAttachment)
+                {
+                    // Disable the old magazine when new magazine is equipped
+                    partTransform.gameObject.SetActive(false);
+                    Debug.Log($"[HandleMagazineVisibility] DISABLED old magazine part: {partPath}");
+                }
+                else
+                {
+                    // Re-enable the old magazine when no magazine attachment is equipped
+                    partTransform.gameObject.SetActive(true);
+                    Debug.Log($"[HandleMagazineVisibility] Re-enabled old magazine: {partPath}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[HandleMagazineVisibility] Could not find magazine part at path: '{partPath}'");
+            }
+        }
+
+        Debug.Log($"=== HandleMagazineVisibility complete ===");
+    }
+
+    /// <summary>
+    /// Helper method to find child by name recursively
+    /// </summary>
+    private static Transform FindChildByNameRecursive(Transform parent, string name)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == name)
+            {
+                return child;
+            }
+
+            Transform result = FindChildByNameRecursive(child, name);
+            if (result != null)
+                return result;
+        }
+        return null;
     }
 
     /// <summary>
