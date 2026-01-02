@@ -10,28 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Drum Mag
+  m_Name: Muzzle Break 1
   m_EditorClassIdentifier: 
-  ID: 241
-  Name: Drum Mag
+  ID: 4422
+  Name: Muzzle Break A
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 1
-  id: 241
-  type: 3
-  prefab: {fileID: 2499065575067169146, guid: a91a1de3c7993ab4db574b4b11eb79d9, type: 3}
-  icon: {fileID: 0}
+  id: 4422
+  type: 1
+  prefab: {fileID: 3314109776193778576, guid: 9fbe474c9a0e33d459bd2e9f2a7515ba, type: 3}
+  icon: {fileID: -625314523, guid: ba62195cdad2e1045ae073842349fdd3, type: 3}
   description: 
   Value: 0
-  localPosition: {x: 0, y: -0.13, z: 0.04}
-  localEuler: {x: 0, y: -0.003, z: 0}
+  localPosition: {x: 0, y: 0, z: 0}
+  localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
-  damageBonus: 0
+  damageBonus: 1.2
   fireRateMultiplier: 1
   reloadTimeMultiplier: 1
   spreadMultiplier: 1
   recoilMultiplier: 1
-  magazineBonus: 200
+  magazineBonus: 0
   scopeFOVOverride: 0
   scopeReticle: {fileID: 0}
   reticleScale: 1

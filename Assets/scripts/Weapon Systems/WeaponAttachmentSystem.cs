@@ -169,33 +169,48 @@ public class WeaponAttachmentSystem : MonoBehaviour
     }
 
     public void RecalculateStats()
+{
+    // Start with base weapon stats
+    cachedDamage = weaponData.damage;
+    cachedFireRate = weaponData.fireRate;
+    cachedReloadTime = weaponData.reloadTime;
+    cachedSpread = weaponData.spread;
+    cachedRecoilX = weaponData.recoilX;
+    cachedRecoilY = weaponData.recoilY;
+    cachedRecoilZ = weaponData.recoilZ;
+    cachedMagazineSize = weaponData.magazineSize;
+
+    // Check if there's a magazine attachment - if so, it replaces the magazine size
+    bool hasMagazineAttachment = false;
+
+    // Apply modifiers from all equipped attachments
+    foreach (var att in equippedAttachments)
     {
-        // Start with base weapon stats
-        cachedDamage = weaponData.damage;
-        cachedFireRate = weaponData.fireRate;
-        cachedReloadTime = weaponData.reloadTime;
-        cachedSpread = weaponData.spread;
-        cachedRecoilX = weaponData.recoilX;
-        cachedRecoilY = weaponData.recoilY;
-        cachedRecoilZ = weaponData.recoilZ;
-        cachedMagazineSize = weaponData.magazineSize;
-
-        // Apply modifiers from all equipped attachments
-        foreach (var att in equippedAttachments)
+        // Special handling for Magazine type - it REPLACES magazine size, not adds to it
+        if (att.type == AttachmentType.Magazine)
         {
-            // Additive modifiers
-            cachedDamage += att.damageBonus;
+            cachedMagazineSize = att.magazineBonus; // Replace, don't add
+            hasMagazineAttachment = true;
+            Debug.Log($"[WeaponAttachmentSystem] Magazine attachment found: {att.name}, setting capacity to {att.magazineBonus}");
+        }
+        else
+        {
+            // For non-magazine attachments, add the bonus
             cachedMagazineSize += att.magazineBonus;
-
-            // Multiplicative modifiers
-            cachedFireRate *= att.fireRateMultiplier;
-            cachedReloadTime *= att.reloadTimeMultiplier;
-            cachedSpread *= att.spreadMultiplier;
-            cachedRecoilX *= att.recoilMultiplier;
-            cachedRecoilY *= att.recoilMultiplier;
-            cachedRecoilZ *= att.recoilMultiplier;
         }
 
-        Debug.Log($"[WeaponAttachmentSystem] Stats recalculated - Damage: {cachedDamage}, FireRate: {cachedFireRate}, Spread: {cachedSpread}, Recoil: ({cachedRecoilX}, {cachedRecoilY}, {cachedRecoilZ})");
+        // Additive modifiers
+        cachedDamage += att.damageBonus;
+
+        // Multiplicative modifiers
+        cachedFireRate *= att.fireRateMultiplier;
+        cachedReloadTime *= att.reloadTimeMultiplier;
+        cachedSpread *= att.spreadMultiplier;
+        cachedRecoilX *= att.recoilMultiplier;
+        cachedRecoilY *= att.recoilMultiplier;
+        cachedRecoilZ *= att.recoilMultiplier;
     }
+
+    Debug.Log($"[WeaponAttachmentSystem] Stats recalculated - Damage: {cachedDamage}, FireRate: {cachedFireRate}, MagazineSize: {cachedMagazineSize}, Spread: {cachedSpread}, Recoil: ({cachedRecoilX}, {cachedRecoilY}, {cachedRecoilZ})");
+}
 }

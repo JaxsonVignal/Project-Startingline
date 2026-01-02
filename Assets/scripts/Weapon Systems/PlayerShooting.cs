@@ -176,6 +176,34 @@ public class PlayerShooting : MonoBehaviour
 
         // Check if a grenade launcher is equipped
         UpdateGrenadeLauncherFromAttachments();
+
+        // IMPORTANT: Adjust current ammo if magazine capacity changed
+        if (attachmentSystem != null && currentWeapon != null)
+        {
+            int newMaxMagazine = attachmentSystem.CurrentMagazineSize;
+            int oldMaxMagazine = currentWeapon.magazineSize;
+
+            Debug.Log($"[SetAttachmentSystem] Magazine capacity changed from {oldMaxMagazine} to {newMaxMagazine}");
+
+            // If the new magazine is larger and we're at full capacity, fill it up
+            if (newMaxMagazine > oldMaxMagazine && currentAmmo == oldMaxMagazine)
+            {
+                currentAmmo = newMaxMagazine;
+                Debug.Log($"[SetAttachmentSystem] Filled magazine to new capacity: {currentAmmo}");
+            }
+            // If the new magazine is smaller and we have more ammo than it can hold, cap it
+            else if (newMaxMagazine < oldMaxMagazine && currentAmmo > newMaxMagazine)
+            {
+                currentAmmo = newMaxMagazine;
+                Debug.Log($"[SetAttachmentSystem] Capped ammo to new magazine capacity: {currentAmmo}");
+            }
+
+            // Save the adjusted ammo
+            if (!string.IsNullOrEmpty(currentWeaponSlotID))
+            {
+                WeaponAmmoTracker.SetAmmo(currentWeaponSlotID, currentAmmo);
+            }
+        }
     }
 
     private void UpdateGrenadeLauncherFromAttachments()
