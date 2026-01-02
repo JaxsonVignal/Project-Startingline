@@ -43,15 +43,42 @@ MonoBehaviour:
   allowedAttachments:
   - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
   - {fileID: 11400000, guid: 6c79adfea28736f4594495fba5db7b57, type: 2}
-  - {fileID: 11400000, guid: de8e061e67c381f4d8330e788c87ee44, type: 2}
-  - {fileID: 11400000, guid: f2a38c1f039835b4697cca1d8b619f46, type: 2}
-  - {fileID: 11400000, guid: 2536a1c3b1855f448b7127935ab9d8f6, type: 2}
-  scopeOffsets: []
+  - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
+  - {fileID: 11400000, guid: 48f1c564060115148bb44dbc4d2c9bd1, type: 2}
+  - {fileID: 11400000, guid: 4a0c7c777c7db9f42a3ec5d45ad496e6, type: 2}
+  - {fileID: 11400000, guid: f6c4582476dd5e440b8c97a90492cdca, type: 2}
+  - {fileID: 11400000, guid: 677f5f4c3d85a6341bf7fbb503ac6387, type: 2}
+  - {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
+  - {fileID: 11400000, guid: 0b885955b01696f4a8e51c7a22f81fe4, type: 2}
+  - {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
+  scopeOffsets:
+  - scope: {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
+    positionOffset: {x: -0.451, y: 0.089, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: 0b885955b01696f4a8e51c7a22f81fe4, type: 2}
+    positionOffset: {x: -0.451, y: 0.087, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
+    positionOffset: {x: -0.451, y: 0.095, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: 677f5f4c3d85a6341bf7fbb503ac6387, type: 2}
+    positionOffset: {x: -0.451, y: 0.082, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: f6c4582476dd5e440b8c97a90492cdca, type: 2}
+    positionOffset: {x: -0.451, y: 0.082, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: 4a0c7c777c7db9f42a3ec5d45ad496e6, type: 2}
+    positionOffset: {x: -0.451, y: 0.105, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
+    positionOffset: {x: -0.451, y: 0.098, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: 48f1c564060115148bb44dbc4d2c9bd1, type: 2}
+    positionOffset: {x: -0.451, y: 0.092, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
   partsToDisableWithSight:
   - RearSight
   - FrontSight
-  partsToDisableWithBarrel:
-  - AR_Q_Muzzle
   partToDisableWithSightPath: RearSight
   weaponPrefab: {fileID: 2769957187085557481, guid: 4e765fdcad1a56f4599c871843469053, type: 3}
   shootSound: {fileID: 0}
