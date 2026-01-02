@@ -26,8 +26,6 @@ public class WeaponBuilderUI : MonoBehaviour
     private List<AttachmentData> availableAttachments = new List<AttachmentData>();
     private Dictionary<AttachmentData, int> attachmentCounts = new Dictionary<AttachmentData, int>();
 
-    
-
     // Track which attachments were on the weapon BEFORE we started editing
     private List<string> originalAttachmentIds = new List<string>();
 
@@ -46,11 +44,8 @@ public class WeaponBuilderUI : MonoBehaviour
 
     void OnEnable()
     {
-      
         // Refresh items whenever the builder UI is opened
         RefreshAvailableItems();
-        
-        
     }
 
     /// <summary>
@@ -110,7 +105,7 @@ public class WeaponBuilderUI : MonoBehaviour
         }
 
         weaponDropdown.interactable = true;
-        finalizeButton.interactable = true; // Re-enable finalize button when weapons are available
+        finalizeButton.interactable = true;
 
         List<string> options = new List<string>();
         foreach (var w in availableWeapons)
@@ -199,7 +194,6 @@ public class WeaponBuilderUI : MonoBehaviour
         {
             if (slot.ItemData == weaponData)
             {
-                // Check if this slot has a stored weapon instance
                 var instance = WeaponInstanceStorage.GetInstance(slot.UniqueSlotID);
                 if (instance != null)
                 {
@@ -217,7 +211,6 @@ public class WeaponBuilderUI : MonoBehaviour
 
         if (availableAttachments.Count == 0)
         {
-            // Create a "No attachments" text object
             GameObject textGO = new GameObject("NoAttachmentsText");
             textGO.transform.SetParent(attachmentListPanel, false);
             var text = textGO.AddComponent<TextMeshProUGUI>();
@@ -242,13 +235,11 @@ public class WeaponBuilderUI : MonoBehaviour
         }
         else
         {
-            // No weapon selected, show all attachments
             compatibleAttachments = availableAttachments;
         }
 
         if (compatibleAttachments.Count == 0)
         {
-            // Create a "No compatible attachments" text object
             GameObject textGO = new GameObject("NoCompatibleAttachmentsText");
             textGO.transform.SetParent(attachmentListPanel, false);
             var text = textGO.AddComponent<TextMeshProUGUI>();
@@ -265,7 +256,6 @@ public class WeaponBuilderUI : MonoBehaviour
             var img = btnGO.GetComponentInChildren<Image>();
             if (img != null) img.sprite = att.Icon;
 
-            // Show attachment count
             var texts = btnGO.GetComponentsInChildren<TextMeshProUGUI>();
             if (texts.Length > 0)
             {
@@ -273,7 +263,6 @@ public class WeaponBuilderUI : MonoBehaviour
                 texts[0].text = $"x{available}";
             }
 
-            // Disable button if no more available (all used in preview)
             int availableCount = GetAvailableAttachmentCount(att);
             btn.interactable = availableCount > 0;
 
@@ -317,6 +306,14 @@ public class WeaponBuilderUI : MonoBehaviour
 
         if (alreadyEquipped)
         {
+            // Special handling for barrel attachments - they need to go through minigame to be replaced
+            if (att.type == AttachmentType.Barrel && RequiresMinigame(att))
+            {
+                Debug.Log($"Barrel attachment already equipped. Starting replacement minigame...");
+                StartBarrelReplacementMinigame(att);
+                return;
+            }
+
             Debug.Log($"Already have a {att.type} equipped. Remove it first.");
             return;
         }
@@ -331,7 +328,6 @@ public class WeaponBuilderUI : MonoBehaviour
         }
         else
         {
-            // No minigame required, add directly
             AddAttachmentDirectly(att);
         }
     }
@@ -343,15 +339,102 @@ public class WeaponBuilderUI : MonoBehaviour
     {
         switch (att.type)
         {
-            case AttachmentType.Barrel:      // Silencers
-            case AttachmentType.Sight:       // Scopes
-            case AttachmentType.Underbarrel: // Underbarrel attachments
-            case AttachmentType.Magazine:    // Magazines
+            case AttachmentType.Barrel:
+            case AttachmentType.Sight:
+            case AttachmentType.Underbarrel:
+            case AttachmentType.Magazine:
                 return true;
-            // Add more types that require minigames
             default:
                 return false;
         }
+    }
+
+    /// <summary>
+    /// Start a barrel replacement minigame (remove old, attach new)
+    /// </summary>
+    /// <summary>
+    /// Start a barrel replacement minigame (remove old, attach new)
+    /// </summary>
+    void StartBarrelReplacementMinigame(AttachmentData newBarrelAttachment)
+    {
+        Debug.Log($"StartBarrelReplacementMinigame called for {newBarrelAttachment.name}");
+
+        if (minigameManager == null)
+        {
+            Debug.LogError("MinigameManager not assigned!");
+            return;
+        }
+
+        // Get the currently equipped barrel attachment
+        var currentBarrelEntry = previewInstance.attachments.Find(e => e.type == AttachmentType.Barrel);
+
+        if (currentBarrelEntry == null)
+        {
+            Debug.LogError("No current barrel attachment found!");
+            return;
+        }
+
+        AttachmentData currentBarrelAttachment = null;
+        if (attachmentLookup.TryGetValue(currentBarrelEntry.attachmentId, out var att))
+        {
+            currentBarrelAttachment = att;
+        }
+
+        if (currentBarrelAttachment == null)
+        {
+            Debug.LogError($"Could not find current barrel attachment in lookup: {currentBarrelEntry.attachmentId}");
+            return;
+        }
+
+        Debug.Log($"Current barrel: {currentBarrelAttachment.name}, New barrel: {newBarrelAttachment.name}");
+
+        // Get the barrel socket
+        Transform socket = GetSocketForAttachmentType(AttachmentType.Barrel);
+
+        if (socket == null)
+        {
+            Debug.LogError($"No socket found for Barrel type!");
+            return;
+        }
+
+        // Disable finalize button and attachment buttons while minigame is active
+        if (finalizeButton != null)
+            finalizeButton.interactable = false;
+
+        DisableAllAttachmentButtons();
+
+        // Start the barrel replacement minigame
+        minigameManager.StartBarrelReplacementMinigame(
+            currentBarrelAttachment,
+            newBarrelAttachment,
+            selectedBase,
+            socket,
+            (replacedAttachment) =>
+            {
+                Debug.Log("Barrel replacement minigame complete!");
+
+                // Remove the old barrel attachment from preview (WITHOUT re-enabling default parts)
+                previewInstance.attachments.RemoveAll(e => e.type == AttachmentType.Barrel);
+                previewRuntime.attachmentSystem.UnequipType(AttachmentType.Barrel);
+
+                // NOTE: We DON'T call ReEnableDefaultBarrelParts() here because we're replacing with another barrel
+                // The default parts should stay disabled
+
+                // Add the old barrel back to inventory
+                if (playerInventory.PrimaryInventorySystem.AddToInventory(currentBarrelAttachment, 1))
+                {
+                    Debug.Log($"Added old barrel {currentBarrelAttachment.name} back to inventory");
+                }
+
+                // Add the new barrel attachment
+                AddAttachmentDirectly(replacedAttachment);
+
+                // Re-enable finalize button and attachment buttons
+                if (finalizeButton != null)
+                    finalizeButton.interactable = true;
+
+                PopulateAttachmentButtons();
+            });
     }
 
     /// <summary>
@@ -368,9 +451,6 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        Debug.Log("MinigameManager is assigned");
-
-        // Get the appropriate socket for this attachment type
         Transform socket = GetSocketForAttachmentType(att.type);
 
         if (socket == null)
@@ -380,28 +460,20 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Socket found: {socket.name}");
-
-        // Disable finalize button and attachment buttons while minigame is active
         if (finalizeButton != null)
             finalizeButton.interactable = false;
 
         DisableAllAttachmentButtons();
 
-        Debug.Log("About to call minigameManager.StartMinigame...");
-
-        // Start the minigame
         minigameManager.StartMinigame(att, selectedBase, socket, (completedAttachment) =>
         {
             Debug.Log("Minigame completion callback triggered!");
-            // Called when minigame is completed
             AddAttachmentDirectly(completedAttachment);
 
-            // Re-enable finalize button and attachment buttons
             if (finalizeButton != null)
                 finalizeButton.interactable = true;
 
-            PopulateAttachmentButtons(); // This will re-enable available buttons
+            PopulateAttachmentButtons();
         });
     }
 
@@ -427,7 +499,6 @@ public class WeaponBuilderUI : MonoBehaviour
     {
         if (previewRuntime == null) return null;
 
-        // Get the AttachmentSlotMap from the preview weapon
         AttachmentSlotMap slotMap = previewRuntime.GetComponent<AttachmentSlotMap>();
         if (slotMap == null)
         {
@@ -448,24 +519,21 @@ public class WeaponBuilderUI : MonoBehaviour
         previewRuntime.attachmentSystem.EquipAttachment(att, entry);
 
         UpdateSelectedAttachmentsUI();
-        PopulateAttachmentButtons(); // Refresh to update counts
+        PopulateAttachmentButtons();
     }
 
     public void RemoveAttachmentFromPreview(AttachmentType type)
     {
         if (previewRuntime == null) return;
 
-        // Find the attachment being removed
         var attachmentEntry = previewInstance.attachments.Find(e => e.type == type);
 
         if (attachmentEntry != null)
         {
-            // Check if this was an ORIGINAL attachment (already on the weapon)
             bool wasOriginal = originalAttachmentIds.Contains(attachmentEntry.attachmentId);
 
             if (wasOriginal)
             {
-                // This was a pre-existing attachment - add it back to inventory
                 if (attachmentLookup.TryGetValue(attachmentEntry.attachmentId, out var att))
                 {
                     Debug.Log($"Removing PRE-EXISTING attachment: {att.name} - adding back to inventory");
@@ -473,7 +541,6 @@ public class WeaponBuilderUI : MonoBehaviour
                     if (playerInventory.PrimaryInventorySystem.AddToInventory(att, 1))
                     {
                         Debug.Log($"Successfully added {att.name} back to inventory");
-                        // Remove from original list so it won't be kept on finalize
                         originalAttachmentIds.Remove(attachmentEntry.attachmentId);
                     }
                     else
@@ -484,17 +551,61 @@ public class WeaponBuilderUI : MonoBehaviour
             }
             else
             {
-                // This was a newly added attachment - it's already in inventory, just being removed from preview
                 Debug.Log($"Removing NEWLY ADDED attachment: {attachmentEntry.attachmentId} - already in inventory");
+            }
+
+            // Special handling for barrel attachments - need to re-enable default barrel
+            if (type == AttachmentType.Barrel)
+            {
+                Debug.Log("Re-enabling default barrel parts after removing barrel attachment");
+                ReEnableDefaultBarrelParts();
             }
         }
 
-        // Remove from preview
         previewInstance.attachments.RemoveAll(e => e.type == type);
         previewRuntime.attachmentSystem.UnequipType(type);
 
         UpdateSelectedAttachmentsUI();
-        PopulateAttachmentButtons(); // Refresh to update counts
+        PopulateAttachmentButtons();
+    }
+
+    /// <summary>
+    /// Re-enable the default barrel parts when a barrel attachment is removed
+    /// </summary>
+    private void ReEnableDefaultBarrelParts()
+    {
+        if (previewRuntime == null || selectedBase == null) return;
+
+        var partsToReEnable = selectedBase.GetPartsToDisableWithBarrel();
+
+        if (partsToReEnable == null || partsToReEnable.Count == 0)
+        {
+            Debug.Log("No barrel parts to re-enable");
+            return;
+        }
+
+        foreach (var partPath in partsToReEnable)
+        {
+            if (string.IsNullOrEmpty(partPath))
+                continue;
+
+            Transform partTransform = previewRuntime.transform.Find(partPath);
+
+            if (partTransform == null)
+            {
+                partTransform = FindChildByNameRecursive(previewRuntime.transform, partPath);
+            }
+
+            if (partTransform != null)
+            {
+                partTransform.gameObject.SetActive(true);
+                Debug.Log($"Re-enabled default barrel part: {partPath}");
+            }
+            else
+            {
+                Debug.LogWarning($"Could not find barrel part to re-enable: {partPath}");
+            }
+        }
     }
 
     void UpdateSelectedAttachmentsUI()
@@ -512,17 +623,14 @@ public class WeaponBuilderUI : MonoBehaviour
             var btn = btnGO.GetComponent<Button>();
             btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => RemoveAttachmentFromPreview(entry.type));
-
-            // Optional: Change button color or add X icon to indicate it's removable
         }
     }
 
     public void FinalizeWeapon()
     {
-        // Check if a minigame is currently active
         if (minigameManager != null && minigameManager.IsMinigameActive())
         {
-            Debug.LogWarning("Cannot finalize while minigame is active! Complete or cancel the minigame first.");
+            Debug.LogWarning("Cannot finalize while minigame is active!");
             return;
         }
 
@@ -532,7 +640,6 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        // Find the inventory slot containing this weapon
         InventorySlot weaponSlot = FindInventorySlotForWeapon(selectedBase);
 
         if (weaponSlot == null)
@@ -541,7 +648,6 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        // Verify we still have the weapon in inventory
         if (!playerInventory.PrimaryInventorySystem.ContainsItem(selectedBase, 1))
         {
             Debug.LogError("Selected weapon no longer in inventory!");
@@ -549,121 +655,66 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        Debug.Log($"=== FINALIZE WEAPON DEBUG ===");
-        Debug.Log($"Total attachments in preview: {previewInstance.attachments.Count}");
-        Debug.Log($"Original attachments count: {originalAttachmentIds.Count}");
-
-        // Verify we have NEW attachments that were added (don't check pre-existing ones)
+        // Verify attachments
         foreach (var entry in previewInstance.attachments)
         {
-            Debug.Log($"Checking attachment: {entry.attachmentId} (Type: {entry.type})");
-
-            // Skip if this attachment was already on the weapon when we started editing
             if (originalAttachmentIds.Contains(entry.attachmentId))
-            {
-                Debug.Log($"  -> This is a PRE-EXISTING attachment, skipping inventory check");
                 continue;
-            }
-
-            Debug.Log($"  -> This is a NEW attachment, checking inventory...");
 
             if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
             {
-                Debug.Log($"  -> Found in lookup: {att.name}");
-
                 if (!playerInventory.PrimaryInventorySystem.ContainsItem(att, 1))
                 {
                     Debug.LogError($"Attachment {att.name} no longer in inventory!");
                     RefreshAvailableItems();
                     return;
                 }
-                else
-                {
-                    Debug.Log($"  -> Verified in inventory");
-                }
-            }
-            else
-            {
-                Debug.LogError($"  -> NOT FOUND in attachmentLookup! ID: {entry.attachmentId}");
             }
         }
 
-        // Remove base weapon from inventory
+        // Remove weapon from inventory
         if (!playerInventory.PrimaryInventorySystem.RemoveFromInventory(selectedBase, 1))
         {
             Debug.LogError("Failed to remove weapon from inventory!");
             return;
         }
 
-        // Remove the weapon instance from storage (we'll create a new one)
         WeaponInstanceStorage.RemoveInstance(weaponSlot.UniqueSlotID);
 
-        Debug.Log($"=== REMOVING ATTACHMENTS FROM INVENTORY ===");
-
-        // Remove only NEWLY ADDED attachments from inventory (not pre-existing ones)
+        // Remove newly added attachments from inventory
         foreach (var entry in previewInstance.attachments)
         {
-            Debug.Log($"Processing attachment: {entry.attachmentId} (Type: {entry.type})");
-
-            // Skip if this attachment was already on the weapon when we started editing
             if (originalAttachmentIds.Contains(entry.attachmentId))
-            {
-                Debug.Log($"  -> PRE-EXISTING: Keeping {entry.attachmentId}");
                 continue;
-            }
-
-            Debug.Log($"  -> NEW ATTACHMENT: Attempting to remove from inventory...");
 
             if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
             {
-                Debug.Log($"  -> Found in lookup: {att.name} (Type: {att.type})");
-                Debug.Log($"  -> Calling RemoveFromInventory...");
-
                 if (!playerInventory.PrimaryInventorySystem.RemoveFromInventory(att, 1))
                 {
-                    Debug.LogWarning($"  -> FAILED to remove attachment {att.name} from inventory!");
-                }
-                else
-                {
-                    Debug.Log($"  -> SUCCESS: Removed {att.name} from inventory");
-                }
-            }
-            else
-            {
-                Debug.LogError($"  -> ERROR: Could not find attachment {entry.attachmentId} in attachmentLookup!");
-                Debug.LogError($"  -> Available IDs in lookup:");
-                foreach (var kvp in attachmentLookup)
-                {
-                    Debug.LogError($"     - {kvp.Key} = {kvp.Value.name}");
+                    Debug.LogWarning($"Failed to remove attachment {att.name} from inventory!");
                 }
             }
         }
 
-        Debug.Log($"=== CREATING FINALIZED WEAPON ===");
-
-        // Create the finished weapon pickup
+        // Create finalized weapon
         Vector3 spawnPos = previewRuntime.transform.position;
         Quaternion spawnRot = previewRuntime.transform.rotation;
 
         GameObject pickupWeapon = Instantiate(selectedBase.weaponPrefab, spawnPos, spawnRot);
 
-        // Setup collider
         SphereCollider col = pickupWeapon.GetComponent<SphereCollider>();
         if (col == null) col = pickupWeapon.AddComponent<SphereCollider>();
         col.isTrigger = true;
         col.radius = 1.5f;
 
-        // Ensure UniqueID
         if (!pickupWeapon.TryGetComponent<UniqueID>(out var id))
             pickupWeapon.AddComponent<UniqueID>();
 
-        // Add ItemPickup
         var pickup = pickupWeapon.GetComponent<ItemPickup>();
         if (pickup == null) pickup = pickupWeapon.AddComponent<ItemPickup>();
         pickup.ItemData = selectedBase;
         pickup.pickUpRadius = col.radius;
 
-        // Setup runtime and attachment system
         var runtime = pickupWeapon.GetComponent<WeaponRuntime>();
         if (runtime == null) runtime = pickupWeapon.AddComponent<WeaponRuntime>();
 
@@ -672,48 +723,27 @@ public class WeaponBuilderUI : MonoBehaviour
         attachSys.weaponData = selectedBase;
         runtime.attachmentSystem = attachSys;
 
-        // Debug log all attachments before applying
-        Debug.Log($"Applying {previewInstance.attachments.Count} attachments to finalized weapon:");
-        foreach (var entry in previewInstance.attachments)
-        {
-            if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
-            {
-                Debug.Log($"  - {att.name} (Type: {att.type}, ID: {entry.attachmentId})");
-            }
-        }
-
-        // Apply ALL attachments (including pre-existing ones) BEFORE initializing runtime
+        // Apply attachments
         foreach (var entry in previewInstance.attachments)
         {
             if (!attachmentLookup.TryGetValue(entry.attachmentId, out var att))
-            {
-                Debug.LogWarning($"Could not find attachment with ID: {entry.attachmentId}");
                 continue;
-            }
 
-            Debug.Log($"Equipping attachment: {att.name} at socket type: {att.type}");
             attachSys.EquipAttachment(att, entry);
         }
 
-        // Initialize runtime AFTER attachments are equipped
         runtime.InitFromInstance(previewInstance, selectedBase, attachmentLookup);
 
-        // Handle iron sight visibility based on attachments
         HandleIronSightVisibility(pickupWeapon, selectedBase, previewInstance, attachmentLookup);
-
-        // Handle old magazine visibility based on attachments
         HandleMagazineVisibility(pickupWeapon, selectedBase, previewInstance, attachmentLookup);
 
-        // Store weapon instance
         var instanceHolder = pickupWeapon.AddComponent<WeaponInstanceHolder>();
         instanceHolder.weaponInstance = previewInstance;
 
-        // Notify inventory system
         PlayerInventoryHolder.OnPlayerInventoryChanged?.Invoke();
 
-        Debug.Log($"=== FINALIZED: {selectedBase.name} with {previewInstance.attachments.Count} attachments ===");
+        Debug.Log($"FINALIZED: {selectedBase.name} with {previewInstance.attachments.Count} attachments");
 
-        // Call WeaponBuilderController to close FIRST (before disabling this GameObject)
         WeaponBuilderController controller = FindObjectOfType<WeaponBuilderController>();
         if (controller != null)
         {
@@ -721,7 +751,6 @@ public class WeaponBuilderUI : MonoBehaviour
         }
         else
         {
-            // Fallback if no controller exists
             if (previewContainer != null)
                 previewContainer.SetActive(false);
 
@@ -729,17 +758,10 @@ public class WeaponBuilderUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Disables the old magazine parts when a new magazine attachment is equipped
-    /// Call this after equipping attachments on any weapon
-    /// </summary>
     public static void HandleMagazineVisibility(GameObject weaponObject, WeaponData weaponData, WeaponInstance weaponInstance, Dictionary<string, AttachmentData> attachmentLookup)
     {
         if (weaponObject == null || weaponData == null || weaponInstance == null) return;
 
-        Debug.Log($"=== HandleMagazineVisibility called ===");
-
-        // Check if weapon has a magazine attachment equipped
         bool hasMagazineAttachment = false;
         foreach (var entry in weaponInstance.attachments)
         {
@@ -748,68 +770,35 @@ public class WeaponBuilderUI : MonoBehaviour
                 if (att.type == AttachmentType.Magazine)
                 {
                     hasMagazineAttachment = true;
-                    Debug.Log($"Found magazine attachment: {att.name}");
                     break;
                 }
             }
         }
 
-        Debug.Log($"Has magazine attachment: {hasMagazineAttachment}");
-
-        // Get all magazine parts that should be disabled/enabled
         var partsToToggle = weaponData.GetPartsToDisableWithMagazine();
 
         if (partsToToggle == null || partsToToggle.Count == 0)
-        {
-            Debug.Log("No parts to toggle for magazines");
             return;
-        }
 
-        Debug.Log($"Parts to toggle: {partsToToggle.Count}");
-
-        // Process each part
         foreach (var partPath in partsToToggle)
         {
             if (string.IsNullOrEmpty(partPath))
                 continue;
 
-            Debug.Log($"Looking for part: '{partPath}'");
-
             Transform partTransform = weaponObject.transform.Find(partPath);
 
             if (partTransform == null)
             {
-                Debug.Log($"Could not find '{partPath}' using Find(), searching recursively...");
                 partTransform = FindChildByNameRecursive(weaponObject.transform, partPath);
             }
 
             if (partTransform != null)
             {
-                if (hasMagazineAttachment)
-                {
-                    // Disable the old magazine when new magazine is equipped
-                    partTransform.gameObject.SetActive(false);
-                    Debug.Log($"[HandleMagazineVisibility] DISABLED old magazine part: {partPath}");
-                }
-                else
-                {
-                    // Re-enable the old magazine when no magazine attachment is equipped
-                    partTransform.gameObject.SetActive(true);
-                    Debug.Log($"[HandleMagazineVisibility] Re-enabled old magazine: {partPath}");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[HandleMagazineVisibility] Could not find magazine part at path: '{partPath}'");
+                partTransform.gameObject.SetActive(!hasMagazineAttachment);
             }
         }
-
-        Debug.Log($"=== HandleMagazineVisibility complete ===");
     }
 
-    /// <summary>
-    /// Helper method to find child by name recursively
-    /// </summary>
     private static Transform FindChildByNameRecursive(Transform parent, string name)
     {
         foreach (Transform child in parent)
@@ -826,9 +815,6 @@ public class WeaponBuilderUI : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Find the inventory slot containing the selected weapon
-    /// </summary>
     InventorySlot FindInventorySlotForWeapon(WeaponData weaponData)
     {
         if (playerInventory == null) return null;
@@ -846,15 +832,10 @@ public class WeaponBuilderUI : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Disables the iron sight part if a sight attachment is equipped
-    /// Call this after equipping attachments on any weapon
-    /// </summary>
     public static void HandleIronSightVisibility(GameObject weaponObject, WeaponData weaponData, WeaponInstance weaponInstance, Dictionary<string, AttachmentData> attachmentLookup)
     {
         if (weaponObject == null || weaponData == null || weaponInstance == null) return;
 
-        // Check if weapon has a sight attachment equipped
         bool hasSightAttachment = false;
         foreach (var entry in weaponInstance.attachments)
         {
@@ -868,13 +849,11 @@ public class WeaponBuilderUI : MonoBehaviour
             }
         }
 
-        // Get all parts that should be disabled/enabled
         var partsToToggle = weaponData.GetPartsToDisableWithSight();
 
         if (partsToToggle == null || partsToToggle.Count == 0)
             return;
 
-        // Process each part
         foreach (var partPath in partsToToggle)
         {
             if (string.IsNullOrEmpty(partPath))
@@ -884,22 +863,7 @@ public class WeaponBuilderUI : MonoBehaviour
 
             if (partTransform != null)
             {
-                if (hasSightAttachment)
-                {
-                    // Disable the part when sight is equipped
-                    partTransform.gameObject.SetActive(false);
-                    Debug.Log($"[HandleIronSightVisibility] Disabled part: {partPath}");
-                }
-                else
-                {
-                    // Re-enable the part when no sight is equipped
-                    partTransform.gameObject.SetActive(true);
-                    Debug.Log($"[HandleIronSightVisibility] Re-enabled part: {partPath}");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[HandleIronSightVisibility] Could not find part at path: {partPath}");
+                partTransform.gameObject.SetActive(!hasSightAttachment);
             }
         }
     }
