@@ -39,6 +39,12 @@ public class NPCManager : MonoBehaviour
     public float fleeDistance = 20f;
     public float fleeDuration = 10f;
 
+    [Header("Gunshot Reaction Settings")]
+    [Tooltip("If true, NPC will flee when hearing gunshots")]
+    public bool fleeFromGunshots = true;
+    [Tooltip("Minimum time between gunshot reactions (prevents spam)")]
+    public float gunshotReactionCooldown = 2f;
+
     private Animator animator;
     private CivilianMovementController movement;
 
@@ -50,6 +56,7 @@ public class NPCManager : MonoBehaviour
 
     private bool isFleeing = false;
     private float fleeEndTime;
+    private float lastGunshotReactionTime = -999f;
 
     private void OnEnable()
     {
@@ -225,6 +232,43 @@ public class NPCManager : MonoBehaviour
     }
 
     // ---------------------
+    // GUNSHOT DETECTION
+    // ---------------------
+    /// <summary>
+    /// Called by GunshotDetectionSystem when a gunshot is heard
+    /// </summary>
+    public void OnGunshotHeard(Vector3 gunshotPosition)
+    {
+        // Check if NPC should react to gunshots
+        if (!fleeFromGunshots)
+        {
+            Debug.Log($"{npcName} heard gunshot but is set to not flee");
+            return;
+        }
+
+        // Check cooldown to prevent spam reactions
+        if (Time.time - lastGunshotReactionTime < gunshotReactionCooldown)
+        {
+            Debug.Log($"{npcName} heard gunshot but is on cooldown");
+            return;
+        }
+
+        // Already fleeing
+        if (isFleeing)
+        {
+            Debug.Log($"{npcName} heard gunshot but is already fleeing");
+            return;
+        }
+
+        lastGunshotReactionTime = Time.time;
+
+        Debug.Log($"{npcName} reacting to gunshot at {gunshotPosition}!");
+
+        // Flee away from the gunshot
+        RunAwayFromPosition(gunshotPosition);
+    }
+
+    // ---------------------
     // FLEE SYSTEM
     // ---------------------
     public void RunAwayFromPlayer()
@@ -232,77 +276,93 @@ public class NPCManager : MonoBehaviour
         if (isFleeing)
         {
             Debug.Log($"{npcName} is already fleeing!");
-            return; // Already fleeing
+            return;
         }
 
         Debug.Log($"{npcName} RunAwayFromPlayer() called!");
+
+        // Find player
+        GameObject player = FindPlayer();
+
+        if (player != null)
+        {
+            RunAwayFromPosition(player.transform.position);
+        }
+        else
+        {
+            Debug.LogError($"{npcName} couldn't find player to flee from!");
+        }
+    }
+
+    /// <summary>
+    /// Makes NPC flee away from a specific position
+    /// </summary>
+    public void RunAwayFromPosition(Vector3 dangerPosition)
+    {
+        if (isFleeing)
+        {
+            Debug.Log($"{npcName} is already fleeing!");
+            return;
+        }
+
+        Debug.Log($"{npcName} fleeing from position {dangerPosition}!");
 
         isFleeing = true;
         fleeEndTime = Time.time + fleeDuration;
         currentState = NPCState.Fleeing;
 
-        // Find player - try multiple methods
+        // Calculate flee direction (away from danger)
+        Vector3 directionAwayFromDanger = (transform.position - dangerPosition).normalized;
+        Vector3 fleePosition = transform.position + directionAwayFromDanger * fleeDistance;
+
+        // Make sure the flee position is on the ground
+        if (Physics.Raycast(fleePosition + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f))
+        {
+            fleePosition = hit.point;
+        }
+
+        Debug.Log($"{npcName} fleeing to position: {fleePosition}");
+
+        // Move to flee position
+        if (movement != null)
+        {
+            // Create a temporary transform for the flee location
+            GameObject tempFleePoint = new GameObject("TempFleePoint_" + npcName);
+            tempFleePoint.transform.position = fleePosition;
+            movement.MoveTo(tempFleePoint.transform);
+            Destroy(tempFleePoint, 2f);
+        }
+        else
+        {
+            Debug.LogWarning($"{npcName} has no movement controller!");
+        }
+
+        animator?.SetTrigger("Running");
+
+        Debug.Log($"{npcName} is fleeing!");
+    }
+
+    /// <summary>
+    /// Helper method to find the player in the scene
+    /// </summary>
+    private GameObject FindPlayer()
+    {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
         if (player == null)
-        {
-            // Try finding by name if tag doesn't work
             player = GameObject.Find("Player");
-        }
 
         if (player == null)
-        {
-            // Try finding FPSController
             player = GameObject.Find("FPSController");
-        }
 
         if (player == null)
         {
-            // Last resort: find any camera and use its parent
             Camera mainCam = Camera.main;
             if (mainCam != null)
                 player = mainCam.transform.root.gameObject;
         }
 
-        if (player != null)
-        {
-            Debug.Log($"{npcName} found player at {player.transform.position}");
-
-            // Calculate flee direction (away from player)
-            Vector3 directionAwayFromPlayer = (transform.position - player.transform.position).normalized;
-            Vector3 fleePosition = transform.position + directionAwayFromPlayer * fleeDistance;
-
-            // Make sure the flee position is on the ground
-            if (Physics.Raycast(fleePosition + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f))
-            {
-                fleePosition = hit.point;
-            }
-
-            Debug.Log($"{npcName} fleeing to position: {fleePosition}");
-
-            // Move to flee position
-            if (movement != null)
-            {
-                // Create a temporary transform for the flee location
-                GameObject tempFleePoint = new GameObject("TempFleePoint_" + npcName);
-                tempFleePoint.transform.position = fleePosition;
-                movement.MoveTo(tempFleePoint.transform);
-                Destroy(tempFleePoint, 2f); // Clean up after movement starts
-            }
-            else
-            {
-                Debug.LogWarning($"{npcName} has no movement controller!");
-            }
-
-            animator?.SetTrigger("Running");
-
-            Debug.Log($"{npcName} is fleeing from player!");
-        }
-        else
-        {
-            Debug.LogError($"{npcName} couldn't find player to flee from!");
-            isFleeing = false;
-        }
+        return player;
     }
 
     // ---------------------
