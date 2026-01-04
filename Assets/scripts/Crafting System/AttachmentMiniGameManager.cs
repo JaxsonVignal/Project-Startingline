@@ -224,6 +224,101 @@ public class AttachmentMinigameManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Start an underbarrel replacement minigame (unscrew old, screw in new)
+    /// </summary>
+    /// <summary>
+    /// Start an underbarrel replacement minigame (unscrew old, screw in new)
+    /// </summary>
+    public void StartUnderbarrelReplacementMinigame(
+    AttachmentData oldUnderbarrel,
+    AttachmentData newUnderbarrel,
+    WeaponData weapon,
+    Transform socket,
+    Action<AttachmentData> onComplete)
+    {
+        Debug.Log($"StartUnderbarrelReplacementMinigame: {oldUnderbarrel.name} -> {newUnderbarrel.name}");
+
+        if (currentMinigame != null)
+        {
+            Destroy(currentMinigame.gameObject);
+        }
+
+        onMinigameCompleteCallback = onComplete;
+
+        // Spawn the NEW underbarrel attachment prefab
+        GameObject newUnderbarrelObj = Instantiate(newUnderbarrel.prefab, minigameParent);
+
+        if (newUnderbarrelObj.GetComponent<Collider>() == null)
+        {
+            newUnderbarrelObj.AddComponent<BoxCollider>();
+        }
+
+        UnderbarrelMinigame minigame = newUnderbarrelObj.AddComponent<UnderbarrelMinigame>();
+
+        // Assign screw prefab
+        if (screwPrefab != null)
+        {
+            var screwPrefabField = typeof(UnderbarrelMinigame).GetField("screwPrefab",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            if (screwPrefabField != null)
+            {
+                screwPrefabField.SetValue(minigame, screwPrefab);
+                Debug.Log($"Assigned screw prefab to UnderbarrelMinigame: {screwPrefab.name}");
+            }
+        }
+
+        // Find the old underbarrel GameObject in the scene to remove it
+        GameObject oldUnderbarrelInScene = FindOldUnderbarrelInScene(socket, oldUnderbarrel);
+
+        if (oldUnderbarrelInScene != null)
+        {
+            Debug.Log($"Found old underbarrel in scene: {oldUnderbarrelInScene.name}");
+
+            // Create a list with just the old underbarrel's name
+            var partsToRemove = new System.Collections.Generic.List<string> { oldUnderbarrelInScene.name };
+
+            // IMPORTANT: Pass the OLD attachment data so it uses the correct screw positions
+            minigame.SetOldUnderbarrelParts(socket.root, partsToRemove, oldUnderbarrel);
+        }
+        else
+        {
+            Debug.LogWarning("Could not find old underbarrel in scene - will skip removal phase");
+        }
+
+        minigame.attachmentData = newUnderbarrel;
+        minigame.targetSocket = socket;
+        minigame.weaponData = weapon;
+        minigame.minigameCamera = previewCamera;
+
+        minigame.OnMinigameComplete += OnMinigameCompleted;
+        minigame.OnMinigameCancelled += OnMinigameCancelled;
+
+        currentMinigame = minigame;
+        minigame.StartMinigame();
+
+        Debug.Log($"Started underbarrel replacement minigame");
+    }
+
+    private GameObject FindOldUnderbarrelInScene(Transform socket, AttachmentData oldUnderbarrel)
+    {
+        if (socket == null) return null;
+
+        string expectedName = $"ATT_{oldUnderbarrel.id}";
+
+        foreach (Transform child in socket)
+        {
+            if (child.name == expectedName || child.name.Contains(oldUnderbarrel.prefab.name))
+            {
+                return child.gameObject;
+            }
+        }
+
+        Debug.LogWarning($"Could not find old underbarrel with name '{expectedName}' in socket");
+        return null;
+    }
+
     private SilencerMinigame SetupSilencerMinigame(GameObject attachmentObj, WeaponData weapon, Transform socket)
     {
         SilencerMinigame silencerMinigame = attachmentObj.AddComponent<SilencerMinigame>();

@@ -314,6 +314,14 @@ public class WeaponBuilderUI : MonoBehaviour
                 return;
             }
 
+            // Special handling for underbarrel attachments - they need to go through minigame to be replaced
+            if (att.type == AttachmentType.Underbarrel && RequiresMinigame(att))
+            {
+                Debug.Log($"Underbarrel attachment already equipped. Starting replacement minigame...");
+                StartUnderbarrelReplacementMinigame(att);
+                return;
+            }
+
             Debug.Log($"Already have a {att.type} equipped. Remove it first.");
             return;
         }
@@ -423,6 +431,87 @@ public class WeaponBuilderUI : MonoBehaviour
                 Debug.Log($"Old barrel {currentBarrelAttachment.name} remains consumed (not returned to inventory)");
 
                 // Add the new barrel attachment
+                AddAttachmentDirectly(replacedAttachment);
+
+                // Re-enable finalize button and attachment buttons
+                if (finalizeButton != null)
+                    finalizeButton.interactable = true;
+
+                // Note: AddAttachmentDirectly already calls PopulateAttachmentButtons(), so we don't need to call it again
+            });
+    }
+
+    /// <summary>
+    /// Start an underbarrel replacement minigame (remove old, attach new)
+    /// </summary>
+    void StartUnderbarrelReplacementMinigame(AttachmentData newUnderbarrelAttachment)
+    {
+        Debug.Log($"StartUnderbarrelReplacementMinigame called for {newUnderbarrelAttachment.name}");
+
+        if (minigameManager == null)
+        {
+            Debug.LogError("MinigameManager not assigned!");
+            return;
+        }
+
+        // Get the currently equipped underbarrel attachment
+        var currentUnderbarrelEntry = previewInstance.attachments.Find(e => e.type == AttachmentType.Underbarrel);
+
+        if (currentUnderbarrelEntry == null)
+        {
+            Debug.LogError("No current underbarrel attachment found!");
+            return;
+        }
+
+        AttachmentData currentUnderbarrelAttachment = null;
+        if (attachmentLookup.TryGetValue(currentUnderbarrelEntry.attachmentId, out var att))
+        {
+            currentUnderbarrelAttachment = att;
+        }
+
+        if (currentUnderbarrelAttachment == null)
+        {
+            Debug.LogError($"Could not find current underbarrel attachment in lookup: {currentUnderbarrelEntry.attachmentId}");
+            return;
+        }
+
+        Debug.Log($"Current underbarrel: {currentUnderbarrelAttachment.name}, New underbarrel: {newUnderbarrelAttachment.name}");
+
+        // Get the underbarrel socket
+        Transform socket = GetSocketForAttachmentType(AttachmentType.Underbarrel);
+
+        if (socket == null)
+        {
+            Debug.LogError($"No socket found for Underbarrel type!");
+            return;
+        }
+
+        // Disable finalize button and attachment buttons while minigame is active
+        if (finalizeButton != null)
+            finalizeButton.interactable = false;
+
+        DisableAllAttachmentButtons();
+
+        // Start the underbarrel replacement minigame
+        minigameManager.StartUnderbarrelReplacementMinigame(
+            currentUnderbarrelAttachment,
+            newUnderbarrelAttachment,
+            selectedBase,
+            socket,
+            (replacedAttachment) =>
+            {
+                Debug.Log("Underbarrel replacement minigame complete!");
+
+                // Remove the old underbarrel attachment from preview
+                previewInstance.attachments.RemoveAll(e => e.type == AttachmentType.Underbarrel);
+                previewRuntime.attachmentSystem.UnequipType(AttachmentType.Underbarrel);
+
+                // IMPORTANT: DO NOT add old underbarrel back to inventory here!
+                // It stays "consumed" from when it was originally added
+                // Only the NEW underbarrel will be removed from inventory when finalizing
+                Debug.Log($"Old underbarrel {currentUnderbarrelAttachment.name} remains consumed (not returned to inventory)");
+
+                // Add the new underbarrel attachment
                 AddAttachmentDirectly(replacedAttachment);
 
                 // Re-enable finalize button and attachment buttons

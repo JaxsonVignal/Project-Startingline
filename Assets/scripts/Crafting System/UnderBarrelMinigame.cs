@@ -16,9 +16,9 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
     [SerializeField] private Vector3 spawnOffset = new Vector3(0, -0.1f, 0f);
 
     [Header("Screw Prefab Settings")]
-    [SerializeField] private GameObject screwPrefab; // Assign your screw prefab here
-    [SerializeField] private float screwMoveInDistance = 0.05f; // How far screws move in when being screwed
-    [SerializeField] private float screwMoveSpeed = 2f; // Speed of screw movement
+    [SerializeField] private GameObject screwPrefab;
+    [SerializeField] private float screwMoveInDistance = 0.05f;
+    [SerializeField] private float screwMoveSpeed = 2f;
 
     [Header("Screw Positions (fallback if no AttachmentData)")]
     [SerializeField] private Vector3 frontScrewLocalPos = new Vector3(-0.05f, 0.02f, 0f);
@@ -29,6 +29,9 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
     [SerializeField] private float zoomAmount = 0.7f;
     [SerializeField] private float zoomSpeed = 2f;
 
+    [Header("Old Underbarrel Removal")]
+    [SerializeField] private float minDistanceToMoveAway = 0.15f;
+
     private Camera mainCamera;
     private Vector3 dragStartMousePos;
     private Vector3 objectStartPos;
@@ -37,8 +40,15 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
 
     private enum ScrewState { None, FrontScrew, BackScrew, Complete }
     private ScrewState currentState = ScrewState.None;
+
+    private enum UnderbarrelState { UnscrewingOldFront, UnscrewingOldBack, MovingOldAway, Dragging, Screwing, Complete }
+    private UnderbarrelState replacementState = UnderbarrelState.Dragging;
+
     private float frontScrewProgress = 0f;
     private float backScrewProgress = 0f;
+    private float oldFrontScrewProgress = 0f;
+    private float oldBackScrewProgress = 0f;
+    private AttachmentData oldAttachmentData; // Add this field at the top with other private fields
 
     private Vector2 screwCenterScreenPos;
     private float totalRotation = 0f;
@@ -47,6 +57,9 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
 
     private GameObject frontScrewVisual;
     private GameObject backScrewVisual;
+    private GameObject oldFrontScrewVisual;
+    private GameObject oldBackScrewVisual;
+
     private Vector3 frontScrewStartPos;
     private Vector3 backScrewStartPos;
     private Vector3 frontScrewTargetPos;
@@ -60,6 +73,15 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
     private bool isZooming = false;
     private bool isZoomingOut = false;
     private Vector3 targetCameraPosition;
+
+    // Old underbarrel parts
+    private List<GameObject> oldUnderbarrelParts = new List<GameObject>();
+    private List<Vector3> partOriginalPositions = new List<Vector3>();
+    private GameObject grabbedPart;
+    private Vector3 grabbedPartDragStart;
+    private Vector3 grabbedPartStartPos;
+    private bool isDraggingPart = false;
+    private Vector3 socketWorldPosition;
 
     protected override void Awake()
     {
@@ -94,30 +116,144 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
         }
 
         originalCameraPosition = mainCamera.transform.position;
-        Debug.Log($"UnderbarrelMinigame started. Camera: {mainCamera.name}, Position: {originalCameraPosition}");
 
         if (targetSocket != null)
         {
+            socketWorldPosition = targetSocket.position;
             Vector3 worldOffset = targetSocket.TransformDirection(spawnOffset);
             transform.position = targetSocket.position + worldOffset;
             transform.rotation = targetSocket.rotation;
         }
 
-        CreateScrewVisuals();
-        SetColor(normalColor);
+        // Check if we need to remove old parts first
+        if (oldUnderbarrelParts != null && oldUnderbarrelParts.Count > 0)
+        {
+            replacementState = UnderbarrelState.UnscrewingOldFront;
+
+            // Hide new underbarrel
+            SetRendererActive(false);
+
+            // Add colliders to old parts
+            AddCollidersToOldParts();
+
+            // Create screws on old underbarrel
+            CreateOldScrewVisuals();
+
+            // Zoom to socket
+            ZoomToSocket();
+
+            Debug.Log("Unscrew old underbarrel - FRONT screw first (clockwise)");
+        }
+        else
+        {
+            // No old parts, start normal minigame
+            replacementState = UnderbarrelState.Dragging;
+            CreateScrewVisuals();
+            SetColor(normalColor);
+            Debug.Log("Drag underbarrel to socket");
+        }
+    }
+
+    // Update SetOldUnderbarrelParts to also receive the old attachment data
+    public void SetOldUnderbarrelParts(Transform weaponTransform, List<string> partPaths, AttachmentData oldAttachment = null)
+    {
+        oldUnderbarrelParts.Clear();
+        partOriginalPositions.Clear();
+        oldAttachmentData = oldAttachment; // Store the old attachment data
+
+        if (partPaths == null || partPaths.Count == 0 || weaponTransform == null)
+            return;
+
+        foreach (var partPath in partPaths)
+        {
+            if (string.IsNullOrEmpty(partPath))
+                continue;
+
+            Transform partTransform = weaponTransform.Find(partPath);
+            if (partTransform == null)
+                partTransform = FindChildByName(weaponTransform, partPath);
+
+            if (partTransform != null)
+            {
+                oldUnderbarrelParts.Add(partTransform.gameObject);
+                partOriginalPositions.Add(partTransform.localPosition);
+                Debug.Log($"Will unscrew: {partTransform.name}");
+            }
+        }
+    }
+    private Transform FindChildByName(Transform parent, string name)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == name)
+                return child;
+            Transform result = FindChildByName(child, name);
+            if (result != null)
+                return result;
+        }
+        return null;
+    }
+
+    private void AddCollidersToOldParts()
+    {
+        foreach (var part in oldUnderbarrelParts)
+        {
+            if (part != null && part.GetComponent<Collider>() == null)
+                part.AddComponent<BoxCollider>();
+        }
+    }
+
+    private void CreateOldScrewVisuals()
+    {
+        if (oldUnderbarrelParts.Count == 0) return;
+
+        GameObject oldUnderbarrel = oldUnderbarrelParts[0];
+
+        // Use OLD attachment data for screw positions if available, otherwise use defaults
+        Vector3 oldFrontScrewPos = oldAttachmentData != null ? oldAttachmentData.frontScrewLocalPos : frontScrewLocalPos;
+        Vector3 oldBackScrewPos = oldAttachmentData != null ? oldAttachmentData.backScrewLocalPos : backScrewLocalPos;
+        float oldScrewRadius = oldAttachmentData != null ? oldAttachmentData.screwRadius : screwRadius;
+
+        Debug.Log($"Creating OLD screws using OLD attachment data: Front={oldFrontScrewPos}, Back={oldBackScrewPos}");
+
+        if (screwPrefab != null)
+            oldFrontScrewVisual = Instantiate(screwPrefab, oldUnderbarrel.transform);
+        else
+            oldFrontScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+
+        oldFrontScrewVisual.transform.SetParent(oldUnderbarrel.transform);
+        // Start screws IN position (with the moveInDistance already applied)
+        oldFrontScrewVisual.transform.localPosition = oldFrontScrewPos + new Vector3(screwMoveInDistance, 0, 0);
+        oldFrontScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 90);
+        if (!screwPrefab) oldFrontScrewVisual.transform.localScale = new Vector3(oldScrewRadius * 2, 0.01f, oldScrewRadius * 2);
+
+        Collider col = oldFrontScrewVisual.GetComponent<Collider>();
+        if (col) Destroy(col);
+
+        if (screwPrefab != null)
+            oldBackScrewVisual = Instantiate(screwPrefab, oldUnderbarrel.transform);
+        else
+            oldBackScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+
+        oldBackScrewVisual.transform.SetParent(oldUnderbarrel.transform);
+        // Start screws IN position (with the moveInDistance already applied)
+        oldBackScrewVisual.transform.localPosition = oldBackScrewPos + new Vector3(screwMoveInDistance, 0, 0);
+        oldBackScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 90);
+        if (!screwPrefab) oldBackScrewVisual.transform.localScale = new Vector3(oldScrewRadius * 2, 0.01f, oldScrewRadius * 2);
+
+        col = oldBackScrewVisual.GetComponent<Collider>();
+        if (col) Destroy(col);
+
+        SetScrewColor(oldFrontScrewVisual, Color.red);
+        SetScrewColor(oldBackScrewVisual, Color.red);
     }
 
     void CreateScrewVisuals()
     {
-        bool usingAttachmentData = attachmentData != null;
         actualFrontScrewPos = attachmentData != null ? attachmentData.frontScrewLocalPos : frontScrewLocalPos;
         actualBackScrewPos = attachmentData != null ? attachmentData.backScrewLocalPos : backScrewLocalPos;
         actualScrewRadius = attachmentData != null ? attachmentData.screwRadius : screwRadius;
 
-        Debug.Log($"Using AttachmentData: {usingAttachmentData}");
-        Debug.Log($"Creating screws at: Front={actualFrontScrewPos}, Back={actualBackScrewPos}, Radius={actualScrewRadius}");
-
-        // Create front screw from prefab
         if (screwPrefab != null)
         {
             frontScrewVisual = Instantiate(screwPrefab, transform);
@@ -125,25 +261,20 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
         }
         else
         {
-            // Fallback to primitive if no prefab assigned
             frontScrewVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             frontScrewVisual.transform.localScale = new Vector3(actualScrewRadius * 2, 0.01f, actualScrewRadius * 2);
-            Debug.LogWarning("No screw prefab assigned! Using primitive cylinder as fallback.");
         }
 
         frontScrewVisual.transform.SetParent(transform);
         frontScrewVisual.transform.localPosition = actualFrontScrewPos;
         frontScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 90);
 
-        // Store start and target positions for movement (move along X-axis)
         frontScrewStartPos = frontScrewVisual.transform.localPosition;
         frontScrewTargetPos = frontScrewStartPos + new Vector3(screwMoveInDistance, 0, 0);
 
-        // Remove collider if it exists (we don't want screws to be physical objects)
         Collider frontCol = frontScrewVisual.GetComponent<Collider>();
         if (frontCol != null) Destroy(frontCol);
 
-        // Create back screw from prefab
         if (screwPrefab != null)
         {
             backScrewVisual = Instantiate(screwPrefab, transform);
@@ -159,14 +290,12 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
         backScrewVisual.transform.localPosition = actualBackScrewPos;
         backScrewVisual.transform.localRotation = Quaternion.Euler(90, 0, 90);
 
-        // Store start and target positions for movement (move along X-axis)
         backScrewStartPos = backScrewVisual.transform.localPosition;
         backScrewTargetPos = backScrewStartPos + new Vector3(screwMoveInDistance, 0, 0);
 
         Collider backCol = backScrewVisual.GetComponent<Collider>();
         if (backCol != null) Destroy(backCol);
 
-        // Set initial colors
         SetScrewColor(frontScrewVisual, Color.red);
         SetScrewColor(backScrewVisual, Color.red);
     }
@@ -175,7 +304,6 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
     {
         if (screw == null) return;
 
-        // Try to find renderer in the screw or its children
         Renderer rend = screw.GetComponent<Renderer>();
         if (rend == null)
             rend = screw.GetComponentInChildren<Renderer>();
@@ -186,14 +314,30 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
         }
     }
 
+    void SetRendererActive(bool active)
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        foreach (var rend in renderers)
+        {
+            rend.enabled = active;
+        }
+    }
+
+    void ZoomToSocket()
+    {
+        if (mainCamera == null || targetSocket == null) return;
+
+        Vector3 directionToSocket = (targetSocket.position - mainCamera.transform.position).normalized;
+        float distanceToSocket = Vector3.Distance(mainCamera.transform.position, targetSocket.position);
+        targetCameraPosition = mainCamera.transform.position + (directionToSocket * distanceToSocket * zoomAmount);
+        isZooming = true;
+    }
+
     protected override void Update()
     {
         base.Update();
 
-        if (isComplete)
-        {
-            return;
-        }
+        if (isComplete) return;
 
         if ((isZooming || isZoomingOut) && mainCamera != null)
         {
@@ -211,7 +355,41 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
             }
         }
 
-        // Animate screw movement based on progress
+        // Animate OLD screws moving OUT as they're unscrewed
+        if (replacementState == UnderbarrelState.UnscrewingOldFront || replacementState == UnderbarrelState.UnscrewingOldBack)
+        {
+            if (oldUnderbarrelParts.Count > 0)
+            {
+                Vector3 oldFrontScrewPos = oldAttachmentData != null ? oldAttachmentData.frontScrewLocalPos : frontScrewLocalPos;
+                Vector3 oldBackScrewPos = oldAttachmentData != null ? oldAttachmentData.backScrewLocalPos : backScrewLocalPos;
+
+                if (oldFrontScrewVisual != null && oldFrontScrewProgress > 0f)
+                {
+                    // Move FROM screwed in position TO base position (unscrewing)
+                    Vector3 startPos = oldFrontScrewPos + new Vector3(screwMoveInDistance, 0, 0);
+                    Vector3 targetPos = oldFrontScrewPos;
+                    oldFrontScrewVisual.transform.localPosition = Vector3.Lerp(
+                        startPos,
+                        targetPos,
+                        oldFrontScrewProgress
+                    );
+                }
+
+                if (oldBackScrewVisual != null && oldBackScrewProgress > 0f)
+                {
+                    // Move FROM screwed in position TO base position (unscrewing)
+                    Vector3 startPos = oldBackScrewPos + new Vector3(screwMoveInDistance, 0, 0);
+                    Vector3 targetPos = oldBackScrewPos;
+                    oldBackScrewVisual.transform.localPosition = Vector3.Lerp(
+                        startPos,
+                        targetPos,
+                        oldBackScrewProgress
+                    );
+                }
+            }
+        }
+
+        // Animate NEW screw movement IN as they're screwed
         if (frontScrewVisual != null && frontScrewProgress > 0f)
         {
             Vector3 targetPos = Vector3.Lerp(frontScrewStartPos, frontScrewTargetPos, frontScrewProgress);
@@ -232,14 +410,220 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
             );
         }
 
-        if (!isSnapped)
+        // Main state machine
+        switch (replacementState)
         {
-            HandleDragging();
+            case UnderbarrelState.UnscrewingOldFront:
+            case UnderbarrelState.UnscrewingOldBack:
+                HandleUnscrewingOld();
+                break;
+            case UnderbarrelState.MovingOldAway:
+                HandleMovingOldAway();
+                break;
+            case UnderbarrelState.Dragging:
+                if (!isSnapped)
+                    HandleDragging();
+                break;
+            case UnderbarrelState.Screwing:
+                if (isSnapped)
+                    HandleScrewing();
+                break;
         }
-        else
+    }
+
+    void HandleUnscrewingOld()
+    {
+        if (oldUnderbarrelParts.Count == 0)
         {
-            HandleScrewing();
+            TransitionToDragging();
+            return;
         }
+
+        GameObject oldUnderbarrel = oldUnderbarrelParts[0];
+        Vector3 mousePos = Input.mousePosition;
+
+        // Use OLD attachment data for screw positions
+        Vector3 oldFrontScrewPos = oldAttachmentData != null ? oldAttachmentData.frontScrewLocalPos : frontScrewLocalPos;
+        Vector3 oldBackScrewPos = oldAttachmentData != null ? oldAttachmentData.backScrewLocalPos : backScrewLocalPos;
+
+        Vector3 frontScrewWorldPos = oldUnderbarrel.transform.TransformPoint(oldFrontScrewPos);
+        Vector3 backScrewWorldPos = oldUnderbarrel.transform.TransformPoint(oldBackScrewPos);
+
+        Vector3 frontScrewScreenPos = mainCamera.WorldToScreenPoint(frontScrewWorldPos);
+        Vector3 backScrewScreenPos = mainCamera.WorldToScreenPoint(backScrewWorldPos);
+
+        float distToFront = Vector2.Distance(new Vector2(mousePos.x, mousePos.y), new Vector2(frontScrewScreenPos.x, frontScrewScreenPos.y));
+        float distToBack = Vector2.Distance(new Vector2(mousePos.x, mousePos.y), new Vector2(backScrewScreenPos.x, backScrewScreenPos.y));
+
+        if (replacementState == UnderbarrelState.UnscrewingOldFront)
+        {
+            SetScrewColor(oldFrontScrewVisual, distToFront < circleDetectionRadius ? Color.yellow : Color.red);
+
+            if (Input.GetMouseButtonDown(0) && distToFront < circleDetectionRadius)
+            {
+                screwCenterScreenPos = new Vector2(frontScrewScreenPos.x, frontScrewScreenPos.y);
+                StartCircularMotion(mousePos);
+            }
+        }
+        else if (replacementState == UnderbarrelState.UnscrewingOldBack)
+        {
+            SetScrewColor(oldBackScrewVisual, distToBack < circleDetectionRadius ? Color.yellow : Color.red);
+
+            if (Input.GetMouseButtonDown(0) && distToBack < circleDetectionRadius)
+            {
+                screwCenterScreenPos = new Vector2(backScrewScreenPos.x, backScrewScreenPos.y);
+                StartCircularMotion(mousePos);
+            }
+        }
+
+        if (Input.GetMouseButton(0) && isRotating)
+        {
+            UpdateCircularMotionUnscrew(mousePos);
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            isRotating = false;
+        }
+    }
+
+    void UpdateCircularMotionUnscrew(Vector3 mousePos)
+    {
+        Vector2 currentMouseVec = new Vector2(mousePos.x, mousePos.y) - screwCenterScreenPos;
+        Vector2 currentMouseAngle = currentMouseVec.normalized;
+        float angleDiff = Vector2.SignedAngle(lastMouseAngle, currentMouseAngle);
+
+        // Unscrewing = CLOCKWISE mouse movement (positive angleDiff)
+        // This is OPPOSITE of screwing in which uses counter-clockwise (negative)
+        if (angleDiff > 0) // Clockwise mouse movement
+        {
+            totalRotation += Mathf.Abs(angleDiff);
+            float requiredRotation = rotationsRequired * 360f;
+
+            if (replacementState == UnderbarrelState.UnscrewingOldFront)
+            {
+                oldFrontScrewProgress = Mathf.Clamp01(totalRotation / requiredRotation);
+
+                if (oldFrontScrewVisual != null)
+                    // Rotate the screw visual counter-clockwise (opposite direction)
+                    oldFrontScrewVisual.transform.Rotate(Vector3.up, -Mathf.Abs(angleDiff), Space.Self);
+
+                SetScrewColor(oldFrontScrewVisual, Color.Lerp(Color.red, Color.green, oldFrontScrewProgress));
+
+                if (oldFrontScrewProgress >= 1f)
+                {
+                    Debug.Log("Old front screw done! Now back screw (clockwise circles)");
+                    replacementState = UnderbarrelState.UnscrewingOldBack;
+                    isRotating = false;
+                }
+            }
+            else if (replacementState == UnderbarrelState.UnscrewingOldBack)
+            {
+                oldBackScrewProgress = Mathf.Clamp01(totalRotation / requiredRotation);
+
+                if (oldBackScrewVisual != null)
+                    // Rotate the screw visual counter-clockwise (opposite direction)
+                    oldBackScrewVisual.transform.Rotate(Vector3.up, -Mathf.Abs(angleDiff), Space.Self);
+
+                SetScrewColor(oldBackScrewVisual, Color.Lerp(Color.red, Color.green, oldBackScrewProgress));
+
+                if (oldBackScrewProgress >= 1f)
+                {
+                    Debug.Log("Old back screw done! Move it away");
+                    replacementState = UnderbarrelState.MovingOldAway;
+                    isRotating = false;
+
+                    if (oldFrontScrewVisual) Destroy(oldFrontScrewVisual);
+                    if (oldBackScrewVisual) Destroy(oldBackScrewVisual);
+                }
+            }
+        }
+
+        lastMouseAngle = currentMouseAngle;
+    }
+
+    void HandleMovingOldAway()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            RaycastHit[] hits = Physics.RaycastAll(ray, 1000f);
+
+            foreach (var hit in hits)
+            {
+                foreach (var part in oldUnderbarrelParts)
+                {
+                    if (part != null && (hit.collider.gameObject == part || hit.collider.transform.IsChildOf(part.transform)))
+                    {
+                        grabbedPart = part;
+                        isDraggingPart = true;
+                        grabbedPartDragStart = Input.mousePosition;
+                        grabbedPartStartPos = grabbedPart.transform.position;
+                        break;
+                    }
+                }
+                if (grabbedPart != null) break;
+            }
+        }
+
+        if (isDraggingPart && Input.GetMouseButton(0) && grabbedPart != null)
+        {
+            Vector3 currentMousePos = Input.mousePosition;
+            Vector3 mouseDelta = currentMousePos - grabbedPartDragStart;
+
+            Vector3 worldDelta = mainCamera.ScreenToWorldPoint(new Vector3(mouseDelta.x, mouseDelta.y, mainCamera.WorldToScreenPoint(grabbedPartStartPos).z))
+                                - mainCamera.ScreenToWorldPoint(new Vector3(0, 0, mainCamera.WorldToScreenPoint(grabbedPartStartPos).z));
+
+            grabbedPart.transform.position = grabbedPartStartPos + worldDelta;
+
+            float dist = Vector3.Distance(grabbedPart.transform.position, socketWorldPosition);
+            Color feedbackColor = dist >= minDistanceToMoveAway ? Color.green : Color.yellow;
+
+            Renderer[] renderers = grabbedPart.GetComponentsInChildren<Renderer>();
+            foreach (var rend in renderers)
+            {
+                if (rend.material != null)
+                    rend.material.color = feedbackColor;
+            }
+        }
+
+        if (Input.GetMouseButtonUp(0) && isDraggingPart)
+        {
+            if (grabbedPart != null)
+            {
+                float dist = Vector3.Distance(grabbedPart.transform.position, socketWorldPosition);
+
+                if (dist >= minDistanceToMoveAway)
+                {
+                    Debug.Log("Old underbarrel moved away!");
+                    TransitionToDragging();
+                }
+                else
+                {
+                    Debug.Log("Not far enough!");
+                }
+            }
+
+            isDraggingPart = false;
+            grabbedPart = null;
+        }
+    }
+
+    void TransitionToDragging()
+    {
+        replacementState = UnderbarrelState.Dragging;
+
+        SetRendererActive(true);
+        SetColor(normalColor);
+        CreateScrewVisuals();
+
+        if (mainCamera != null)
+        {
+            targetCameraPosition = originalCameraPosition;
+            isZoomingOut = true;
+        }
+
+        Debug.Log("Drag NEW underbarrel to socket");
     }
 
     void HandleDragging()
@@ -291,11 +675,12 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
     void SnapToSocket()
     {
         isSnapped = true;
+        replacementState = UnderbarrelState.Screwing;
         transform.position = targetSocket.position;
         transform.rotation = targetSocket.rotation;
         SetColor(validColor);
         lastMousePosition = Input.mousePosition;
-        currentState = ScrewState.FrontScrew;
+        currentState = ScrewState.None;
 
         if (mainCamera != null)
         {
@@ -305,7 +690,7 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
             isZooming = true;
         }
 
-        Debug.Log("Underbarrel snapped! Screw in the FRONT screw by moving mouse in circles.");
+        Debug.Log("Snapped! Screw in FRONT screw (counter-clockwise)");
     }
 
     void HandleScrewing()
@@ -384,7 +769,6 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
                 float requiredRotation = rotationsRequired * 360f;
                 frontScrewProgress = Mathf.Clamp01(totalRotation / requiredRotation);
 
-                // Rotate the screw visually
                 if (frontScrewVisual != null)
                 {
                     frontScrewVisual.transform.Rotate(Vector3.up, Mathf.Abs(angleDiff), Space.Self);
@@ -395,13 +779,11 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
 
                 if (frontScrewProgress >= 1f)
                 {
-                    Debug.Log($"Front screw complete! Checking if back screw is also done: backScrewProgress={backScrewProgress}");
                     currentState = ScrewState.None;
                     isRotating = false;
 
                     if (backScrewProgress >= 1f && !isComplete)
                     {
-                        Debug.Log("Both screws complete!");
                         currentState = ScrewState.Complete;
                         CompleteMinigame();
                     }
@@ -412,7 +794,6 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
                 float requiredRotation = rotationsRequired * 360f;
                 backScrewProgress = Mathf.Clamp01(totalRotation / requiredRotation);
 
-                // Rotate the screw visually
                 if (backScrewVisual != null)
                 {
                     backScrewVisual.transform.Rotate(Vector3.up, Mathf.Abs(angleDiff), Space.Self);
@@ -423,13 +804,11 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
 
                 if (backScrewProgress >= 1f)
                 {
-                    Debug.Log($"Back screw complete! Checking if front screw is also done: frontScrewProgress={frontScrewProgress}");
                     currentState = ScrewState.None;
                     isRotating = false;
 
                     if (frontScrewProgress >= 1f && !isComplete)
                     {
-                        Debug.Log("Both screws complete!");
                         currentState = ScrewState.Complete;
                         CompleteMinigame();
                     }
@@ -442,18 +821,26 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
 
     protected override void CompleteMinigame()
     {
-        Debug.Log("=== UnderbarrelMinigame CompleteMinigame() called ===");
         transform.position = targetSocket.position;
         transform.rotation = targetSocket.rotation;
         SetColor(Color.green);
         SetScrewColor(frontScrewVisual, Color.green);
         SetScrewColor(backScrewVisual, Color.green);
 
+        // Disable old parts
+        if (oldUnderbarrelParts != null && oldUnderbarrelParts.Count > 0)
+        {
+            foreach (var part in oldUnderbarrelParts)
+            {
+                if (part != null)
+                    part.SetActive(false);
+            }
+        }
+
         if (mainCamera != null)
         {
             targetCameraPosition = originalCameraPosition;
             isZoomingOut = true;
-            Debug.Log($"Starting zoom out to: {originalCameraPosition}");
         }
 
         StartCoroutine(CompleteAfterZoomOut());
@@ -461,18 +848,14 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
 
     protected override void CancelMinigame()
     {
-        // Reset camera immediately on cancel
         if (mainCamera != null)
         {
             mainCamera.transform.position = originalCameraPosition;
             isZooming = false;
             isZoomingOut = false;
-            Debug.Log("Camera reset on cancel");
         }
 
-        // Destroy screws before cancelling
         DestroyScrews();
-
         base.CancelMinigame();
     }
 
@@ -483,30 +866,16 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
             yield return null;
         }
 
-        // Destroy screws after zoom out completes
         DestroyScrews();
-
         base.CompleteMinigame();
     }
 
-    /// <summary>
-    /// Destroys the screw visual GameObjects
-    /// </summary>
     private void DestroyScrews()
     {
-        if (frontScrewVisual != null)
-        {
-            Debug.Log("Destroying front screw visual");
-            Destroy(frontScrewVisual);
-            frontScrewVisual = null;
-        }
-
-        if (backScrewVisual != null)
-        {
-            Debug.Log("Destroying back screw visual");
-            Destroy(backScrewVisual);
-            backScrewVisual = null;
-        }
+        if (frontScrewVisual != null) Destroy(frontScrewVisual);
+        if (backScrewVisual != null) Destroy(backScrewVisual);
+        if (oldFrontScrewVisual != null) Destroy(oldFrontScrewVisual);
+        if (oldBackScrewVisual != null) Destroy(oldBackScrewVisual);
     }
 
     void OnDrawGizmos()
@@ -515,6 +884,9 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(targetSocket.position, snapDistance);
+
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(targetSocket.position, minDistanceToMoveAway);
         }
 
         if (isSnapped)
