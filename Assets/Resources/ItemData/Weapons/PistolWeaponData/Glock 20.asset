@@ -52,31 +52,28 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
   scopeOffsets:
   - scope: {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
+    positionOffset: {x: -0.451, y: 0.142, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: 0b885955b01696f4a8e51c7a22f81fe4, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
+    positionOffset: {x: -0.451, y: 0.142, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
+    positionOffset: {x: -0.451, y: 0.15, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
+    positionOffset: {x: -0.451, y: 0.152, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: 48f1c564060115148bb44dbc4d2c9bd1, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 48f1c564060115148bb44dbc4d2c9bd1, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
+    positionOffset: {x: -0.451, y: 0.145, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: 677f5f4c3d85a6341bf7fbb503ac6387, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
+    positionOffset: {x: -0.451, y: 0.137, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: f6c4582476dd5e440b8c97a90492cdca, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
+    positionOffset: {x: -0.451, y: 0.137, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: 4a0c7c777c7db9f42a3ec5d45ad496e6, type: 2}
-    positionOffset: {x: 0, y: 0, z: 0}
+    positionOffset: {x: -0.451, y: 0.16, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   partsToDisableWithSight:
   - RearSight
