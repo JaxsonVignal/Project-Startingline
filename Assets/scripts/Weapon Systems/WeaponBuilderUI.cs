@@ -352,9 +352,6 @@ public class WeaponBuilderUI : MonoBehaviour
     /// <summary>
     /// Start a barrel replacement minigame (remove old, attach new)
     /// </summary>
-    /// <summary>
-    /// Start a barrel replacement minigame (remove old, attach new)
-    /// </summary>
     void StartBarrelReplacementMinigame(AttachmentData newBarrelAttachment)
     {
         Debug.Log($"StartBarrelReplacementMinigame called for {newBarrelAttachment.name}");
@@ -420,11 +417,10 @@ public class WeaponBuilderUI : MonoBehaviour
                 // NOTE: We DON'T call ReEnableDefaultBarrelParts() here because we're replacing with another barrel
                 // The default parts should stay disabled
 
-                // Add the old barrel back to inventory
-                if (playerInventory.PrimaryInventorySystem.AddToInventory(currentBarrelAttachment, 1))
-                {
-                    Debug.Log($"Added old barrel {currentBarrelAttachment.name} back to inventory");
-                }
+                // IMPORTANT: DO NOT add old barrel back to inventory here!
+                // It stays "consumed" from when it was originally added
+                // Only the NEW barrel will be removed from inventory when finalizing
+                Debug.Log($"Old barrel {currentBarrelAttachment.name} remains consumed (not returned to inventory)");
 
                 // Add the new barrel attachment
                 AddAttachmentDirectly(replacedAttachment);
@@ -433,7 +429,7 @@ public class WeaponBuilderUI : MonoBehaviour
                 if (finalizeButton != null)
                     finalizeButton.interactable = true;
 
-                PopulateAttachmentButtons();
+                // Note: AddAttachmentDirectly already calls PopulateAttachmentButtons(), so we don't need to call it again
             });
     }
 
@@ -655,19 +651,26 @@ public class WeaponBuilderUI : MonoBehaviour
             return;
         }
 
-        // Verify attachments
+        Debug.Log("=== FINALIZE WEAPON - ATTACHMENT VERIFICATION ===");
+
+        // Verify attachments - but we need to be smart about this
+        // For newly added attachments (not original), they should be in inventory
         foreach (var entry in previewInstance.attachments)
         {
-            if (originalAttachmentIds.Contains(entry.attachmentId))
-                continue;
-
             if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
             {
-                if (!playerInventory.PrimaryInventorySystem.ContainsItem(att, 1))
+                bool isOriginal = originalAttachmentIds.Contains(entry.attachmentId);
+                Debug.Log($"Checking attachment: {att.name} - IsOriginal: {isOriginal}");
+
+                if (!isOriginal)
                 {
-                    Debug.LogError($"Attachment {att.name} no longer in inventory!");
-                    RefreshAvailableItems();
-                    return;
+                    // This is a newly added attachment - verify it's in inventory
+                    if (!playerInventory.PrimaryInventorySystem.ContainsItem(att, 1))
+                    {
+                        Debug.LogError($"Attachment {att.name} no longer in inventory!");
+                        RefreshAvailableItems();
+                        return;
+                    }
                 }
             }
         }
@@ -681,18 +684,31 @@ public class WeaponBuilderUI : MonoBehaviour
 
         WeaponInstanceStorage.RemoveInstance(weaponSlot.UniqueSlotID);
 
+        Debug.Log("=== FINALIZE WEAPON - REMOVING ATTACHMENTS FROM INVENTORY ===");
+
         // Remove newly added attachments from inventory
         foreach (var entry in previewInstance.attachments)
         {
-            if (originalAttachmentIds.Contains(entry.attachmentId))
-                continue;
+            bool isOriginal = originalAttachmentIds.Contains(entry.attachmentId);
 
-            if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
+            if (!isOriginal)
             {
-                if (!playerInventory.PrimaryInventorySystem.RemoveFromInventory(att, 1))
+                if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
                 {
-                    Debug.LogWarning($"Failed to remove attachment {att.name} from inventory!");
+                    Debug.Log($"Removing newly added attachment from inventory: {att.name}");
+                    if (!playerInventory.PrimaryInventorySystem.RemoveFromInventory(att, 1))
+                    {
+                        Debug.LogWarning($"Failed to remove attachment {att.name} from inventory!");
+                    }
+                    else
+                    {
+                        Debug.Log($"Successfully removed {att.name} from inventory");
+                    }
                 }
+            }
+            else
+            {
+                Debug.Log($"Skipping original attachment: {entry.attachmentId}");
             }
         }
 
@@ -864,6 +880,31 @@ public class WeaponBuilderUI : MonoBehaviour
             if (partTransform != null)
             {
                 partTransform.gameObject.SetActive(!hasSightAttachment);
+            }
+        }
+    }
+
+    void OnDisable()
+    {
+        Debug.Log("=== BUILDER CLOSING ===");
+        Debug.Log($"Attachments in preview: {previewInstance?.attachments.Count ?? 0}");
+        if (previewInstance != null)
+        {
+            foreach (var att in previewInstance.attachments)
+            {
+                if (attachmentLookup.TryGetValue(att.attachmentId, out var attData))
+                {
+                    Debug.Log($"  - {attData.name} (ID: {att.attachmentId}, Type: {att.type})");
+                }
+            }
+        }
+
+        Debug.Log($"Original attachments: {originalAttachmentIds.Count}");
+        foreach (var id in originalAttachmentIds)
+        {
+            if (attachmentLookup.TryGetValue(id, out var attData))
+            {
+                Debug.Log($"  - Original: {attData.name} (ID: {id})");
             }
         }
     }

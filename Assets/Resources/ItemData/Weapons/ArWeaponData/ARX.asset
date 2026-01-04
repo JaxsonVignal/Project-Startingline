@@ -18,7 +18,7 @@ MonoBehaviour:
   Icon: {fileID: 0}
   maxStackSize: 1
   weaponId: ARX
-  damage: 30
+  damage: 32.4
   fireRate: 0.1
   reloadTime: 2.5
   magazineSize: 30
@@ -53,6 +53,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
   - {fileID: 11400000, guid: a62d89aa8830895428d50a176049e790, type: 2}
   - {fileID: 11400000, guid: 7ecb167fe2179d946985bda80bab1ab9, type: 2}
+  - {fileID: 11400000, guid: de8e061e67c381f4d8330e788c87ee44, type: 2}
   scopeOffsets:
   - scope: {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
     positionOffset: {x: -0.451, y: 0.089, z: 0}
