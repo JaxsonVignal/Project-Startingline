@@ -93,6 +93,14 @@ public class PlayerShooting : MonoBehaviour
         }
     }
 
+    private void ReportGunshot()
+    {
+        if (GunshotDetectionSystem.Instance != null && firePoint != null)
+        {
+            GunshotDetectionSystem.Instance.ReportGunshotToAllNPCs(firePoint.position);
+        }
+    }
+
     public void EquipWeapon(WeaponData weapon)
     {
         EquipWeapon(weapon, null);
@@ -465,6 +473,7 @@ public class PlayerShooting : MonoBehaviour
         }
 
         currentGrenadeAmmo--;
+        ReportGunshot();
 
         // Save grenade ammo
         if (!string.IsNullOrEmpty(currentWeaponSlotID))
@@ -545,6 +554,7 @@ public class PlayerShooting : MonoBehaviour
     {
         if (isReloadingUnderbarrelShotgun || currentUnderbarrelShotgunAmmo <= 0)
         {
+            ReportGunshot();
             Debug.Log("Out of shotgun shells! Reload first.");
             return;
         }
@@ -645,11 +655,13 @@ public class PlayerShooting : MonoBehaviour
     {
         if (isReloading || currentAmmo <= 0)
         {
+            
             Debug.Log("Out of ammo! Reload first.");
             return;
         }
 
         currentAmmo--;
+        ReportGunshot();
 
         if (!string.IsNullOrEmpty(currentWeaponSlotID))
         {
@@ -754,6 +766,8 @@ public class PlayerShooting : MonoBehaviour
             Debug.LogWarning("No rocket or bullet prefab assigned!");
             return;
         }
+
+        
 
         GameObject rocketObj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
 
