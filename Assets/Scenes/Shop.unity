@@ -15707,6 +15707,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   silencerMinigamePrefab: {fileID: 0}
+  screwPrefab: {fileID: 0}
   minigameParent: {fileID: 31003540}
   previewCamera: {fileID: 1152775642}
 --- !u!4 &1217400952
@@ -16188,6 +16189,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dayLengthInMinutes: 24
   startHour: 6
+  pauseAtMidnight: 1
+  midnightPauseTime: 0
+  midnightThreshold: 0.1
   directionalLight: {fileID: 705507994}
   lightColor:
     serializedVersion: 2
@@ -18904,6 +18908,7 @@ GameObject:
   - component: {fileID: 1446155166}
   - component: {fileID: 1446155165}
   - component: {fileID: 1446155173}
+  - component: {fileID: 1446155174}
   m_Layer: 0
   m_Name: NPC test
   m_TagString: Untagged
@@ -18938,6 +18943,8 @@ MonoBehaviour:
   meetingWaitTime: 300
   fleeDistance: 20
   fleeDuration: 20
+  fleeFromGunshots: 1
+  gunshotReactionCooldown: 2
 --- !u!95 &1446155166
 Animator:
   serializedVersion: 5
@@ -19095,6 +19102,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 1000
   playerMovement: {fileID: 0}
+--- !u!114 &1446155174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446155164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edd73bf07f45f2c4ab0dbf3449a36313, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gunshotHearingRange: 50
+  npcLayer:
+    serializedVersion: 2
+    m_Bits: 1
 --- !u!4 &1446744243 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4497011438508190, guid: 7446a392a730ac14d9cc70d21cf7ace0, type: 3}
