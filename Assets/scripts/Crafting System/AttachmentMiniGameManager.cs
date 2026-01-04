@@ -1,35 +1,25 @@
 using UnityEngine;
 using System;
 
-/// <summary>
-/// Manages which minigame to spawn for each attachment type
-/// Add this component to your WeaponBuilderUI or create a separate manager
-/// </summary>
 public class AttachmentMinigameManager : MonoBehaviour
 {
     [Header("Minigame Prefabs")]
     [SerializeField] private GameObject silencerMinigamePrefab;
-    // Add more minigame prefabs here for other attachment types
 
     [Header("Scope Minigame Settings")]
-    [SerializeField] private GameObject screwPrefab; // Assign your screw model here!
+    [SerializeField] private GameObject screwPrefab;
 
     [Header("References")]
-    [SerializeField] private Transform minigameParent; // Where to spawn minigames
-    [SerializeField] private Camera previewCamera; // The camera used for weapon preview
+    [SerializeField] private Transform minigameParent;
+    [SerializeField] private Camera previewCamera;
 
     private AttachmentMinigameBase currentMinigame;
     private Action<AttachmentData> onMinigameCompleteCallback;
 
-    /// <summary>
-    /// Start a minigame for the given attachment
-    /// </summary>
     public void StartMinigame(AttachmentData attachment, WeaponData weapon, Transform socket, Action<AttachmentData> onComplete)
     {
         Debug.Log($"AttachmentMinigameManager.StartMinigame called for {attachment.Name}");
-        Debug.Log($"Preview camera assigned: {(previewCamera != null ? previewCamera.name : "NULL")}");
 
-        // Cancel any existing minigame
         if (currentMinigame != null)
         {
             Destroy(currentMinigame.gameObject);
@@ -37,7 +27,6 @@ public class AttachmentMinigameManager : MonoBehaviour
 
         onMinigameCompleteCallback = onComplete;
 
-        // Check if this attachment type has a minigame implementation
         if (!HasMinigameImplementation(attachment.type))
         {
             Debug.LogWarning($"No minigame implementation for {attachment.type}. Adding attachment directly.");
@@ -45,141 +34,33 @@ public class AttachmentMinigameManager : MonoBehaviour
             return;
         }
 
-        // Spawn the attachment prefab
         GameObject attachmentObj = Instantiate(attachment.prefab, minigameParent);
-        Debug.Log($"Spawned attachment object: {attachmentObj.name}");
 
-        // Add collider if it doesn't have one (needed for mouse interaction)
         if (attachmentObj.GetComponent<Collider>() == null)
         {
-            var collider = attachmentObj.AddComponent<BoxCollider>();
-            Debug.Log("Added BoxCollider to attachment");
+            attachmentObj.AddComponent<BoxCollider>();
         }
 
-        // Add the appropriate minigame component
         AttachmentMinigameBase minigame = null;
 
         switch (attachment.type)
         {
             case AttachmentType.Barrel:
-                SilencerMinigame silencerMinigame = attachmentObj.AddComponent<SilencerMinigame>();
-                Debug.Log("Added SilencerMinigame component");
-
-                // Configure silencer-specific settings
-                if (silencerMinigame != null && weapon != null && socket != null)
-                {
-                    // Set the weapon parts to disable when silencer is attached
-                    // Use socket.root to get the weapon's root transform
-                    var partsToDisable = weapon.GetPartsToDisableWithBarrel();
-                    if (partsToDisable != null && partsToDisable.Count > 0)
-                    {
-                        Debug.Log($"Setting {partsToDisable.Count} weapon parts to disable for silencer");
-                        silencerMinigame.SetWeaponPartsToDisable(socket.root, partsToDisable);
-                    }
-                    else
-                    {
-                        Debug.Log("No weapon parts to disable for this barrel attachment");
-                    }
-                }
-
-                minigame = silencerMinigame;
+                minigame = SetupSilencerMinigame(attachmentObj, weapon, socket);
                 break;
 
             case AttachmentType.Sight:
-                ScopeMinigame scopeMinigame = attachmentObj.AddComponent<ScopeMinigame>();
-                Debug.Log("Added ScopeMinigame component");
-
-                // IMPORTANT: Assign the screw prefab using reflection
-                // since the field is private with [SerializeField]
-                if (screwPrefab != null)
-                {
-                    var screwPrefabField = typeof(ScopeMinigame).GetField("screwPrefab",
-                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-                    if (screwPrefabField != null)
-                    {
-                        screwPrefabField.SetValue(scopeMinigame, screwPrefab);
-                        Debug.Log($"Assigned screw prefab: {screwPrefab.name}");
-                    }
-                    else
-                    {
-                        Debug.LogError("Could not find screwPrefab field in ScopeMinigame!");
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("No screw prefab assigned in AttachmentMinigameManager!");
-                }
-
-                // Configure scope-specific settings
-                if (scopeMinigame != null && weapon != null && socket != null)
-                {
-                    // Set the weapon parts to disable when scope is attached
-                    // Use socket.root to get the weapon's root transform
-                    var partsToDisable = weapon.GetPartsToDisableWithSight();
-                    if (partsToDisable != null && partsToDisable.Count > 0)
-                    {
-                        Debug.Log($"Setting {partsToDisable.Count} weapon parts to disable for scope");
-                        scopeMinigame.SetWeaponPartsToDisable(socket.root, partsToDisable);
-                    }
-                }
-
-                minigame = scopeMinigame;
+                minigame = SetupScopeMinigame(attachmentObj, weapon, socket);
                 break;
 
             case AttachmentType.Underbarrel:
-                UnderbarrelMinigame underbarrelMinigame = attachmentObj.AddComponent<UnderbarrelMinigame>();
-                Debug.Log("Added UnderbarrelMinigame component");
-
-                // IMPORTANT: Assign the screw prefab using reflection
-                if (screwPrefab != null)
-                {
-                    var screwPrefabField = typeof(UnderbarrelMinigame).GetField("screwPrefab",
-                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-                    if (screwPrefabField != null)
-                    {
-                        screwPrefabField.SetValue(underbarrelMinigame, screwPrefab);
-                        Debug.Log($"Assigned screw prefab to UnderbarrelMinigame: {screwPrefab.name}");
-                    }
-                    else
-                    {
-                        Debug.LogError("Could not find screwPrefab field in UnderbarrelMinigame!");
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("No screw prefab assigned for UnderbarrelMinigame!");
-                }
-
-                minigame = underbarrelMinigame;
+                minigame = SetupUnderbarrelMinigame(attachmentObj);
                 break;
 
             case AttachmentType.Magazine:
-                MagazineMinigame magazineMinigame = attachmentObj.AddComponent<MagazineMinigame>();
-                Debug.Log("Added MagazineMinigame component");
-
-                // Configure magazine-specific settings
-                if (magazineMinigame != null && weapon != null && socket != null)
-                {
-                    // Set the old magazine parts to remove
-                    // Use socket.root to get the weapon's root transform
-                    var partsToDisable = weapon.GetPartsToDisableWithMagazine();
-                    if (partsToDisable != null && partsToDisable.Count > 0)
-                    {
-                        Debug.Log($"Setting {partsToDisable.Count} old magazine parts to remove");
-                        magazineMinigame.SetOldMagazineParts(socket.root, partsToDisable);
-                    }
-                    else
-                    {
-                        Debug.Log("No old magazine parts to remove");
-                    }
-                }
-
-                minigame = magazineMinigame;
+                minigame = SetupMagazineMinigame(attachmentObj, weapon, socket);
                 break;
 
-            // Add more cases for other attachment types
             default:
                 Debug.LogWarning($"No minigame implementation for {attachment.type}");
                 onComplete?.Invoke(attachment);
@@ -187,66 +68,250 @@ public class AttachmentMinigameManager : MonoBehaviour
                 return;
         }
 
-        // Configure the minigame BEFORE starting it
-        Debug.Log("Configuring minigame...");
         minigame.attachmentData = attachment;
         minigame.targetSocket = socket;
         minigame.weaponData = weapon;
-        minigame.minigameCamera = previewCamera; // Pass the preview camera
+        minigame.minigameCamera = previewCamera;
 
-        Debug.Log($"Set minigameCamera to: {(minigame.minigameCamera != null ? minigame.minigameCamera.name : "NULL")}");
-
-        // Subscribe to events
         minigame.OnMinigameComplete += OnMinigameCompleted;
         minigame.OnMinigameCancelled += OnMinigameCancelled;
 
         currentMinigame = minigame;
-
-        // Start the minigame AFTER everything is configured
-        Debug.Log("Starting minigame...");
         minigame.StartMinigame();
-
-        Debug.Log($"Started {attachment.type} minigame for {attachment.Name}");
     }
 
     /// <summary>
-    /// Check if a minigame implementation exists for this attachment type
+    /// Start a barrel replacement minigame (unscrew old, screw in new)
     /// </summary>
-    private bool HasMinigameImplementation(AttachmentType type)
+    /// <summary>
+    /// Start a barrel replacement minigame (unscrew old, screw in new)
+    /// </summary>
+    public void StartBarrelReplacementMinigame(
+        AttachmentData oldBarrel,
+        AttachmentData newBarrel,
+        WeaponData weapon,
+        Transform socket,
+        Action<AttachmentData> onComplete)
     {
-        Debug.Log($"HasMinigameImplementation check for: {type}");
+        Debug.Log($"StartBarrelReplacementMinigame: {oldBarrel.name} -> {newBarrel.name}");
 
-        switch (type)
+        if (currentMinigame != null)
         {
-            case AttachmentType.Barrel:
-                Debug.Log("Barrel has minigame implementation");
-                return true;
-            case AttachmentType.Sight:
-                Debug.Log("Sight has minigame implementation");
-                return true;
-            case AttachmentType.Underbarrel:
-                Debug.Log("Underbarrel has minigame implementation");
-                return true;
-            case AttachmentType.Magazine:
-                Debug.Log("Magazine has minigame implementation");
-                return true;
-            // Add more types as you implement them
-            default:
-                Debug.Log($"{type} does NOT have minigame implementation");
-                return false;
+            Destroy(currentMinigame.gameObject);
+        }
+
+        onMinigameCompleteCallback = onComplete;
+
+        // Find and HIDE the default barrel parts IMMEDIATELY before starting the minigame
+        HideDefaultBarrelParts(socket.root, weapon);
+
+        // Spawn the NEW barrel attachment prefab
+        GameObject newBarrelObj = Instantiate(newBarrel.prefab, minigameParent);
+
+        if (newBarrelObj.GetComponent<Collider>() == null)
+        {
+            newBarrelObj.AddComponent<BoxCollider>();
+        }
+
+        SilencerMinigame minigame = newBarrelObj.AddComponent<SilencerMinigame>();
+
+        // Find the old barrel GameObject in the scene to remove it
+        GameObject oldBarrelInScene = FindOldBarrelInScene(socket, oldBarrel);
+
+        if (oldBarrelInScene != null)
+        {
+            Debug.Log($"Found old barrel in scene: {oldBarrelInScene.name}");
+
+            // Create a temporary list with just the old barrel's name
+            var partsToRemove = new System.Collections.Generic.List<string> { oldBarrelInScene.name };
+
+            minigame.SetWeaponPartsToDisable(socket.root, partsToRemove);
+        }
+        else
+        {
+            Debug.LogWarning("Could not find old barrel in scene - will skip removal phase");
+        }
+
+        minigame.attachmentData = newBarrel;
+        minigame.targetSocket = socket;
+        minigame.weaponData = weapon;
+        minigame.minigameCamera = previewCamera;
+
+        minigame.OnMinigameComplete += OnMinigameCompleted;
+        minigame.OnMinigameCancelled += OnMinigameCancelled;
+
+        currentMinigame = minigame;
+        minigame.StartMinigame();
+
+        Debug.Log($"Started barrel replacement minigame");
+    }
+
+    /// <summary>
+    /// Hide the default barrel parts during barrel replacement
+    /// </summary>
+    private void HideDefaultBarrelParts(Transform weaponRoot, WeaponData weaponData)
+    {
+        if (weaponRoot == null || weaponData == null) return;
+
+        var partsToHide = weaponData.GetPartsToDisableWithBarrel();
+
+        if (partsToHide == null || partsToHide.Count == 0)
+        {
+            Debug.Log("No default barrel parts to hide");
+            return;
+        }
+
+        Debug.Log($"Hiding {partsToHide.Count} default barrel parts during replacement");
+
+        foreach (var partPath in partsToHide)
+        {
+            if (string.IsNullOrEmpty(partPath))
+                continue;
+
+            Transform partTransform = weaponRoot.Find(partPath);
+
+            if (partTransform == null)
+            {
+                partTransform = FindChildByNameRecursive(weaponRoot, partPath);
+            }
+
+            if (partTransform != null)
+            {
+                partTransform.gameObject.SetActive(false);
+                Debug.Log($"Hid default barrel part: {partPath}");
+            }
+            else
+            {
+                Debug.LogWarning($"Could not find default barrel part to hide: {partPath}");
+            }
         }
     }
 
-    private GameObject GetMinigamePrefabForAttachment(AttachmentData attachment)
+    /// <summary>
+    /// Recursive helper to find child transforms
+    /// </summary>
+    private Transform FindChildByNameRecursive(Transform parent, string name)
     {
-        // This method is now optional - keeping for backwards compatibility
-        switch (attachment.type)
+        foreach (Transform child in parent)
+        {
+            if (child.name == name)
+            {
+                return child;
+            }
+
+            Transform result = FindChildByNameRecursive(child, name);
+            if (result != null)
+                return result;
+        }
+        return null;
+    }
+
+    private GameObject FindOldBarrelInScene(Transform socket, AttachmentData oldBarrel)
+    {
+        if (socket == null) return null;
+
+        string expectedName = $"ATT_{oldBarrel.id}";
+
+        foreach (Transform child in socket)
+        {
+            if (child.name == expectedName || child.name.Contains(oldBarrel.prefab.name))
+            {
+                return child.gameObject;
+            }
+        }
+
+        Debug.LogWarning($"Could not find old barrel with name '{expectedName}' in socket");
+        return null;
+    }
+
+    private SilencerMinigame SetupSilencerMinigame(GameObject attachmentObj, WeaponData weapon, Transform socket)
+    {
+        SilencerMinigame silencerMinigame = attachmentObj.AddComponent<SilencerMinigame>();
+
+        if (silencerMinigame != null && weapon != null && socket != null)
+        {
+            var partsToDisable = weapon.GetPartsToDisableWithBarrel();
+            if (partsToDisable != null && partsToDisable.Count > 0)
+            {
+                silencerMinigame.SetWeaponPartsToDisable(socket.root, partsToDisable);
+            }
+        }
+
+        return silencerMinigame;
+    }
+
+    private ScopeMinigame SetupScopeMinigame(GameObject attachmentObj, WeaponData weapon, Transform socket)
+    {
+        ScopeMinigame scopeMinigame = attachmentObj.AddComponent<ScopeMinigame>();
+
+        if (screwPrefab != null)
+        {
+            var screwPrefabField = typeof(ScopeMinigame).GetField("screwPrefab",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            if (screwPrefabField != null)
+            {
+                screwPrefabField.SetValue(scopeMinigame, screwPrefab);
+            }
+        }
+
+        if (scopeMinigame != null && weapon != null && socket != null)
+        {
+            var partsToDisable = weapon.GetPartsToDisableWithSight();
+            if (partsToDisable != null && partsToDisable.Count > 0)
+            {
+                scopeMinigame.SetWeaponPartsToDisable(socket.root, partsToDisable);
+            }
+        }
+
+        return scopeMinigame;
+    }
+
+    private UnderbarrelMinigame SetupUnderbarrelMinigame(GameObject attachmentObj)
+    {
+        UnderbarrelMinigame underbarrelMinigame = attachmentObj.AddComponent<UnderbarrelMinigame>();
+
+        if (screwPrefab != null)
+        {
+            var screwPrefabField = typeof(UnderbarrelMinigame).GetField("screwPrefab",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            if (screwPrefabField != null)
+            {
+                screwPrefabField.SetValue(underbarrelMinigame, screwPrefab);
+            }
+        }
+
+        return underbarrelMinigame;
+    }
+
+    private MagazineMinigame SetupMagazineMinigame(GameObject attachmentObj, WeaponData weapon, Transform socket)
+    {
+        MagazineMinigame magazineMinigame = attachmentObj.AddComponent<MagazineMinigame>();
+
+        if (magazineMinigame != null && weapon != null && socket != null)
+        {
+            var partsToDisable = weapon.GetPartsToDisableWithMagazine();
+            if (partsToDisable != null && partsToDisable.Count > 0)
+            {
+                magazineMinigame.SetOldMagazineParts(socket.root, partsToDisable);
+            }
+        }
+
+        return magazineMinigame;
+    }
+
+    private bool HasMinigameImplementation(AttachmentType type)
+    {
+        switch (type)
         {
             case AttachmentType.Barrel:
-                return silencerMinigamePrefab;
-            // Add more cases for other types
+            case AttachmentType.Sight:
+            case AttachmentType.Underbarrel:
+            case AttachmentType.Magazine:
+                return true;
             default:
-                return null;
+                return false;
         }
     }
 
@@ -254,14 +319,12 @@ public class AttachmentMinigameManager : MonoBehaviour
     {
         Debug.Log($"Minigame completed for {attachment.Name}");
 
-        // Clean up the minigame object
         if (currentMinigame != null)
         {
             Destroy(currentMinigame.gameObject);
             currentMinigame = null;
         }
 
-        // Notify callback
         onMinigameCompleteCallback?.Invoke(attachment);
         onMinigameCompleteCallback = null;
     }
@@ -269,22 +332,15 @@ public class AttachmentMinigameManager : MonoBehaviour
     private void OnMinigameCancelled()
     {
         Debug.Log("Minigame cancelled");
-
         currentMinigame = null;
         onMinigameCompleteCallback = null;
     }
 
-    /// <summary>
-    /// Check if a minigame is currently active
-    /// </summary>
     public bool IsMinigameActive()
     {
         return currentMinigame != null;
     }
 
-    /// <summary>
-    /// Cancel the current minigame
-    /// </summary>
     public void CancelCurrentMinigame()
     {
         if (currentMinigame != null)
