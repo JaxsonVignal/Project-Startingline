@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
   m_Name: Acog
   m_EditorClassIdentifier: 
-  ID: -1
+  ID: 4
   Name: Acog
   Description: 
   Icon: {fileID: 0}
@@ -39,3 +39,6 @@ MonoBehaviour:
   frontScrewLocalPos: {x: -0.05, y: 0.01, z: -0.025}
   backScrewLocalPos: {x: -0.05, y: 0.01, z: 0.025}
   screwRadius: 0.005
+  grenadeLauncherData: {fileID: 0}
+  underbarrelShotgunData: {fileID: 0}
+  flashlightData: {fileID: 0}
