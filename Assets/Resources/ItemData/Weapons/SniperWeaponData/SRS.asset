@@ -53,13 +53,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
   scopeOffsets:
   - scope: {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
-    positionOffset: {x: -0.451, y: 0.1219, z: -0.03}
+    positionOffset: {x: -0.451, y: 0.1219, z: 1}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: 0b885955b01696f4a8e51c7a22f81fe4, type: 2}
-    positionOffset: {x: -0.451, y: 0.1219, z: -0.03}
+    positionOffset: {x: -0.451, y: 54, z: 2}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
-    positionOffset: {x: -0.451, y: 0.13, z: -0.05}
+    positionOffset: {x: -0.451, y: -0.4, z: -0.05}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: 677f5f4c3d85a6341bf7fbb503ac6387, type: 2}
     positionOffset: {x: -0.451, y: 0.117, z: -0.03}
