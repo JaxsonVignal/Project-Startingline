@@ -322,6 +322,14 @@ public class WeaponBuilderUI : MonoBehaviour
                 return;
             }
 
+            // Special handling for scope/sight attachments - they need to go through minigame to be replaced
+            if (att.type == AttachmentType.Sight && RequiresMinigame(att))
+            {
+                Debug.Log($"Sight attachment already equipped. Starting replacement minigame...");
+                StartScopeReplacementMinigame(att);
+                return;
+            }
+
             Debug.Log($"Already have a {att.type} equipped. Remove it first.");
             return;
         }
@@ -861,6 +869,74 @@ public class WeaponBuilderUI : MonoBehaviour
 
             gameObject.SetActive(false);
         }
+    }
+
+
+    // Add this method:
+    void StartScopeReplacementMinigame(AttachmentData newScopeAttachment)
+    {
+        Debug.Log($"StartScopeReplacementMinigame called for {newScopeAttachment.name}");
+
+        if (minigameManager == null)
+        {
+            Debug.LogError("MinigameManager not assigned!");
+            return;
+        }
+
+        var currentScopeEntry = previewInstance.attachments.Find(e => e.type == AttachmentType.Sight);
+
+        if (currentScopeEntry == null)
+        {
+            Debug.LogError("No current scope attachment found!");
+            return;
+        }
+
+        AttachmentData currentScopeAttachment = null;
+        if (attachmentLookup.TryGetValue(currentScopeEntry.attachmentId, out var att))
+        {
+            currentScopeAttachment = att;
+        }
+
+        if (currentScopeAttachment == null)
+        {
+            Debug.LogError($"Could not find current scope attachment in lookup: {currentScopeEntry.attachmentId}");
+            return;
+        }
+
+        Debug.Log($"Current scope: {currentScopeAttachment.name}, New scope: {newScopeAttachment.name}");
+
+        Transform socket = GetSocketForAttachmentType(AttachmentType.Sight);
+
+        if (socket == null)
+        {
+            Debug.LogError($"No socket found for Sight type!");
+            return;
+        }
+
+        if (finalizeButton != null)
+            finalizeButton.interactable = false;
+
+        DisableAllAttachmentButtons();
+
+        minigameManager.StartScopeReplacementMinigame(
+            currentScopeAttachment,
+            newScopeAttachment,
+            selectedBase,
+            socket,
+            (replacedAttachment) =>
+            {
+                Debug.Log("Scope replacement minigame complete!");
+
+                previewInstance.attachments.RemoveAll(e => e.type == AttachmentType.Sight);
+                previewRuntime.attachmentSystem.UnequipType(AttachmentType.Sight);
+
+                Debug.Log($"Old scope {currentScopeAttachment.name} remains consumed (not returned to inventory)");
+
+                AddAttachmentDirectly(replacedAttachment);
+
+                if (finalizeButton != null)
+                    finalizeButton.interactable = true;
+            });
     }
 
     public static void HandleMagazineVisibility(GameObject weaponObject, WeaponData weaponData, WeaponInstance weaponInstance, Dictionary<string, AttachmentData> attachmentLookup)

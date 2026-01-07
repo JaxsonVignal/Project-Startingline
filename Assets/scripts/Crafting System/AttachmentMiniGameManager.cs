@@ -225,6 +225,97 @@ public class AttachmentMinigameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Start a scope replacement minigame (unscrew old, screw in new)
+    /// </summary>
+    public void StartScopeReplacementMinigame(
+        AttachmentData oldScope,
+        AttachmentData newScope,
+        WeaponData weapon,
+        Transform socket,
+        Action<AttachmentData> onComplete)
+    {
+        Debug.Log($"StartScopeReplacementMinigame: {oldScope.name} -> {newScope.name}");
+
+        if (currentMinigame != null)
+        {
+            Destroy(currentMinigame.gameObject);
+        }
+
+        onMinigameCompleteCallback = onComplete;
+
+        GameObject newScopeObj = Instantiate(newScope.prefab, minigameParent);
+
+        if (newScopeObj.GetComponent<Collider>() == null)
+        {
+            newScopeObj.AddComponent<BoxCollider>();
+        }
+
+        ScopeMinigame minigame = newScopeObj.AddComponent<ScopeMinigame>();
+
+        // Assign screw prefab
+        if (screwPrefab != null)
+        {
+            var screwPrefabField = typeof(ScopeMinigame).GetField("screwPrefab",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            if (screwPrefabField != null)
+            {
+                screwPrefabField.SetValue(minigame, screwPrefab);
+            }
+        }
+
+        // Find old scope in scene
+        GameObject oldScopeInScene = FindOldScopeInScene(socket, oldScope);
+
+        if (oldScopeInScene != null)
+        {
+            Debug.Log($"Found old scope in scene: {oldScopeInScene.name}");
+
+            var partsToRemove = new System.Collections.Generic.List<string> { oldScopeInScene.name };
+            minigame.SetOldScopeParts(socket.root, partsToRemove, oldScope);
+        }
+
+        // Set weapon parts to disable (iron sights)
+        if (weapon != null)
+        {
+            var partsToDisable = weapon.GetPartsToDisableWithSight();
+            if (partsToDisable != null && partsToDisable.Count > 0)
+            {
+                minigame.SetWeaponPartsToDisable(socket.root, partsToDisable);
+            }
+        }
+
+        minigame.attachmentData = newScope;
+        minigame.targetSocket = socket;
+        minigame.weaponData = weapon;
+        minigame.minigameCamera = previewCamera;
+
+        minigame.OnMinigameComplete += OnMinigameCompleted;
+        minigame.OnMinigameCancelled += OnMinigameCancelled;
+
+        currentMinigame = minigame;
+        minigame.StartMinigame();
+    }
+
+    private GameObject FindOldScopeInScene(Transform socket, AttachmentData oldScope)
+    {
+        if (socket == null) return null;
+
+        string expectedName = $"ATT_{oldScope.id}";
+
+        foreach (Transform child in socket)
+        {
+            if (child.name == expectedName || child.name.Contains(oldScope.prefab.name))
+            {
+                return child.gameObject;
+            }
+        }
+
+        Debug.LogWarning($"Could not find old scope with name '{expectedName}' in socket");
+        return null;
+    }
+
+    /// <summary>
     /// Start an underbarrel replacement minigame (unscrew old, screw in new)
     /// </summary>
     /// <summary>

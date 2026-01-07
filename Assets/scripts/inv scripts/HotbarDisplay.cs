@@ -91,6 +91,13 @@ public class HotbarDisplay : StaticInventoryDisplay
             return;
         }
 
+        // Add this check to prevent switching to the same slot
+        if (newIndex == _currentIndex)
+        {
+            Debug.Log("Already on this slot!");
+            return;
+        }
+
         slots[_currentIndex].ToggleHighlight();
 
         _currentIndex = Mathf.Clamp(newIndex, 0, _maxIndexSize);
