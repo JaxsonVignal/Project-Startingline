@@ -37340,11 +37340,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4886023285958192746, guid: e67e335b63d221942938ed041776bebf, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.82
+      value: 1.4
       objectReference: {fileID: 0}
     - target: {fileID: 4886023285958192746, guid: e67e335b63d221942938ed041776bebf, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 200.76
+      value: 126
       objectReference: {fileID: 0}
     - target: {fileID: 4886023285958192746, guid: e67e335b63d221942938ed041776bebf, type: 3}
       propertyPath: m_LocalRotation.w
@@ -46926,7 +46926,7 @@ GameObject:
   - component: {fileID: 1446155166}
   - component: {fileID: 1446155165}
   - component: {fileID: 1446155173}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: NPC test
   m_TagString: Untagged
   m_Icon: {fileID: 0}

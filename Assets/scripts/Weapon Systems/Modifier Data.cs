@@ -32,10 +32,79 @@ public class ModifierData
     [Range(0.5f, 5f)]
     public float bobbingSpeed = 2f;
 
+    [Header("Cryo Modifier")]
+    [Tooltip("Bullets freeze targets in place")]
+    public bool cryoRounds = false;
+
+    [Tooltip("Duration target is frozen in seconds")]
+    public float cryoDuration = 5f;
+
+    [Tooltip("Freeze animation (if false, just stops movement)")]
+    public bool freezeAnimation = true;
+
+    [Header("Cryo Visual Effects")]
+    [Tooltip("Tint color applied to frozen targets (light blue = icy look)")]
+    public Color freezeTintColor = new Color(0.5f, 0.8f, 1f, 1f);
+
+    [Tooltip("Strength of the color tint (0 = no tint, 1 = full tint)")]
+    [Range(0f, 1f)]
+    public float freezeTintStrength = 0.5f;
+
+    [Tooltip("Optional ice effect prefab to spawn on frozen target")]
+    public GameObject iceEffectPrefab;
+
+    [Header("Explosive Modifier")]
+    [Tooltip("Bullets explode on impact dealing area damage")]
+    public bool explosiveRounds = false;
+
+    [Tooltip("Radius of explosion in units")]
+    public float explosionRadius = 5f;
+
+    [Tooltip("Damage multiplier applied to weapon damage (1.0 = same as weapon, 2.0 = double)")]
+    public float explosionDamageMultiplier = 1.5f;
+
+    [Tooltip("Apply explosion force to rigidbodies")]
+    public bool applyExplosionForce = true;
+
+    [Tooltip("Force strength applied to physics objects")]
+    public float explosionForceStrength = 1000f;
+
+    [Header("Explosive Visual Effects")]
+    [Tooltip("Explosion effect prefab to spawn at impact point")]
+    public GameObject explosionEffectPrefab;
+
+    [Tooltip("Show explosion radius in scene (debug)")]
+    public bool showExplosionRadius = false;
+
+    [Header("Tracer Modifier")]
+    [Tooltip("Bullets glow/emit light as they fly")]
+    public bool tracerRounds = false;
+
+    [Tooltip("Color of the tracer glow")]
+    public Color tracerColor = new Color(1f, 0.3f, 0f, 1f); // Orange/red by default
+
+    [Tooltip("Intensity of the light (0-8, standard range is 0-2)")]
+    [Range(0f, 8f)]
+    public float tracerIntensity = 1.5f;
+
+    [Tooltip("Range of the light in units")]
+    [Range(1f, 20f)]
+    public float tracerLightRange = 5f;
+
+    [Header("Tracer Visual Effects")]
+    [Tooltip("Add emission to bullet material (makes bullet itself glow)")]
+    public bool addEmission = true;
+
+    [Tooltip("Emission intensity multiplier")]
+    [Range(0f, 10f)]
+    public float emissionIntensity = 2f;
+
+    [Tooltip("Optional trail renderer prefab for bullet trail")]
+    public GameObject trailEffectPrefab;
+
+    [Tooltip("Trail length in seconds")]
+    [Range(0.1f, 2f)]
+    public float trailDuration = 0.3f;
+
     // ADD MORE MODIFIERS HERE IN THE FUTURE
-    // Example:
-    // [Header("Explosive Modifier")]
-    // public bool explosiveRounds = false;
-    // public float explosionRadius = 5f;
-    // public float explosionDamage = 50f;
 }

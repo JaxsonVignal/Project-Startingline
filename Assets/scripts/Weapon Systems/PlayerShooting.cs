@@ -733,7 +733,9 @@ public class PlayerShooting : MonoBehaviour
                 BulletModifier bulletModifier = bulletObj.GetComponent<BulletModifier>();
                 if (bulletModifier != null && currentModifier != null)
                 {
-                    bulletModifier.Initialize(currentModifier);
+                    // Pass both modifier data AND weapon damage
+                    float currentDamage = currentAttachmentSystem != null ? currentAttachmentSystem.CurrentDamage : currentWeapon.damage;
+                    bulletModifier.Initialize(currentModifier, currentDamage);
                 }
 
                 Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
