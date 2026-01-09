@@ -67,7 +67,20 @@ MonoBehaviour:
     tracerColor: {r: 0, g: 1, b: 0.2879982, a: 1}
     tracerIntensity: 1.97
     tracerLightRange: 15.08
-    addEmission: 1
+    addEmission: 0
     emissionIntensity: 2
     trailEffectPrefab: {fileID: 0}
     trailDuration: 0.3
+    ricochetRounds: 0
+    maxBounces: 1
+    bounceSpeedMultiplier: 0.9
+    bounceDamageMultiplier: 0.8
+    ricochetSparkPrefab: {fileID: 0}
+    ricochetSound: {fileID: 0}
+    showRicochetDebug: 0
+    homingRounds: 1
+    homingStrength: 3
+    homingDetectionRange: 30
+    homingActivationDelay: 0.1
+    homingUpdateInterval: 0.2
+    showHomingDebug: 0

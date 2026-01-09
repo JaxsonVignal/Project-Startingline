@@ -11,6 +11,10 @@ public class BulletModifier : MonoBehaviour
     private ModifierData modifierData;
     private float weaponDamage; // Store weapon damage for explosive calculations
 
+    // Ricochet tracking
+    private int bouncesRemaining = 0;
+    private float currentDamageMultiplier = 1f;
+
     /// <summary>
     /// Call this from PlayerShooting to pass modifier data to the bullet
     /// </summary>
@@ -18,6 +22,13 @@ public class BulletModifier : MonoBehaviour
     {
         modifierData = modifier;
         weaponDamage = damage;
+
+        // Setup ricochet tracking
+        if (modifierData != null && modifierData.ricochetRounds)
+        {
+            bouncesRemaining = modifierData.maxBounces;
+            currentDamageMultiplier = 1f;
+        }
 
         if (modifierData != null)
         {
@@ -39,6 +50,10 @@ public class BulletModifier : MonoBehaviour
                 Debug.Log($"  - Tracer enabled (Color: {modifierData.tracerColor}, Intensity: {modifierData.tracerIntensity})");
                 ApplyTracerEffect();
             }
+            if (modifierData.ricochetRounds)
+            {
+                Debug.Log($"  - Ricochet enabled (Max Bounces: {modifierData.maxBounces}, Speed Mult: {modifierData.bounceSpeedMultiplier}x, Damage Mult: {modifierData.bounceDamageMultiplier}x)");
+            }
         }
     }
 
@@ -49,6 +64,23 @@ public class BulletModifier : MonoBehaviour
     public void OnBulletHit(Collision collision)
     {
         if (modifierData == null) return;
+
+        // RICOCHET CHECK - If enabled and bounces remaining, bounce instead of applying effects
+        if (modifierData.ricochetRounds && bouncesRemaining > 0)
+        {
+            // Check if we hit an enemy - if so, don't ricochet, just apply effects
+            if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+            {
+                Debug.Log($"[BulletModifier] Hit enemy - applying effects without ricochet");
+                bouncesRemaining = 0; // Use up bounces
+            }
+            else
+            {
+                // Hit a surface - ricochet!
+                ApplyRicochet(collision);
+                return; // Don't apply other effects yet - wait until after bounce(s)
+            }
+        }
 
         // EXPLOSIVE EFFECT - Apply first so it can damage multiple enemies
         if (modifierData.explosiveRounds)
@@ -314,6 +346,93 @@ public class BulletModifier : MonoBehaviour
     //         }
     //     }
     // }
+
+    /// <summary>
+    /// Apply ricochet effect - bounce bullet off surface
+    /// </summary>
+    private void ApplyRicochet(Collision collision)
+    {
+        if (collision.contacts.Length == 0) return;
+
+        ContactPoint contact = collision.contacts[0];
+        Vector3 incomingDirection = transform.forward;
+        Vector3 normal = contact.normal;
+
+        // Calculate reflection direction
+        Vector3 reflectDirection = Vector3.Reflect(incomingDirection, normal);
+
+        Debug.Log($"[BulletModifier] Ricochet! Bounces remaining: {bouncesRemaining}");
+
+        // Spawn spark effect
+        if (modifierData.ricochetSparkPrefab != null)
+        {
+            GameObject spark = Instantiate(modifierData.ricochetSparkPrefab, contact.point, Quaternion.LookRotation(normal));
+            Destroy(spark, 2f);
+            Debug.Log($"[BulletModifier] Spawned ricochet spark");
+        }
+
+        // Play ricochet sound
+        if (modifierData.ricochetSound != null)
+        {
+            AudioSource.PlayClipAtPoint(modifierData.ricochetSound, contact.point);
+            Debug.Log($"[BulletModifier] Played ricochet sound");
+        }
+
+        // Update bullet direction and velocity
+        transform.forward = reflectDirection;
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            // Apply speed multiplier
+            float newSpeed = rb.velocity.magnitude * modifierData.bounceSpeedMultiplier;
+            rb.velocity = reflectDirection * newSpeed;
+            Debug.Log($"[BulletModifier] New velocity: {rb.velocity.magnitude}");
+        }
+
+        // Update damage multiplier
+        currentDamageMultiplier *= modifierData.bounceDamageMultiplier;
+        bouncesRemaining--;
+
+        Debug.Log($"[BulletModifier] Damage multiplier now: {currentDamageMultiplier}x, Bounces remaining: {bouncesRemaining}");
+
+        // Debug visualization
+        if (modifierData.showRicochetDebug)
+        {
+            Debug.DrawRay(contact.point, normal * 2f, Color.yellow, 2f);
+            Debug.DrawRay(contact.point, reflectDirection * 3f, Color.green, 2f);
+            Debug.DrawRay(contact.point, -incomingDirection * 3f, Color.red, 2f);
+        }
+    }
+
+    /// <summary>
+    /// Get the current damage multiplier (for Bullet script to use)
+    /// </summary>
+    public float GetCurrentDamageMultiplier()
+    {
+        return currentDamageMultiplier;
+    }
+
+    /// <summary>
+    /// Check if bullet should be destroyed on this hit (false if ricocheting)
+    /// </summary>
+    public bool ShouldDestroyOnHit(Collision collision)
+    {
+        // If ricochet is enabled and we have bounces remaining
+        if (modifierData != null && modifierData.ricochetRounds && bouncesRemaining > 0)
+        {
+            // Check if we hit an enemy - if so, destroy (don't ricochet off enemies)
+            if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+            {
+                return true; // Destroy on enemy hit
+            }
+
+            // Hit a surface - don't destroy, we're going to ricochet
+            return false;
+        }
+
+        // No ricochet or no bounces left - destroy normally
+        return true;
+    }
 }
 
 /// <summary>

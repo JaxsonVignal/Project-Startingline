@@ -106,5 +106,31 @@ public class ModifierData
     [Range(0.1f, 2f)]
     public float trailDuration = 0.3f;
 
+    [Header("Ricochet Modifier")]
+    [Tooltip("Bullets bounce off surfaces once before applying effects")]
+    public bool ricochetRounds = false;
+
+    [Tooltip("Maximum number of bounces (1 = one bounce, 2 = two bounces, etc)")]
+    [Range(1, 5)]
+    public int maxBounces = 1;
+
+    [Tooltip("Speed multiplier after bounce (1.0 = same speed, 0.8 = 80% speed)")]
+    [Range(0.1f, 1.5f)]
+    public float bounceSpeedMultiplier = 0.9f;
+
+    [Tooltip("Damage multiplier after bounce (1.0 = same damage, 0.8 = 80% damage)")]
+    [Range(0.1f, 1.5f)]
+    public float bounceDamageMultiplier = 0.8f;
+
+    [Header("Ricochet Visual Effects")]
+    [Tooltip("Spark effect prefab to spawn at bounce point")]
+    public GameObject ricochetSparkPrefab;
+
+    [Tooltip("Sound to play on ricochet")]
+    public AudioClip ricochetSound;
+
+    [Tooltip("Show ricochet angle in scene (debug)")]
+    public bool showRicochetDebug = false;
+
     // ADD MORE MODIFIERS HERE IN THE FUTURE
 }
