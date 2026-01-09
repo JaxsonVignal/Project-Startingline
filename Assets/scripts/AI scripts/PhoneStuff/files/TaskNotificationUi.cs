@@ -156,22 +156,30 @@ public class TaskNotificationUI : MonoBehaviour
             timeRemaining = (24f - currentTime) + order.pickupTimeGameHour;
         }
 
-        int hours = Mathf.FloorToInt(timeRemaining);
-        int minutes = Mathf.FloorToInt((timeRemaining % 1f) * 60f);
-
-        // Calculate meeting time
         int meetingHour = Mathf.FloorToInt(order.pickupTimeGameHour);
         int meetingMinute = Mathf.FloorToInt((order.pickupTimeGameHour % 1f) * 60f);
 
-        // Color code based on urgency
-        if (timeRemaining < 0.5f)
-            timeText.color = Color.red;
-        else if (timeRemaining < 1f)
-            timeText.color = Color.yellow;
+        // Check if meeting time has arrived or passed - keep showing NOW
+        if (timeRemaining <= 0f || currentTime >= order.pickupTimeGameHour)
+        {
+            timeText.color = Color.green;
+            timeText.text = $"Meet at {meetingHour:00}:{meetingMinute:00} (NOW!)";
+        }
         else
-            timeText.color = Color.white;
+        {
+            int hours = Mathf.FloorToInt(timeRemaining);
+            int minutes = Mathf.FloorToInt((timeRemaining % 1f) * 60f);
 
-        timeText.text = $"Meet at {meetingHour:00}:{meetingMinute:00} ({hours}h {minutes}m)";
+            // Color code based on urgency
+            if (timeRemaining < 0.5f)
+                timeText.color = Color.red;
+            else if (timeRemaining < 1f)
+                timeText.color = Color.yellow;
+            else
+                timeText.color = Color.white;
+
+            timeText.text = $"Meet at {meetingHour:00}:{meetingMinute:00} ({hours}h {minutes}m)";
+        }
     }
 
     private void UpdateAllTaskTimers(float currentTime)
@@ -197,11 +205,19 @@ public class TaskNotificationUI : MonoBehaviour
         {
             Destroy(activeTaskItems[npcName]);
             activeTaskItems.Remove(npcName);
+
+            Debug.Log($"Task removed for {npcName}. Remaining tasks: {activeTaskItems.Count}");
         }
 
-        // Hide panel if no tasks
-        if (activeTaskItems.Count == 0 && taskPanel != null)
-            taskPanel.SetActive(false);
+        // Hide panel if no tasks remain
+        if (activeTaskItems.Count == 0)
+        {
+            if (taskPanel != null && taskPanel.activeSelf)
+            {
+                taskPanel.SetActive(false);
+                Debug.Log("Task panel closed - no tasks remaining");
+            }
+        }
     }
 
     private void ShowNewTaskNotification(WeaponOrder order)

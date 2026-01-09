@@ -34,6 +34,7 @@ public class NPCManager : MonoBehaviour
 
     [Header("Weapon Deal Settings")]
     public float meetingWaitTime = 300f;
+    public float playerNearbyRange = 5f; // NEW: Don't leave if player is this close
 
     [Header("Flee Settings")]
     public float fleeDistance = 20f;
@@ -107,6 +108,14 @@ public class NPCManager : MonoBehaviour
 
             if (IsTimePast(hour, meetingEnd))
             {
+                // NEW: Don't leave if player is nearby
+                if (IsPlayerNearby())
+                {
+                    Debug.Log($"{npcName}: Meeting time expired but player is nearby, waiting...");
+                    return;
+                }
+
+                Debug.Log($"{npcName}: Meeting time expired, leaving meeting location");
                 CompleteMeeting();
                 return;
             }
@@ -118,6 +127,17 @@ public class NPCManager : MonoBehaviour
             if (newState != currentState)
                 SwitchState(newState);
         }
+    }
+
+    // NEW: Check if player is nearby
+    private bool IsPlayerNearby()
+    {
+        GameObject player = FindPlayer();
+        if (player == null)
+            return false;
+
+        float distance = Vector3.Distance(transform.position, player.transform.position);
+        return distance <= playerNearbyRange;
     }
 
     private bool IsTimeBetween(float now, float start, float end)
@@ -214,6 +234,8 @@ public class NPCManager : MonoBehaviour
 
         movement?.MoveTo(meetingLocation);
         animator?.SetTrigger("Walking");
+
+        Debug.Log($"{npcName} is now going to meeting location");
     }
 
     private void CompleteMeeting()
@@ -223,10 +245,14 @@ public class NPCManager : MonoBehaviour
 
         float now = DayNightCycleManager.Instance.currentTimeOfDay;
         SwitchState(DetermineState(now));
+
+        Debug.Log($"{npcName} meeting completed, returning to schedule");
     }
 
     public void CompleteWeaponDeal()
     {
+        Debug.Log($"{npcName} weapon deal completed!");
+
         if (hasScheduledMeeting)
             CompleteMeeting();
     }
