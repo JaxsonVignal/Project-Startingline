@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel, SideRail }
+public enum AttachmentType { Sight, Barrel, Grip, Magazine, Stock, Cosmetic, Underbarrel, SideRail, Modifier }
 
 [CreateAssetMenu(menuName = "Inventory System/Attachment")]
 public class AttachmentData : InventoryItemData
@@ -58,4 +58,7 @@ public class AttachmentData : InventoryItemData
     [Tooltip("If this siderail attachment is a flashlight, assign the data here")]
     public FlashlightData flashlightData;
 
+    [Header("Modifier Settings (for Modifier type)")]
+    [Tooltip("If this is a modifier attachment, configure behavior changes here")]
+    public ModifierData modifierData;
 }

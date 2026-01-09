@@ -19,6 +19,14 @@ public class Bullet : MonoBehaviour
             health.TakeDamage(weaponData.damage);
         }
 
+        // === ADD THIS SECTION ===
+        // Call the BulletModifier to apply modifier effects
+        BulletModifier modifier = GetComponent<BulletModifier>();
+        if (modifier != null)
+        {
+            modifier.OnBulletHit(collision);
+        }
+
         Destroy(gameObject);
     }
 
