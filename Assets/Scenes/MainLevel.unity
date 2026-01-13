@@ -13338,7 +13338,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   silencerMinigamePrefab: {fileID: 0}
-  screwPrefab: {fileID: 0}
+  screwPrefab: {fileID: 2180686687860469392, guid: 4d2dbe16f755e7141ac91e55ec34c84a, type: 3}
   minigameParent: {fileID: 31003540}
   previewCamera: {fileID: 1152775642}
 --- !u!4 &1217400952
@@ -13809,6 +13809,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dayLengthInMinutes: 24
   startHour: 6
+  pauseAtMidnight: 1
+  midnightPauseTime: 0
+  midnightThreshold: 0.1
   directionalLight: {fileID: 705507994}
   lightColor:
     serializedVersion: 2
@@ -15719,6 +15722,8 @@ MonoBehaviour:
   meetingWaitTime: 300
   fleeDistance: 20
   fleeDuration: 20
+  fleeFromGunshots: 1
+  gunshotReactionCooldown: 2
 --- !u!95 &1446155166
 Animator:
   serializedVersion: 5
@@ -19252,6 +19257,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
   - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
   - {fileID: 11400000, guid: 6c79adfea28736f4594495fba5db7b57, type: 2}
+  - {fileID: 11400000, guid: 48f1c564060115148bb44dbc4d2c9bd1, type: 2}
+  - {fileID: 11400000, guid: f6c4582476dd5e440b8c97a90492cdca, type: 2}
+  - {fileID: 11400000, guid: 4a0c7c777c7db9f42a3ec5d45ad496e6, type: 2}
+  - {fileID: 11400000, guid: 677f5f4c3d85a6341bf7fbb503ac6387, type: 2}
+  - {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
+  - {fileID: 11400000, guid: 0b885955b01696f4a8e51c7a22f81fe4, type: 2}
+  - {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
 --- !u!4 &1758961713
 Transform:
   m_ObjectHideFlags: 0

@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: 1055321939593142362}
   - component: {fileID: 8195147149922170047}
   - component: {fileID: 7015632223004493198}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Police
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -190,6 +190,7 @@ MonoBehaviour:
   searchMoveInterval: 5
   searchRadius: 30
   attackRange: 10
+  removeFromWantedSystemOnDestroy: 1
 --- !u!114 &8195147149922170047
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -232,9 +233,33 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6689886485743741755}
     m_Modifications:
+    - target: {fileID: 1463031315393814775, guid: 41d8bc6004065684bbdfd31ac744c941, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1505220896636597950, guid: 41d8bc6004065684bbdfd31ac744c941, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3499817048288417790, guid: 41d8bc6004065684bbdfd31ac744c941, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 3832144844868751813, guid: 41d8bc6004065684bbdfd31ac744c941, type: 3}
       propertyPath: m_Name
       value: Pistol_01_C6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3832144844868751813, guid: 41d8bc6004065684bbdfd31ac744c941, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4283700173363317523, guid: 41d8bc6004065684bbdfd31ac744c941, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4575802491896691954, guid: 41d8bc6004065684bbdfd31ac744c941, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 7227140571085996449, guid: 41d8bc6004065684bbdfd31ac744c941, type: 3}
       propertyPath: m_LocalPosition.x
