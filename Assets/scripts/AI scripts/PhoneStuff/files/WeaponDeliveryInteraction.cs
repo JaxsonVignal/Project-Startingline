@@ -1,7 +1,8 @@
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using System.Linq;
+using static UnityEditor.PlayerSettings;
 
 /// <summary>
 /// Handles delivering weapons to NPCs at meeting locations.
@@ -249,15 +250,15 @@ public class WeaponDeliveryInteraction : MonoBehaviour
             Debug.Log($"=== CHECKING INVENTORY FOR WEAPON: {currentOrder.weaponRequested.Name} ===");
             Debug.Log($"=== REQUIRED ATTACHMENTS ===");
             if (currentOrder.sightAttachment != null)
-                Debug.Log($"  - Sight: {currentOrder.sightAttachment.Name} (ID: {currentOrder.sightAttachment.id})");
+                Debug.Log($"  - Sight: {currentOrder.sightAttachment.Name}");
             if (currentOrder.underbarrelAttachment != null)
-                Debug.Log($"  - Underbarrel: {currentOrder.underbarrelAttachment.Name} (ID: {currentOrder.underbarrelAttachment.id})");
+                Debug.Log($"  - Underbarrel: {currentOrder.underbarrelAttachment.Name}");
             if (currentOrder.barrelAttachment != null)
-                Debug.Log($"  - Barrel: {currentOrder.barrelAttachment.Name} (ID: {currentOrder.barrelAttachment.id})");
+                Debug.Log($"  - Barrel: {currentOrder.barrelAttachment.Name}");
             if (currentOrder.magazineAttachment != null)
-                Debug.Log($"  - Magazine: {currentOrder.magazineAttachment.Name} (ID: {currentOrder.magazineAttachment.id})");
+                Debug.Log($"  - Magazine: {currentOrder.magazineAttachment.Name}");
             if (currentOrder.sideRailAttachment != null)
-                Debug.Log($"  - SideRail: {currentOrder.sideRailAttachment.Name} (ID: {currentOrder.sideRailAttachment.id})");
+                Debug.Log($"  - SideRail: {currentOrder.sideRailAttachment.Name}");
         }
 
         // Get all weapons in inventory (both active and inactive)
@@ -275,7 +276,7 @@ public class WeaponDeliveryInteraction : MonoBehaviour
                     Debug.Log($"  - Weapon: {w.weaponData.Name}, Attachments: {w.equippedAttachments.Count}");
                     foreach (var att in w.equippedAttachments)
                     {
-                        Debug.Log($"    * {att.type}: {att.name} (ID: {att.id})");
+                        Debug.Log($"    * {att.type}: {att.name}");
                     }
                 }
             }
@@ -288,8 +289,8 @@ public class WeaponDeliveryInteraction : MonoBehaviour
             if (weapon.weaponData == null)
                 continue;
 
-            // Check if this is the correct weapon type
-            if (weapon.weaponData.id == currentOrder.weaponRequested.id)
+            // Check if this is the correct weapon type (compare by reference or name)
+            if (weapon.weaponData == currentOrder.weaponRequested)
             {
                 if (showDebugLogs)
                 {
@@ -368,7 +369,7 @@ public class WeaponDeliveryInteraction : MonoBehaviour
         }
 
         if (showDebugLogs)
-            Debug.Log($"  [{type}] Required: {requiredAttachment.name} (ID: {requiredAttachment.id})");
+            Debug.Log($"  [{type}] Required: {requiredAttachment.name}");
 
         // Find the equipped attachment of this type on this weapon
         AttachmentData equippedAttachment = weapon.equippedAttachments
@@ -382,10 +383,11 @@ public class WeaponDeliveryInteraction : MonoBehaviour
         }
 
         if (showDebugLogs)
-            Debug.Log($"  [{type}] Found equipped: {equippedAttachment.name} (ID: {equippedAttachment.id})");
+            Debug.Log($"  [{type}] Found equipped: {equippedAttachment.name}");
 
-        // Check if it matches the required attachment (compare by ID for exact match)
-        if (equippedAttachment.id != requiredAttachment.id)
+        // Check if it matches the required attachment (compare by reference or name)
+        // Using reference comparison is most reliable for ScriptableObjects
+        if (equippedAttachment != requiredAttachment)
         {
             if (showDebugLogs)
                 Debug.LogWarning($"  [{type}] ✗ WRONG - Expected '{requiredAttachment.name}' but found '{equippedAttachment.name}'");
@@ -414,7 +416,7 @@ public class WeaponDeliveryInteraction : MonoBehaviour
 
         foreach (var weapon in allWeapons)
         {
-            if (weapon.weaponData != null && weapon.weaponData.id == currentOrder.weaponRequested.id)
+            if (weapon.weaponData != null && weapon.weaponData == currentOrder.weaponRequested)
             {
                 if (CheckAllAttachments(weapon))
                 {

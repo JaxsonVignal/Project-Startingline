@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 using System;
 using System.Collections.Generic;
 
@@ -6,6 +7,12 @@ public class PlayerMoneyManager : MonoBehaviour
 {
     [Header("Money Settings")]
     [SerializeField] private float startingBalance = 100f;
+
+    [Header("UI Display")]
+    [SerializeField] private TMP_Text moneyDisplayText;
+    [SerializeField] private string moneyPrefix = "$";
+    [SerializeField] private string moneySuffix = "";
+    [SerializeField] private bool showDecimals = true;
 
     private float currentBalance;
     private List<Transaction> transactionHistory = new List<Transaction>();
@@ -41,6 +48,7 @@ public class PlayerMoneyManager : MonoBehaviour
     {
         currentBalance = startingBalance;
         LogTransaction("Initial balance", startingBalance);
+        UpdateMoneyDisplay();
     }
 
     private void LogTransaction(string description, float amount)
@@ -48,6 +56,18 @@ public class PlayerMoneyManager : MonoBehaviour
         Transaction trans = new Transaction(description, amount, currentBalance);
         transactionHistory.Add(trans);
         OnTransactionAdded?.Invoke(trans);
+    }
+
+    private void UpdateMoneyDisplay()
+    {
+        if (moneyDisplayText != null)
+        {
+            string formattedAmount = showDecimals ?
+                currentBalance.ToString("F2") :
+                Mathf.Floor(currentBalance).ToString("F0");
+
+            moneyDisplayText.text = $"{moneyPrefix}{formattedAmount}{moneySuffix}";
+        }
     }
 
     /// <summary>
@@ -64,6 +84,7 @@ public class PlayerMoneyManager : MonoBehaviour
         currentBalance += amount;
         LogTransaction(description, amount);
         OnMoneyChanged?.Invoke(currentBalance);
+        UpdateMoneyDisplay();
 
         Debug.Log($"Added ${amount:F2}. New balance: ${currentBalance:F2}");
         return true;
@@ -89,6 +110,7 @@ public class PlayerMoneyManager : MonoBehaviour
         currentBalance -= amount;
         LogTransaction(description, -amount);
         OnMoneyChanged?.Invoke(currentBalance);
+        UpdateMoneyDisplay();
 
         Debug.Log($"Spent ${amount:F2}. New balance: ${currentBalance:F2}");
         return true;
@@ -125,6 +147,7 @@ public class PlayerMoneyManager : MonoBehaviour
         currentBalance = amount;
         LogTransaction(description, difference);
         OnMoneyChanged?.Invoke(currentBalance);
+        UpdateMoneyDisplay();
     }
 
     /// <summary>
@@ -163,6 +186,15 @@ public class PlayerMoneyManager : MonoBehaviour
         transactionHistory.Clear();
         LogTransaction("Reset to starting balance", startingBalance);
         OnMoneyChanged?.Invoke(currentBalance);
+        UpdateMoneyDisplay();
+    }
+
+    /// <summary>
+    /// Manually refresh the display (useful if you change the text reference at runtime)
+    /// </summary>
+    public void RefreshDisplay()
+    {
+        UpdateMoneyDisplay();
     }
 
     // Example usage methods - remove or modify as needed
