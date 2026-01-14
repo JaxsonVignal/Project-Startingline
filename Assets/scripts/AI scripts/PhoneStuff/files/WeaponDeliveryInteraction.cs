@@ -2,7 +2,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEditor.PlayerSettings;
+using System.Collections.Generic;
 
 /// <summary>
 /// Handles delivering weapons to NPCs at meeting locations.
@@ -17,7 +17,7 @@ public class WeaponDeliveryInteraction : MonoBehaviour
     public Button cancelButton;
 
     [Header("Interaction Hint UI (Optional)")]
-    public GameObject interactionHintUI; // e.g., "Press E to deliver"
+    public GameObject interactionHintUI;
     public TMP_Text hintText;
 
     [Header("Interaction Settings")]
@@ -31,13 +31,12 @@ public class WeaponDeliveryInteraction : MonoBehaviour
     private WeaponOrder currentOrder;
     private bool isMenuOpen = false;
 
-    // References to player components (assign these in Inspector or find them)
     [Header("Player Control References")]
-    public MonoBehaviour playerMovementScript; // Your FPS controller script
-    public MonoBehaviour playerLookScript; // Your mouse look script
+    public MonoBehaviour playerMovementScript;
+    public MonoBehaviour playerLookScript;
 
     [Header("Weapon System")]
-    public Transform weaponHolder; // Parent object where weapons are spawned (optional, for optimization)
+    public Transform weaponHolder; // Where all weapons are stored
 
     private void Start()
     {
@@ -56,12 +55,10 @@ public class WeaponDeliveryInteraction : MonoBehaviour
 
     private void Update()
     {
-        // Don't check for interactions if menu is open
         if (!isMenuOpen)
         {
             CheckForNearbyNPC();
 
-            // Show hint when near NPC with order
             if (nearbyNPC != null && currentOrder != null)
             {
                 ShowInteractionHint();
@@ -93,7 +90,6 @@ public class WeaponDeliveryInteraction : MonoBehaviour
                 if (showDebugLogs)
                     Debug.Log($"Found NPC: {npc.npcName}");
 
-                // Check: Is NPC waiting at meeting?
                 bool isReady = TextingManager.Instance.IsNPCReadyForDelivery(npc.npcName);
 
                 if (showDebugLogs)
@@ -117,7 +113,6 @@ public class WeaponDeliveryInteraction : MonoBehaviour
             }
         }
 
-        // Debug: Show what we found
         if (showDebugLogs && colliders.Length > 0 && nearbyNPC == null)
         {
             Debug.Log($"Found {colliders.Length} colliders in range, but no valid NPC with order");
@@ -151,7 +146,6 @@ public class WeaponDeliveryInteraction : MonoBehaviour
         deliveryPromptUI.SetActive(true);
         isMenuOpen = true;
 
-        // Lock cursor and disable player controls
         LockCursor(false);
         DisablePlayerControls();
 
@@ -181,7 +175,6 @@ public class WeaponDeliveryInteraction : MonoBehaviour
                 $"\n\nPayment: ${currentOrder.agreedPrice:F0}";
         }
 
-        // Hide the hint when showing full prompt
         HideInteractionHint();
     }
 
@@ -193,14 +186,13 @@ public class WeaponDeliveryInteraction : MonoBehaviour
             return;
         }
 
-        // Check if player has the weapon with correct attachments equipped
-        if (CheckWeaponAndAttachments())
-        {
-            // Player has correct weapon with attachments - complete the delivery successfully
-            RemoveWeaponFromInventory();
-            AddMoneyToPlayer(currentOrder.agreedPrice);
+        // Find the EXACT weapon with correct attachments from ALL weapons in inventory
+        WeaponAttachmentSystem matchingWeapon = FindExactMatchingWeapon();
 
-            // COMPLETE DELIVERY
+        if (matchingWeapon != null)
+        {
+            RemoveWeaponFromInventory(matchingWeapon);
+            AddMoneyToPlayer(currentOrder.agreedPrice);
             TextingManager.Instance.CompleteWeaponDelivery(nearbyNPC.npcName);
 
             Debug.Log($"✓ Delivered weapon to {nearbyNPC.npcName} for ${currentOrder.agreedPrice}");
@@ -209,171 +201,253 @@ public class WeaponDeliveryInteraction : MonoBehaviour
         }
         else
         {
-            // Player doesn't have correct weapon/attachments - fail the order, no payment
-            Debug.LogWarning($"✗ Order FAILED: Player doesn't have the weapon with required attachments for {nearbyNPC.npcName}!");
+            Debug.LogWarning($"✗ Order FAILED: No weapon found with exact attachments!");
 
-            // Close/fail the order without payment
             TextingManager.Instance.CompleteWeaponDelivery(nearbyNPC.npcName);
 
-            // Show error message to player
             if (promptText != null)
             {
-                promptText.text = "Delivery FAILED!\n\nYou don't have the correct weapon with the required attachments equipped.\n\nOrder cancelled - no payment received.";
+                promptText.text = "Delivery FAILED!\n\nYou don't have a weapon with the exact attachments required.\n\nOrder cancelled - no payment received.";
             }
 
-            // Close prompt after a brief delay so player can see the message
             Invoke(nameof(ClosePrompt), 2.5f);
         }
     }
 
-    private bool CheckWeaponAndAttachments()
+    /// <summary>
+    /// Finds the EXACT weapon that matches both weapon type AND all attachments
+    /// Searches ALL weapons in inventory, not just the currently held one
+    /// </summary>
+    private WeaponAttachmentSystem FindExactMatchingWeapon()
     {
-        // Get player inventory
-        PlayerInventoryHolder playerInventory = GetComponent<PlayerInventoryHolder>();
-        if (playerInventory == null)
-        {
-            Debug.LogError("PlayerInventoryHolder not found!");
-            return false;
-        }
-
-        var inventory = playerInventory.PrimaryInventorySystem;
-
-        // Check if player has the weapon in inventory
-        if (!inventory.ContainsItem(currentOrder.weaponRequested, 1))
-        {
-            Debug.LogWarning($"Player doesn't have {currentOrder.weaponRequested.Name} in inventory");
-            return false;
-        }
-
         if (showDebugLogs)
         {
-            Debug.Log($"=== CHECKING INVENTORY FOR WEAPON: {currentOrder.weaponRequested.Name} ===");
-            Debug.Log($"=== REQUIRED ATTACHMENTS ===");
-            if (currentOrder.sightAttachment != null)
-                Debug.Log($"  - Sight: {currentOrder.sightAttachment.Name}");
-            if (currentOrder.underbarrelAttachment != null)
-                Debug.Log($"  - Underbarrel: {currentOrder.underbarrelAttachment.Name}");
-            if (currentOrder.barrelAttachment != null)
-                Debug.Log($"  - Barrel: {currentOrder.barrelAttachment.Name}");
-            if (currentOrder.magazineAttachment != null)
-                Debug.Log($"  - Magazine: {currentOrder.magazineAttachment.Name}");
-            if (currentOrder.sideRailAttachment != null)
-                Debug.Log($"  - SideRail: {currentOrder.sideRailAttachment.Name}");
+            Debug.Log($"\n╔════════════════════════════════════════╗");
+            Debug.Log($"║  SEARCHING FOR EXACT WEAPON MATCH     ║");
+            Debug.Log($"╚════════════════════════════════════════╝");
+            Debug.Log($"Required Weapon: {currentOrder.weaponRequested.Name}");
+            Debug.Log($"\n--- REQUIRED ATTACHMENTS ---");
+            LogRequiredAttachments();
         }
 
-        // Get all weapons in inventory (both active and inactive)
+        // Get ALL weapon GameObjects from inventory (active AND inactive)
         WeaponAttachmentSystem[] allWeapons = GetAllWeaponsInInventory();
 
         if (showDebugLogs)
         {
-            Debug.Log($"Found {allWeapons.Length} total weapons in inventory");
-
-            // Log all weapons found
-            foreach (var w in allWeapons)
-            {
-                if (w.weaponData != null)
-                {
-                    Debug.Log($"  - Weapon: {w.weaponData.Name}, Attachments: {w.equippedAttachments.Count}");
-                    foreach (var att in w.equippedAttachments)
-                    {
-                        Debug.Log($"    * {att.type}: {att.name}");
-                    }
-                }
-            }
+            Debug.Log($"\n╔════════════════════════════════════════╗");
+            Debug.Log($"║  FOUND {allWeapons.Length} WEAPONS IN INVENTORY      ║");
+            Debug.Log($"╚════════════════════════════════════════╝");
         }
 
-        // Find matching weapon with correct attachments
-        foreach (var weapon in allWeapons)
-        {
-            // Skip if weapon data is null
-            if (weapon.weaponData == null)
-                continue;
+        // Track all weapons of the correct type
+        List<WeaponAttachmentSystem> correctTypeWeapons = new List<WeaponAttachmentSystem>();
 
-            // Check if this is the correct weapon type (compare by reference or name)
-            if (weapon.weaponData == currentOrder.weaponRequested)
+        // Log all weapons found and filter by type
+        for (int i = 0; i < allWeapons.Length; i++)
+        {
+            var weapon = allWeapons[i];
+
+            if (weapon == null || weapon.weaponData == null)
             {
                 if (showDebugLogs)
-                {
-                    Debug.Log($">>> Found matching weapon: {weapon.weaponData.Name}");
-                    Debug.Log($">>> Weapon has {weapon.equippedAttachments.Count} attachments equipped");
-                }
+                    Debug.LogWarning($"[{i}] Weapon is null or has no data - SKIPPED");
+                continue;
+            }
 
-                if (CheckAllAttachments(weapon))
+            bool isCorrectType = IsCorrectWeaponType(weapon);
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"\n[{i}] ═══════════════════════════════════");
+                Debug.Log($"  Weapon: {weapon.weaponData.Name}");
+                Debug.Log($"  GameObject: {weapon.gameObject.name}");
+                Debug.Log($"  Active: {weapon.gameObject.activeInHierarchy}");
+                Debug.Log($"  Correct Type: {(isCorrectType ? "✓ YES" : "✗ NO")}");
+
+                if (weapon.equippedAttachments.Count > 0)
                 {
-                    if (showDebugLogs)
-                        Debug.Log($"✓✓✓ WEAPON HAS ALL REQUIRED ATTACHMENTS!");
-                    return true;
+                    Debug.Log($"  Equipped Attachments ({weapon.equippedAttachments.Count}):");
+                    foreach (var att in weapon.equippedAttachments)
+                    {
+                        if (att != null)
+                            Debug.Log($"    • {att.type}: {att.name}");
+                    }
                 }
                 else
                 {
-                    if (showDebugLogs)
-                        Debug.LogWarning($"✗ Weapon found but missing/wrong required attachments");
+                    Debug.Log($"  Equipped Attachments: NONE");
                 }
+            }
+
+            if (isCorrectType)
+            {
+                correctTypeWeapons.Add(weapon);
+            }
+        }
+
+        if (correctTypeWeapons.Count == 0)
+        {
+            if (showDebugLogs)
+                Debug.LogWarning($"✗✗✗ NO WEAPONS OF TYPE '{currentOrder.weaponRequested.Name}' FOUND!");
+            return null;
+        }
+
+        if (showDebugLogs)
+        {
+            Debug.Log($"\n╔════════════════════════════════════════╗");
+            Debug.Log($"║  {correctTypeWeapons.Count} WEAPON(S) OF CORRECT TYPE     ║");
+            Debug.Log($"╚════════════════════════════════════════╝");
+        }
+
+        // Now check each weapon of correct type for exact attachment match
+        for (int i = 0; i < correctTypeWeapons.Count; i++)
+        {
+            var weapon = correctTypeWeapons[i];
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"\n┌─────────────────────────────────────┐");
+                Debug.Log($"│ CHECKING WEAPON [{i}]: {weapon.weaponData.Name}");
+                Debug.Log($"└─────────────────────────────────────┘");
+            }
+
+            if (HasExactAttachments(weapon))
+            {
+                if (showDebugLogs)
+                {
+                    Debug.Log($"\n╔════════════════════════════════════════╗");
+                    Debug.Log($"║  ✓✓✓ EXACT MATCH FOUND ✓✓✓           ║");
+                    Debug.Log($"╚════════════════════════════════════════╝");
+                    Debug.Log($"Weapon: {weapon.weaponData.Name}");
+                    Debug.Log($"GameObject: {weapon.gameObject.name}\n");
+                }
+                return weapon;
+            }
+            else
+            {
+                if (showDebugLogs)
+                    Debug.LogWarning($"✗ Attachments don't match for weapon [{i}]");
             }
         }
 
         if (showDebugLogs)
-            Debug.LogWarning("✗✗✗ NO WEAPON FOUND WITH ALL REQUIRED ATTACHMENTS");
+        {
+            Debug.Log($"\n╔════════════════════════════════════════╗");
+            Debug.Log($"║  ✗✗✗ NO EXACT MATCH FOUND ✗✗✗        ║");
+            Debug.Log($"╚════════════════════════════════════════╝");
+        }
+        return null;
+    }
+
+    private bool IsCorrectWeaponType(WeaponAttachmentSystem weapon)
+    {
+        // Check by reference first (most reliable)
+        if (weapon.weaponData == currentOrder.weaponRequested)
+            return true;
+
+        // Fallback: check by name
+        if (weapon.weaponData.Name == currentOrder.weaponRequested.Name)
+            return true;
+
         return false;
     }
 
-    private bool CheckAllAttachments(WeaponAttachmentSystem weapon)
+    /// <summary>
+    /// Checks if weapon has EXACTLY the required attachments (no more, no less)
+    /// </summary>
+    private bool HasExactAttachments(WeaponAttachmentSystem weapon)
     {
         if (showDebugLogs)
-            Debug.Log("--- Checking Required Attachments ---");
+            Debug.Log("  ┌─ Checking Attachments ─┐");
 
-        // Check each required attachment
         bool sightOk = CheckAttachment(weapon, AttachmentType.Sight, currentOrder.sightAttachment);
         bool underbarrelOk = CheckAttachment(weapon, AttachmentType.Underbarrel, currentOrder.underbarrelAttachment);
         bool barrelOk = CheckAttachment(weapon, AttachmentType.Barrel, currentOrder.barrelAttachment);
         bool magazineOk = CheckAttachment(weapon, AttachmentType.Magazine, currentOrder.magazineAttachment);
         bool sideRailOk = CheckAttachment(weapon, AttachmentType.SideRail, currentOrder.sideRailAttachment);
 
-        bool allOk = sightOk && underbarrelOk && barrelOk && magazineOk && sideRailOk;
+        bool allMatch = sightOk && underbarrelOk && barrelOk && magazineOk && sideRailOk;
 
         if (showDebugLogs)
-            Debug.Log($"--- Attachment Check Results: {(allOk ? "PASS ✓" : "FAIL ✗")} ---");
+            Debug.Log($"  └─ Result: {(allMatch ? "✓ ALL MATCH" : "✗ MISMATCH")} ─┘");
 
-        return allOk;
+        return allMatch;
+    }
+
+    private void LogRequiredAttachments()
+    {
+        if (currentOrder.sightAttachment != null)
+            Debug.Log($"  • Sight: {currentOrder.sightAttachment.name}");
+        if (currentOrder.underbarrelAttachment != null)
+            Debug.Log($"  • Underbarrel: {currentOrder.underbarrelAttachment.name}");
+        if (currentOrder.barrelAttachment != null)
+            Debug.Log($"  • Barrel: {currentOrder.barrelAttachment.name}");
+        if (currentOrder.magazineAttachment != null)
+            Debug.Log($"  • Magazine: {currentOrder.magazineAttachment.name}");
+        if (currentOrder.sideRailAttachment != null)
+            Debug.Log($"  • SideRail: {currentOrder.sideRailAttachment.name}");
+
+        // Count required attachments
+        int requiredCount = 0;
+        if (currentOrder.sightAttachment != null) requiredCount++;
+        if (currentOrder.underbarrelAttachment != null) requiredCount++;
+        if (currentOrder.barrelAttachment != null) requiredCount++;
+        if (currentOrder.magazineAttachment != null) requiredCount++;
+        if (currentOrder.sideRailAttachment != null) requiredCount++;
+
+        if (requiredCount == 0)
+            Debug.Log("  • No attachments required");
     }
 
     private WeaponAttachmentSystem[] GetAllWeaponsInInventory()
     {
         if (showDebugLogs)
-            Debug.Log(">>> Searching for weapons in inventory...");
+            Debug.Log(">>> Searching for weapon GameObjects in inventory...");
 
-        // Search from weaponHolder if assigned (includes inactive weapons)
+        // Search in weaponHolder if assigned
         if (weaponHolder != null)
         {
+            // true = include inactive GameObjects
             WeaponAttachmentSystem[] weapons = weaponHolder.GetComponentsInChildren<WeaponAttachmentSystem>(true);
             if (showDebugLogs)
-                Debug.Log($">>> Found {weapons.Length} weapons in weaponHolder");
+                Debug.Log($">>> Found {weapons.Length} weapons in weaponHolder (including inactive)");
             return weapons;
         }
 
-        // Search all child objects of player (includes inactive weapons)
+        // Fallback: search in all player children
         WeaponAttachmentSystem[] allWeapons = GetComponentsInChildren<WeaponAttachmentSystem>(true);
         if (showDebugLogs)
-            Debug.Log($">>> Found {allWeapons.Length} weapons in player children");
+            Debug.Log($">>> Found {allWeapons.Length} weapons in player children (including inactive)");
         return allWeapons;
     }
 
     private bool CheckAttachment(WeaponAttachmentSystem weapon, AttachmentType type, AttachmentData requiredAttachment)
     {
-        // If no attachment is required for this slot, that's fine
+        // If no attachment is required for this slot
         if (requiredAttachment == null)
         {
+            // Check if weapon has something equipped in this slot
+            bool hasAttachment = weapon.equippedAttachments.Any(att => att != null && att.type == type);
+
+            if (hasAttachment)
+            {
+                if (showDebugLogs)
+                    Debug.LogWarning($"  [{type}] ✗ EXTRA - Not required but weapon has one equipped!");
+                return false; // Weapon has extra attachment that wasn't ordered
+            }
+
             if (showDebugLogs)
-                Debug.Log($"  [{type}] Not required - OK ✓");
+                Debug.Log($"  [{type}] ✓ Not required, none equipped");
             return true;
         }
 
+        // Required attachment specified
         if (showDebugLogs)
             Debug.Log($"  [{type}] Required: {requiredAttachment.name}");
 
-        // Find the equipped attachment of this type on this weapon
         AttachmentData equippedAttachment = weapon.equippedAttachments
-            .FirstOrDefault(att => att.type == type);
+            .FirstOrDefault(att => att != null && att.type == type);
 
         if (equippedAttachment == null)
         {
@@ -383,14 +457,16 @@ public class WeaponDeliveryInteraction : MonoBehaviour
         }
 
         if (showDebugLogs)
-            Debug.Log($"  [{type}] Found equipped: {equippedAttachment.name}");
+            Debug.Log($"  [{type}] Found: {equippedAttachment.name}");
 
-        // Check if it matches the required attachment (compare by reference or name)
-        // Using reference comparison is most reliable for ScriptableObjects
-        if (equippedAttachment != requiredAttachment)
+        // Compare by reference AND name
+        bool matches = equippedAttachment == requiredAttachment ||
+                       equippedAttachment.name == requiredAttachment.name;
+
+        if (!matches)
         {
             if (showDebugLogs)
-                Debug.LogWarning($"  [{type}] ✗ WRONG - Expected '{requiredAttachment.name}' but found '{equippedAttachment.name}'");
+                Debug.LogWarning($"  [{type}] ✗ WRONG - Expected '{requiredAttachment.name}' got '{equippedAttachment.name}'");
             return false;
         }
 
@@ -399,8 +475,14 @@ public class WeaponDeliveryInteraction : MonoBehaviour
         return true;
     }
 
-    private void RemoveWeaponFromInventory()
+    private void RemoveWeaponFromInventory(WeaponAttachmentSystem weaponToRemove)
     {
+        if (weaponToRemove == null)
+        {
+            Debug.LogError("Cannot remove weapon: weaponToRemove is null!");
+            return;
+        }
+
         PlayerInventoryHolder playerInventory = GetComponent<PlayerInventoryHolder>();
         if (playerInventory == null)
         {
@@ -410,37 +492,38 @@ public class WeaponDeliveryInteraction : MonoBehaviour
 
         var inventory = playerInventory.PrimaryInventorySystem;
 
-        // Find the specific weapon instance that matches the order
-        WeaponAttachmentSystem[] allWeapons = GetAllWeaponsInInventory();
-        WeaponAttachmentSystem weaponToRemove = null;
+        // Find and remove from inventory slot
+        var weaponSlot = inventory.InventorySlots.FirstOrDefault(slot =>
+            slot.ItemData == weaponToRemove.weaponData ||
+            (slot.ItemData != null && slot.ItemData.Name == weaponToRemove.weaponData.Name));
 
-        foreach (var weapon in allWeapons)
+        if (weaponSlot != null && weaponSlot.ItemData != null)
         {
-            if (weapon.weaponData != null && weapon.weaponData == currentOrder.weaponRequested)
+            if (weaponSlot.StackSize > 1)
             {
-                if (CheckAllAttachments(weapon))
-                {
-                    weaponToRemove = weapon;
-                    break;
-                }
+                weaponSlot.RemoveFromStack(1);
+                if (showDebugLogs)
+                    Debug.Log($"Removed 1 from weapon stack. Remaining: {weaponSlot.StackSize}");
             }
-        }
+            else
+            {
+                weaponSlot.ClearSlot();
+                if (showDebugLogs)
+                    Debug.Log($"Cleared weapon slot");
+            }
 
-        if (weaponToRemove != null)
-        {
-            // Destroy the weapon GameObject (which includes all attachments)
-            Destroy(weaponToRemove.gameObject);
-
-            // Remove from inventory system
-            inventory.RemoveFromInventory(currentOrder.weaponRequested, 1);
-
-            if (showDebugLogs)
-                Debug.Log($"Removed {currentOrder.weaponRequested.Name} with all attachments from inventory");
+            inventory.OnInventorySlotChanged?.Invoke(weaponSlot);
         }
         else
         {
-            Debug.LogError("Could not find the weapon to remove!");
+            Debug.LogWarning("Could not find weapon in inventory slots!");
         }
+
+        // Destroy the weapon GameObject (includes all attachments)
+        Destroy(weaponToRemove.gameObject);
+
+        if (showDebugLogs)
+            Debug.Log($"Removed and destroyed weapon: {weaponToRemove.weaponData.Name}");
     }
 
     private void AddMoneyToPlayer(float amount)
@@ -449,7 +532,7 @@ public class WeaponDeliveryInteraction : MonoBehaviour
 
         if (money != null)
         {
-            money.AddMoney(amount);
+            money.AddMoney(amount, $"Weapon delivery to {nearbyNPC.npcName}");
             if (showDebugLogs)
                 Debug.Log($"Added ${amount} to player");
         }
@@ -466,12 +549,10 @@ public class WeaponDeliveryInteraction : MonoBehaviour
 
         isMenuOpen = false;
 
-        // Unlock cursor and re-enable player controls
         LockCursor(true);
         EnablePlayerControls();
     }
 
-    // Cursor control methods
     private void LockCursor(bool locked)
     {
         if (locked)
@@ -486,7 +567,6 @@ public class WeaponDeliveryInteraction : MonoBehaviour
         }
     }
 
-    // Player control methods
     private void DisablePlayerControls()
     {
         if (playerMovementScript != null)
@@ -510,7 +590,6 @@ public class WeaponDeliveryInteraction : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, interactionRange);
 
-        // Draw line to nearby NPC if found
         if (nearbyNPC != null)
         {
             Gizmos.color = Color.green;

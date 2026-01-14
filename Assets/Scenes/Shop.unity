@@ -14640,7 +14640,7 @@ MonoBehaviour:
   pickUpRadius: 1
   ItemData: {fileID: 11400000, guid: c62b43e4cec9aac45b9b4940072e93f7, type: 2}
   itemSaveData:
-    ItemData: {fileID: 0}
+    ItemData: {fileID: 11400000, guid: c62b43e4cec9aac45b9b4940072e93f7, type: 2}
     position: {x: 0, y: 0, z: 0}
     rotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!114 &1101629394
@@ -29475,6 +29475,10 @@ PrefabInstance:
       propertyPath: spawnPoint
       value: 
       objectReference: {fileID: 1612089270}
+    - target: {fileID: 3602688709701167938, guid: 08618163981885e4c978c3e35fcb4c92, type: 3}
+      propertyPath: moneyManager
+      value: 
+      objectReference: {fileID: 61485000}
     - target: {fileID: 3602688709701167938, guid: 08618163981885e4c978c3e35fcb4c92, type: 3}
       propertyPath: playerMoneyText
       value: 
