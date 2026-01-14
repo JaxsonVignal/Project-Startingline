@@ -148,6 +148,19 @@ public class BulletModifier : MonoBehaviour
 
         Debug.Log($"[BulletModifier] Applying anti-gravity to {target.name}");
 
+        // If knockback is happening, remove any old anti-gravity first
+        KnockbackHandler knockbackCheck = target.GetComponent<KnockbackHandler>();
+        if (knockbackCheck != null && knockbackCheck.IsBeingKnockedBack)
+        {
+            // Knockback active - remove old anti-gravity to avoid conflicts
+            AntiGravityEffect oldEffect = target.GetComponent<AntiGravityEffect>();
+            if (oldEffect != null)
+            {
+                Destroy(oldEffect);
+                Debug.Log($"[BulletModifier] Removed old anti-gravity - knockback active");
+            }
+        }
+
         // Check if target already has an anti-gravity effect component
         AntiGravityEffect existingEffect = target.GetComponent<AntiGravityEffect>();
 
@@ -794,6 +807,16 @@ public class AntiGravityEffect : MonoBehaviour
         groundPosition = startPosition; // Remember where ground level is
         isLifting = true;
 
+        // Check if knockback is active (Rigidbody present)
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            Debug.Log($"[AntiGravityEffect] Found Rigidbody - will use physics-based anti-gravity on {gameObject.name}");
+            // Don't disable NavMeshAgent - knockback already did it
+            return;
+        }
+
+        // No Rigidbody - use transform-based movement
         // Disable NavMeshAgent if present
         navAgent = GetComponent<UnityEngine.AI.NavMeshAgent>();
         if (navAgent != null)
@@ -843,6 +866,94 @@ public class AntiGravityEffect : MonoBehaviour
 
     private void Update()
     {
+        // Check if there's an active Rigidbody (from knockback)
+        Rigidbody rb = GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            Debug.Log($"[AntiGravityEffect] UPDATE: Found RB on {gameObject.name}, isKinematic: {rb.isKinematic}, useGravity: {rb.useGravity}");
+
+            // Make sure it's active for anti-gravity
+            if (rb.isKinematic)
+            {
+                rb.isKinematic = false;
+                rb.useGravity = false; // Disable Unity's gravity, we'll control it
+                Debug.Log($"[AntiGravityEffect] Re-enabled Rigidbody for anti-gravity on {gameObject.name}");
+            }
+
+            // Check if knockback is still active
+            KnockbackHandler knockback = GetComponent<KnockbackHandler>();
+            if (knockback != null && knockback.IsBeingKnockedBack)
+            {
+                Debug.Log($"[AntiGravityEffect] Knockback still active - WAITING");
+                // Knockback is active - don't interfere! Just wait
+                // Only disable gravity so they fly higher
+                rb.useGravity = false;
+
+                timeRemaining -= Time.deltaTime;
+                return; // Let knockback handle movement
+            }
+
+            Debug.Log($"[AntiGravityEffect] Knockback finished - TAKING OVER, currentY: {transform.position.y}, targetY: {groundPosition.y + liftHeight}");
+
+            // Knockback finished or not present - anti-gravity takes over
+            rb.useGravity = false; // Keep gravity off
+
+            // Use Rigidbody but mimic the transform-based behavior
+            float currentHeight = transform.position.y;
+            float targetHeight = groundPosition.y + liftHeight;
+
+            // Damp velocity to stop it at target height
+            rb.velocity = new Vector3(rb.velocity.x * 0.95f, rb.velocity.y * 0.9f, rb.velocity.z * 0.95f);
+
+            if (isLifting)
+            {
+                // Still lifting - apply force toward target
+                if (currentHeight < targetHeight - 0.5f)
+                {
+                    // Not at target yet - apply upward force
+                    float forceNeeded = (targetHeight - currentHeight) * 50f; // Proportional force
+                    forceNeeded = Mathf.Clamp(forceNeeded, 0f, 300f); // Cap it
+                    rb.AddForce(Vector3.up * forceNeeded, ForceMode.Force);
+                    Debug.Log($"[AntiGravityEffect] LIFTING - Applied {forceNeeded}N upward");
+                }
+                else
+                {
+                    // Reached target - start floating
+                    isLifting = false;
+                    rb.velocity = Vector3.zero; // Stop movement
+                    Debug.Log($"[AntiGravityEffect] {gameObject.name} reached target height with Rigidbody, now floating");
+                }
+            }
+            else
+            {
+                // Floating - apply bobbing force
+                float bob = Mathf.Sin(Time.time * bobbingSpeed) * bobbingAmount;
+                float bobTargetY = targetHeight + bob;
+                float heightDiff = bobTargetY - currentHeight;
+
+                // Apply gentle force to maintain bobbing
+                rb.AddForce(Vector3.up * heightDiff * 20f, ForceMode.Force);
+                Debug.Log($"[AntiGravityEffect] BOBBING - heightDiff: {heightDiff}");
+            }
+
+            // Reduce time
+            timeRemaining -= Time.deltaTime;
+            if (timeRemaining <= 0f)
+            {
+                // Effect over - re-enable gravity and let them fall
+                rb.useGravity = true;
+                Debug.Log($"[AntiGravityEffect] Duration expired, re-enabling gravity");
+                Destroy(this);
+            }
+            return;
+        }
+
+        Debug.LogWarning($"[AntiGravityEffect] NO RIGIDBODY FOUND on {gameObject.name} - using transform movement");
+
+        // Original transform-based movement (when no knockback active)
+
+        // Original transform-based movement (when no knockback active)
         if (isLowering)
         {
             // Lower back to ground

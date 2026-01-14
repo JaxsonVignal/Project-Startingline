@@ -43,9 +43,9 @@ MonoBehaviour:
   underbarrelShotgunData: {fileID: 0}
   flashlightData: {fileID: 0}
   modifierData:
-    antiGravityRounds: 0
+    antiGravityRounds: 1
     antiGravityForce: 5
-    antiGravityDuration: 5
+    antiGravityDuration: 10
     disableGravity: 1
     initialUpwardImpulse: 5
     bobbingAmount: 0.61
@@ -60,7 +60,7 @@ MonoBehaviour:
     explosionRadius: 5
     explosionDamageMultiplier: 1.5
     applyExplosionKnockback: 1
-    explosionKnockbackForce: 10.9
+    explosionKnockbackForce: 25
     explosionKnockbackDuration: 2
     explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
     showExplosionRadius: 0
