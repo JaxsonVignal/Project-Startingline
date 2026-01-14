@@ -15,6 +15,15 @@ public class BulletModifier : MonoBehaviour
     private int bouncesRemaining = 0;
     private float currentDamageMultiplier = 1f;
 
+    private void Start()
+    {
+        // Setup phase collision if enabled
+        if (modifierData != null && modifierData.phaseRounds)
+        {
+            SetupPhaseCollision();
+        }
+    }
+
     /// <summary>
     /// Call this from PlayerShooting to pass modifier data to the bullet
     /// </summary>
@@ -54,6 +63,11 @@ public class BulletModifier : MonoBehaviour
             {
                 Debug.Log($"  - Ricochet enabled (Max Bounces: {modifierData.maxBounces}, Speed Mult: {modifierData.bounceSpeedMultiplier}x, Damage Mult: {modifierData.bounceDamageMultiplier}x)");
             }
+            if (modifierData.phaseRounds)
+            {
+                Debug.Log($"  - Phase enabled (Transparency: {modifierData.phaseTransparency})");
+                ApplyPhaseEffect();
+            }
         }
     }
 
@@ -64,6 +78,13 @@ public class BulletModifier : MonoBehaviour
     public void OnBulletHit(Collision collision)
     {
         if (modifierData == null) return;
+
+        // TELEPORT EFFECT - Apply FIRST before other effects!
+        // This way if you combine teleport + gravity, they teleport first, THEN float up
+        if (modifierData.teleportRounds)
+        {
+            ApplyTeleport(collision);
+        }
 
         // RICOCHET CHECK - If enabled and bounces remaining, bounce instead of applying effects
         if (modifierData.ricochetRounds && bouncesRemaining > 0)
@@ -98,6 +119,12 @@ public class BulletModifier : MonoBehaviour
         if (modifierData.cryoRounds)
         {
             ApplyCryo(collision);
+        }
+
+        // GRAVITY WELL EFFECT
+        if (modifierData.gravityWellRounds)
+        {
+            ApplyGravityWell(collision);
         }
     }
 
@@ -249,15 +276,29 @@ public class BulletModifier : MonoBehaviour
                 Debug.Log($"[BulletModifier] Explosion hit {hitCollider.gameObject.name} for {finalDamage} damage (distance: {distance:F1})");
             }
 
-            // Apply physics force if enabled
-            if (modifierData.applyExplosionForce)
+            // Apply knockback if enabled (no Rigidbody needed!)
+            if (modifierData.applyExplosionKnockback)
             {
-                Rigidbody rb = hitCollider.GetComponent<Rigidbody>();
-                if (rb != null)
+                // Get root transform to knockback whole enemy
+                Transform rootTransform = hitCollider.transform.root;
+
+                // Calculate knockback direction (away from explosion)
+                Vector3 knockbackDirection = (rootTransform.position - explosionPos).normalized;
+
+                // Use full knockback force (NOT reduced by distance - damage falloff is enough!)
+                float knockbackStrength = modifierData.explosionKnockbackForce;
+
+                // Get or add KnockbackHandler component on the ENEMY (not the bullet!)
+                KnockbackHandler knockbackHandler = rootTransform.GetComponent<KnockbackHandler>();
+                if (knockbackHandler == null)
                 {
-                    rb.AddExplosionForce(modifierData.explosionForceStrength, explosionPos, modifierData.explosionRadius);
-                    Debug.Log($"[BulletModifier] Applied explosion force to {hitCollider.gameObject.name}");
+                    knockbackHandler = rootTransform.gameObject.AddComponent<KnockbackHandler>();
                 }
+
+                // Apply knockback (handler will check if already being knocked back)
+                knockbackHandler.ApplyKnockback(knockbackDirection, knockbackStrength, modifierData.explosionKnockbackDuration);
+
+                Debug.Log($"[BulletModifier] Applied knockback to {rootTransform.name} (force: {knockbackStrength:F1}, direction: {knockbackDirection})");
             }
         }
 
@@ -268,6 +309,173 @@ public class BulletModifier : MonoBehaviour
         {
             Debug.DrawLine(explosionPos, explosionPos + Vector3.up * modifierData.explosionRadius, Color.red, 2f);
         }
+    }
+
+    /// <summary>
+    /// Create gravity well at impact point that pulls enemies toward center
+    /// </summary>
+    private void ApplyGravityWell(Collision collision)
+    {
+        if (collision.contacts.Length == 0) return;
+
+        Vector3 wellPosition = collision.contacts[0].point;
+
+        Debug.Log($"[BulletModifier] Creating gravity well at {wellPosition} with radius {modifierData.gravityWellRadius}");
+
+        // Create gravity well GameObject
+        GameObject wellObject = new GameObject("GravityWell");
+        wellObject.transform.position = wellPosition;
+
+        // Add the gravity well component
+        GravityWellEffect wellEffect = wellObject.AddComponent<GravityWellEffect>();
+        wellEffect.Initialize(
+            wellPosition,
+            modifierData.gravityWellRadius,
+            modifierData.gravityWellDuration,
+            modifierData.gravityWellStrength,
+            modifierData.gravityWellDamagePerSecond,
+            modifierData.gravityWellEffectPrefab,
+            modifierData.showGravityWellDebug
+        );
+
+        // Destroy after duration
+        Destroy(wellObject, modifierData.gravityWellDuration);
+    }
+
+    /// <summary>
+    /// Teleport enemy to random nearby location (with collision checks)
+    /// </summary>
+    private void ApplyTeleport(Collision collision)
+    {
+        if (collision.collider == null) return;
+
+        GameObject target = collision.collider.gameObject;
+
+        // Check if target is on the "Enemies" layer
+        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        {
+            Debug.Log($"[BulletModifier] Skipping teleport on {target.name} - not on Enemies layer");
+            return;
+        }
+
+        // Get root transform (whole enemy, not just a body part)
+        Transform rootTransform = target.transform.root;
+        Vector3 originalPosition = rootTransform.position;
+
+        Debug.Log($"[BulletModifier] Attempting to teleport {rootTransform.name} from {originalPosition}");
+
+        // Spawn departure effect
+        if (modifierData.teleportDepartureEffectPrefab != null)
+        {
+            GameObject departureEffect = Instantiate(modifierData.teleportDepartureEffectPrefab, originalPosition, Quaternion.identity);
+            Destroy(departureEffect, 3f);
+            Debug.Log($"[BulletModifier] Spawned departure effect at {originalPosition}");
+        }
+
+        // Try to find valid teleport location
+        Vector3 teleportPosition;
+        bool foundValidPosition = FindValidTeleportPosition(originalPosition, out teleportPosition);
+
+        if (foundValidPosition)
+        {
+            // Get NavMeshAgent
+            UnityEngine.AI.NavMeshAgent navAgent = rootTransform.GetComponent<UnityEngine.AI.NavMeshAgent>();
+
+            if (navAgent != null && navAgent.isOnNavMesh)
+            {
+                // Find nearest NavMesh point to teleport position
+                UnityEngine.AI.NavMeshHit navHit;
+                if (UnityEngine.AI.NavMesh.SamplePosition(teleportPosition, out navHit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+                {
+                    // Teleport using NavMeshAgent.Warp (safe method)
+                    navAgent.Warp(navHit.position);
+
+                    Debug.Log($"[BulletModifier] Teleported {rootTransform.name} to {navHit.position}");
+
+                    // Spawn arrival effect
+                    if (modifierData.teleportArrivalEffectPrefab != null)
+                    {
+                        GameObject arrivalEffect = Instantiate(modifierData.teleportArrivalEffectPrefab, navHit.position, Quaternion.identity);
+                        Destroy(arrivalEffect, 3f);
+                        Debug.Log($"[BulletModifier] Spawned arrival effect at {navHit.position}");
+                    }
+
+                    // Debug visualization
+                    if (modifierData.showTeleportDebug)
+                    {
+                        Debug.DrawLine(originalPosition, navHit.position, Color.magenta, 5f);
+                        Debug.DrawLine(navHit.position, navHit.position + Vector3.up * 3f, Color.cyan, 5f);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[BulletModifier] No NavMesh found near teleport position {teleportPosition}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[BulletModifier] Enemy {rootTransform.name} has no NavMeshAgent or not on NavMesh");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[BulletModifier] Failed to find valid teleport position for {rootTransform.name} after {modifierData.teleportMaxAttempts} attempts");
+        }
+    }
+
+    /// <summary>
+    /// Find a valid teleport position that isn't inside objects
+    /// </summary>
+    private bool FindValidTeleportPosition(Vector3 originalPosition, out Vector3 validPosition)
+    {
+        validPosition = originalPosition;
+
+        for (int i = 0; i < modifierData.teleportMaxAttempts; i++)
+        {
+            // Generate random point within distance range (horizontal only - no vertical!)
+            Vector2 randomCircle = Random.insideUnitCircle.normalized;
+            float randomDistance = Random.Range(modifierData.teleportMinDistance, modifierData.teleportMaxDistance);
+
+            Vector3 randomOffset = new Vector3(randomCircle.x, 0f, randomCircle.y) * randomDistance;
+            Vector3 candidatePosition = originalPosition + randomOffset;
+
+            // Check if position is valid (not inside objects)
+            if (IsPositionValid(candidatePosition))
+            {
+                validPosition = candidatePosition;
+                Debug.Log($"[BulletModifier] Found valid position on attempt {i + 1}: {validPosition}");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Check if a position is valid (not inside walls/objects)
+    /// </summary>
+    private bool IsPositionValid(Vector3 position)
+    {
+        // Check sphere around position for collisions
+        Collider[] colliders = Physics.OverlapSphere(position, modifierData.teleportCheckRadius);
+
+        foreach (Collider col in colliders)
+        {
+            // Ignore enemies (we want to check for walls/obstacles, not other enemies)
+            if (col.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+            {
+                continue;
+            }
+
+            // If we hit something that's not an enemy, position is invalid
+            Debug.Log($"[BulletModifier] Position {position} invalid - colliding with {col.gameObject.name} on layer {LayerMask.LayerToName(col.gameObject.layer)}");
+            return false;
+        }
+
+        // Position is valid - no obstacles detected
+        // (No ground check = enemies can teleport into air and fall! Much funnier!)
+        Debug.Log($"[BulletModifier] Position {position} is valid - clear of obstacles");
+        return true;
     }
 
     /// <summary>
@@ -326,6 +534,114 @@ public class BulletModifier : MonoBehaviour
                 trail.startColor = modifierData.tracerColor;
                 trail.endColor = new Color(modifierData.tracerColor.r, modifierData.tracerColor.g, modifierData.tracerColor.b, 0f);
                 Debug.Log($"[BulletModifier] Added trail effect to bullet");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Apply phase effect to bullet - visual changes
+    /// Makes bullet semi-transparent and glowy
+    /// </summary>
+    private void ApplyPhaseEffect()
+    {
+        Debug.Log($"[BulletModifier] Applying phase effect to bullet");
+
+        // Make bullet semi-transparent
+        if (modifierData.makeTransparent)
+        {
+            Renderer bulletRenderer = GetComponent<Renderer>();
+            if (bulletRenderer != null && bulletRenderer.material != null)
+            {
+                Material mat = bulletRenderer.material;
+
+                // Set material to transparent mode
+                mat.SetFloat("_Mode", 3); // Transparent mode
+                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                mat.SetInt("_ZWrite", 0);
+                mat.DisableKeyword("_ALPHATEST_ON");
+                mat.EnableKeyword("_ALPHABLEND_ON");
+                mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                mat.renderQueue = 3000;
+
+                // Set transparency
+                Color color = mat.color;
+                color.a = modifierData.phaseTransparency;
+                mat.color = color;
+
+                // Add phase glow
+                mat.EnableKeyword("_EMISSION");
+                Color emissionColor = modifierData.phaseGlowColor * 2f; // HDR glow
+                mat.SetColor("_EmissionColor", emissionColor);
+
+                Debug.Log($"[BulletModifier] Set bullet transparency to {modifierData.phaseTransparency}");
+            }
+        }
+
+        // Add phase particle effect
+        if (modifierData.phaseEffectPrefab != null)
+        {
+            GameObject phaseEffect = Instantiate(modifierData.phaseEffectPrefab, transform.position, Quaternion.identity, transform);
+            Debug.Log($"[BulletModifier] Added phase particle effect");
+        }
+    }
+
+    /// <summary>
+    /// Setup collision to only hit enemies
+    /// Called in Start after Initialize
+    /// </summary>
+    private void SetupPhaseCollision()
+    {
+        // Get the bullet's collider
+        Collider bulletCollider = GetComponent<Collider>();
+        if (bulletCollider == null)
+        {
+            Debug.LogWarning("[BulletModifier] No collider found on bullet! Phase rounds need a collider.");
+            return;
+        }
+
+        // Ignore collisions with everything except Enemies layer
+        int enemyLayer = LayerMask.NameToLayer("Enemies");
+
+        // Iterate through all layers (0-31)
+        for (int i = 0; i < 32; i++)
+        {
+            // Ignore collision with all layers except Enemies
+            if (i != enemyLayer)
+            {
+                Physics.IgnoreLayerCollision(gameObject.layer, i, true);
+            }
+        }
+
+        Debug.Log($"[BulletModifier] Phase collision setup - bullet will only collide with Enemies layer");
+
+        // Debug visualization
+        if (modifierData.showPhaseDebug)
+        {
+            // Draw a trail behind the bullet
+            StartCoroutine(DrawPhaseDebugTrail());
+        }
+    }
+
+    /// <summary>
+    /// Draw debug trail for phase bullets
+    /// </summary>
+    private IEnumerator DrawPhaseDebugTrail()
+    {
+        Vector3 lastPos = transform.position;
+
+        while (true)
+        {
+            yield return new WaitForSeconds(0.1f);
+
+            if (transform != null)
+            {
+                Debug.DrawLine(lastPos, transform.position, Color.cyan, 2f);
+                lastPos = transform.position;
+            }
+            else
+            {
+                break;
             }
         }
     }
@@ -853,6 +1169,181 @@ public class CryoEffect : MonoBehaviour
         if (iceEffectInstance != null)
         {
             Destroy(iceEffectInstance);
+        }
+    }
+}
+
+/// <summary>
+/// Component that creates a gravity well that pulls enemies toward a point
+/// Does NOT require Rigidbody - uses transform-based movement
+/// </summary>
+public class GravityWellEffect : MonoBehaviour
+{
+    private Vector3 wellCenter;
+    private float radius;
+    private float duration;
+    private float strength;
+    private float damagePerSecond;
+    private bool showDebug;
+
+    private float timeRemaining;
+    private GameObject visualEffect;
+    private List<Transform> affectedEnemies = new List<Transform>();
+
+    public void Initialize(Vector3 center, float wellRadius, float wellDuration, float pullStrength, float dps, GameObject effectPrefab, bool debug)
+    {
+        wellCenter = center;
+        radius = wellRadius;
+        duration = wellDuration;
+        strength = pullStrength;
+        damagePerSecond = dps;
+        showDebug = debug;
+        timeRemaining = duration;
+
+        Debug.Log($"[GravityWellEffect] Created at {wellCenter} - Radius: {radius}, Duration: {duration}s, Strength: {strength}");
+
+        // Spawn visual effect
+        if (effectPrefab != null)
+        {
+            visualEffect = Instantiate(effectPrefab, wellCenter, Quaternion.identity);
+            visualEffect.transform.localScale = Vector3.one * radius * 2f; // Scale to match radius
+            Debug.Log($"[GravityWellEffect] Spawned visual effect");
+        }
+    }
+
+    private void Update()
+    {
+        timeRemaining -= Time.deltaTime;
+
+        if (timeRemaining <= 0f)
+        {
+            EndEffect();
+            return;
+        }
+
+        // Find all enemies in radius
+        Collider[] enemies = Physics.OverlapSphere(wellCenter, radius, LayerMask.GetMask("Enemies"));
+
+        affectedEnemies.Clear();
+
+        // Track which root transforms we've already processed
+        HashSet<Transform> processedRoots = new HashSet<Transform>();
+
+        foreach (Collider enemy in enemies)
+        {
+            if (enemy == null) continue;
+
+            // Get the root transform (top-level parent)
+            Transform rootTransform = enemy.transform.root;
+
+            // Skip if we've already processed this root
+            if (processedRoots.Contains(rootTransform))
+            {
+                continue;
+            }
+
+            processedRoots.Add(rootTransform);
+            affectedEnemies.Add(rootTransform);
+
+            // Calculate pull direction and distance (use root position)
+            Vector3 directionToCenter = (wellCenter - rootTransform.position).normalized;
+            float distanceToCenter = Vector3.Distance(rootTransform.position, wellCenter);
+
+            // Calculate pull strength (stronger closer to center, weaker at edges)
+            float distanceMultiplier = 1f - (distanceToCenter / radius);
+            float pullForce = strength * distanceMultiplier * Time.deltaTime;
+
+            // Pull ONLY the root transform (this moves the entire enemy hierarchy)
+            rootTransform.position += directionToCenter * pullForce;
+
+            // Apply damage if enabled (get health from the collider we hit, not the root)
+            if (damagePerSecond > 0f)
+            {
+                EnemyHealth health = enemy.GetComponent<EnemyHealth>();
+                if (health != null)
+                {
+                    float damage = damagePerSecond * Time.deltaTime;
+                    health.TakeDamage(damage);
+                }
+            }
+
+            // Debug visualization
+            if (showDebug)
+            {
+                Debug.DrawLine(rootTransform.position, wellCenter, Color.magenta, Time.deltaTime);
+            }
+        }
+
+        // Debug visualization - draw sphere
+        if (showDebug)
+        {
+            DrawDebugSphere(wellCenter, radius, Color.magenta);
+        }
+    }
+
+    private void EndEffect()
+    {
+        Debug.Log($"[GravityWellEffect] Ended at {wellCenter}");
+
+        if (visualEffect != null)
+        {
+            Destroy(visualEffect);
+        }
+
+        Destroy(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        if (visualEffect != null)
+        {
+            Destroy(visualEffect);
+        }
+    }
+
+    /// <summary>
+    /// Draw a debug sphere using lines
+    /// </summary>
+    private void DrawDebugSphere(Vector3 center, float sphereRadius, Color color)
+    {
+        // Draw 3 circles (XY, XZ, YZ planes)
+        int segments = 16;
+        float angleStep = 360f / segments;
+
+        // XY plane circle
+        for (int i = 0; i < segments; i++)
+        {
+            float angle1 = i * angleStep * Mathf.Deg2Rad;
+            float angle2 = (i + 1) * angleStep * Mathf.Deg2Rad;
+
+            Vector3 p1 = center + new Vector3(Mathf.Cos(angle1), Mathf.Sin(angle1), 0) * sphereRadius;
+            Vector3 p2 = center + new Vector3(Mathf.Cos(angle2), Mathf.Sin(angle2), 0) * sphereRadius;
+
+            Debug.DrawLine(p1, p2, color, Time.deltaTime);
+        }
+
+        // XZ plane circle
+        for (int i = 0; i < segments; i++)
+        {
+            float angle1 = i * angleStep * Mathf.Deg2Rad;
+            float angle2 = (i + 1) * angleStep * Mathf.Deg2Rad;
+
+            Vector3 p1 = center + new Vector3(Mathf.Cos(angle1), 0, Mathf.Sin(angle1)) * sphereRadius;
+            Vector3 p2 = center + new Vector3(Mathf.Cos(angle2), 0, Mathf.Sin(angle2)) * sphereRadius;
+
+            Debug.DrawLine(p1, p2, color, Time.deltaTime);
+        }
+
+        // YZ plane circle
+        for (int i = 0; i < segments; i++)
+        {
+            float angle1 = i * angleStep * Mathf.Deg2Rad;
+            float angle2 = (i + 1) * angleStep * Mathf.Deg2Rad;
+
+            Vector3 p1 = center + new Vector3(0, Mathf.Cos(angle1), Mathf.Sin(angle1)) * sphereRadius;
+            Vector3 p2 = center + new Vector3(0, Mathf.Cos(angle2), Mathf.Sin(angle2)) * sphereRadius;
+
+            Debug.DrawLine(p1, p2, color, Time.deltaTime);
         }
     }
 }

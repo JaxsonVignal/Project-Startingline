@@ -56,14 +56,15 @@ MonoBehaviour:
     freezeTintColor: {r: 0.5, g: 0.8, b: 1, a: 1}
     freezeTintStrength: 0.5
     iceEffectPrefab: {fileID: 0}
-    explosiveRounds: 0
+    explosiveRounds: 1
     explosionRadius: 5
     explosionDamageMultiplier: 1.5
-    applyExplosionForce: 1
-    explosionForceStrength: 1000
+    applyExplosionKnockback: 1
+    explosionKnockbackForce: 10.9
+    explosionKnockbackDuration: 2
     explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
     showExplosionRadius: 0
-    tracerRounds: 1
+    tracerRounds: 0
     tracerColor: {r: 0, g: 1, b: 0.2879982, a: 1}
     tracerIntensity: 1.97
     tracerLightRange: 15.08
@@ -78,9 +79,24 @@ MonoBehaviour:
     ricochetSparkPrefab: {fileID: 0}
     ricochetSound: {fileID: 0}
     showRicochetDebug: 0
-    homingRounds: 1
-    homingStrength: 3
-    homingDetectionRange: 30
-    homingActivationDelay: 0.1
-    homingUpdateInterval: 0.2
-    showHomingDebug: 0
+    phaseRounds: 0
+    makeTransparent: 1
+    phaseTransparency: 0.4
+    phaseGlowColor: {r: 0.5, g: 0.8, b: 1, a: 1}
+    phaseEffectPrefab: {fileID: 0}
+    showPhaseDebug: 0
+    gravityWellRounds: 0
+    gravityWellRadius: 15
+    gravityWellDuration: 5
+    gravityWellStrength: 5
+    gravityWellDamagePerSecond: 5
+    gravityWellEffectPrefab: {fileID: 8069894433506584607, guid: 2a8f4668ec7406e46b71c9406ca2e15a, type: 3}
+    showGravityWellDebug: 0
+    teleportRounds: 0
+    teleportMinDistance: 5
+    teleportMaxDistance: 15
+    teleportMaxAttempts: 20
+    teleportCheckRadius: 1
+    teleportDepartureEffectPrefab: {fileID: 5720272262377439168, guid: f0c7a2957654cdc4b9abae37cabef923, type: 3}
+    teleportArrivalEffectPrefab: {fileID: 2124885087639729593, guid: 6ba7a0626ca720b498c4ef745fea2a06, type: 3}
+    showTeleportDebug: 0
