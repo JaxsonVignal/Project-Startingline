@@ -748,6 +748,7 @@ MonoBehaviour:
   stockSocket: {fileID: 0}
   underbarrelSocket: {fileID: 8160151482402264427}
   sideRailSocket: {fileID: 44081537723810642}
+  modifierSocket: {fileID: 0}
 --- !u!114 &7076229333797653346
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1204,7 +1205,7 @@ Transform:
   m_GameObject: {fileID: 7889799757237935095}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.129, z: 0.09}
+  m_LocalPosition: {x: 0, y: 0.129, z: 0.046}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
