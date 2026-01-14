@@ -291,6 +291,13 @@ public class BulletModifier : MonoBehaviour
                 Debug.Log($"[BulletModifier] Explosion hit {hitCollider.gameObject.name} for {finalDamage} damage (distance: {distance:F1})");
             }
 
+            // APPLY TELEPORT IF ENABLED!
+            if (modifierData.teleportRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying teleport to explosion victim {rootTransform.name}");
+                ApplyTeleportToTarget(rootTransform);
+            }
+
             // Apply knockback if enabled (no Rigidbody needed!)
             if (modifierData.applyExplosionKnockback)
             {
@@ -439,6 +446,17 @@ public class BulletModifier : MonoBehaviour
 
         // Get root transform (whole enemy, not just a body part)
         Transform rootTransform = target.transform.root;
+
+        // Use helper method
+        ApplyTeleportToTarget(rootTransform);
+    }
+
+    /// <summary>
+    /// Apply teleport to a specific target transform
+    /// Helper method used by both direct hits and explosion hits
+    /// </summary>
+    private void ApplyTeleportToTarget(Transform rootTransform)
+    {
         Vector3 originalPosition = rootTransform.position;
 
         Debug.Log($"[BulletModifier] Attempting to teleport {rootTransform.name} from {originalPosition}");
