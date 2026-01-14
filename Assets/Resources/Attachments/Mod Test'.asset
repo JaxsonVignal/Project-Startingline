@@ -56,8 +56,8 @@ MonoBehaviour:
     freezeTintColor: {r: 0.5, g: 0.8, b: 1, a: 1}
     freezeTintStrength: 0.5
     iceEffectPrefab: {fileID: 0}
-    explosiveRounds: 1
-    explosionRadius: 5
+    explosiveRounds: 0
+    explosionRadius: 10
     explosionDamageMultiplier: 1.5
     applyExplosionKnockback: 1
     explosionKnockbackForce: 25
@@ -92,7 +92,7 @@ MonoBehaviour:
     gravityWellDamagePerSecond: 5
     gravityWellEffectPrefab: {fileID: 8069894433506584607, guid: 2a8f4668ec7406e46b71c9406ca2e15a, type: 3}
     showGravityWellDebug: 0
-    teleportRounds: 0
+    teleportRounds: 1
     teleportMinDistance: 5
     teleportMaxDistance: 15
     teleportMaxAttempts: 20

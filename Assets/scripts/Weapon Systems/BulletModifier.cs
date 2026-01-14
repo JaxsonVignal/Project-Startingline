@@ -148,19 +148,6 @@ public class BulletModifier : MonoBehaviour
 
         Debug.Log($"[BulletModifier] Applying anti-gravity to {target.name}");
 
-        // If knockback is happening, remove any old anti-gravity first
-        KnockbackHandler knockbackCheck = target.GetComponent<KnockbackHandler>();
-        if (knockbackCheck != null && knockbackCheck.IsBeingKnockedBack)
-        {
-            // Knockback active - remove old anti-gravity to avoid conflicts
-            AntiGravityEffect oldEffect = target.GetComponent<AntiGravityEffect>();
-            if (oldEffect != null)
-            {
-                Destroy(oldEffect);
-                Debug.Log($"[BulletModifier] Removed old anti-gravity - knockback active");
-            }
-        }
-
         // Check if target already has an anti-gravity effect component
         AntiGravityEffect existingEffect = target.GetComponent<AntiGravityEffect>();
 
@@ -175,6 +162,7 @@ public class BulletModifier : MonoBehaviour
                 modifierData.bobbingAmount,
                 modifierData.bobbingSpeed
             );
+            Debug.Log($"[BulletModifier] Refreshed existing anti-gravity effect");
         }
         else
         {
@@ -188,6 +176,7 @@ public class BulletModifier : MonoBehaviour
                 modifierData.bobbingAmount,
                 modifierData.bobbingSpeed
             );
+            Debug.Log($"[BulletModifier] Added new anti-gravity effect");
         }
     }
 
@@ -267,6 +256,9 @@ public class BulletModifier : MonoBehaviour
 
         int enemiesHit = 0;
 
+        // Track which root transforms we've already processed (avoid duplicate effects)
+        HashSet<Transform> processedRoots = new HashSet<Transform>();
+
         foreach (Collider hitCollider in hitColliders)
         {
             // Only damage objects on Enemies layer
@@ -274,6 +266,16 @@ public class BulletModifier : MonoBehaviour
             {
                 continue;
             }
+
+            // Get root transform to avoid processing same enemy multiple times
+            Transform rootTransform = hitCollider.transform.root;
+
+            // Skip if we already processed this enemy
+            if (processedRoots.Contains(rootTransform))
+            {
+                continue;
+            }
+            processedRoots.Add(rootTransform);
 
             // Calculate distance-based damage falloff
             float distance = Vector3.Distance(explosionPos, hitCollider.transform.position);
@@ -292,9 +294,6 @@ public class BulletModifier : MonoBehaviour
             // Apply knockback if enabled (no Rigidbody needed!)
             if (modifierData.applyExplosionKnockback)
             {
-                // Get root transform to knockback whole enemy
-                Transform rootTransform = hitCollider.transform.root;
-
                 // Calculate knockback direction (away from explosion)
                 Vector3 knockbackDirection = (rootTransform.position - explosionPos).normalized;
 
@@ -312,6 +311,73 @@ public class BulletModifier : MonoBehaviour
                 knockbackHandler.ApplyKnockback(knockbackDirection, knockbackStrength, modifierData.explosionKnockbackDuration);
 
                 Debug.Log($"[BulletModifier] Applied knockback to {rootTransform.name} (force: {knockbackStrength:F1}, direction: {knockbackDirection})");
+            }
+
+            // APPLY ANTI-GRAVITY IF ENABLED!
+            if (modifierData.antiGravityRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying anti-gravity to explosion victim {rootTransform.name}");
+
+                // Check if target already has an anti-gravity effect component
+                AntiGravityEffect existingEffect = rootTransform.GetComponent<AntiGravityEffect>();
+
+                if (existingEffect != null)
+                {
+                    // Refresh the existing effect
+                    existingEffect.RefreshEffect(
+                        modifierData.antiGravityForce,
+                        modifierData.antiGravityDuration,
+                        modifierData.disableGravity,
+                        modifierData.initialUpwardImpulse,
+                        modifierData.bobbingAmount,
+                        modifierData.bobbingSpeed
+                    );
+                    Debug.Log($"[BulletModifier] Refreshed anti-gravity on explosion victim");
+                }
+                else
+                {
+                    // Add new anti-gravity effect component to the target
+                    AntiGravityEffect effect = rootTransform.gameObject.AddComponent<AntiGravityEffect>();
+                    effect.Initialize(
+                        modifierData.antiGravityForce,
+                        modifierData.antiGravityDuration,
+                        modifierData.disableGravity,
+                        modifierData.initialUpwardImpulse,
+                        modifierData.bobbingAmount,
+                        modifierData.bobbingSpeed
+                    );
+                    Debug.Log($"[BulletModifier] Added anti-gravity to explosion victim");
+                }
+            }
+
+            // APPLY CRYO IF ENABLED!
+            if (modifierData.cryoRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying cryo to explosion victim {rootTransform.name}");
+
+                CryoEffect existingCryo = rootTransform.GetComponent<CryoEffect>();
+
+                if (existingCryo != null)
+                {
+                    existingCryo.RefreshEffect(
+                        modifierData.cryoDuration,
+                        modifierData.freezeAnimation,
+                        modifierData.freezeTintColor,
+                        modifierData.freezeTintStrength,
+                        modifierData.iceEffectPrefab
+                    );
+                }
+                else
+                {
+                    CryoEffect effect = rootTransform.gameObject.AddComponent<CryoEffect>();
+                    effect.Initialize(
+                        modifierData.cryoDuration,
+                        modifierData.freezeAnimation,
+                        modifierData.freezeTintColor,
+                        modifierData.freezeTintStrength,
+                        modifierData.iceEffectPrefab
+                    );
+                }
             }
         }
 
