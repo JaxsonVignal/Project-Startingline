@@ -54,6 +54,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a62d89aa8830895428d50a176049e790, type: 2}
   - {fileID: 11400000, guid: 7ecb167fe2179d946985bda80bab1ab9, type: 2}
   - {fileID: 11400000, guid: de8e061e67c381f4d8330e788c87ee44, type: 2}
+  - {fileID: 11400000, guid: 5ba0ebd455758f641ae4151659dc07f1, type: 2}
   scopeOffsets:
   - scope: {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
     positionOffset: {x: -0.451, y: 0.089, z: 0}
