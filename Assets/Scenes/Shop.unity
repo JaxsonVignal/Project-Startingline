@@ -867,7 +867,7 @@ MonoBehaviour:
   showDebugLogs: 1
   playerMovementScript: {fileID: 61484989}
   playerLookScript: {fileID: 61484989}
-  weaponHolder: {fileID: 0}
+  weaponHolder: {fileID: 770844133}
 --- !u!114 &61485000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29479,6 +29479,10 @@ PrefabInstance:
       propertyPath: moneyManager
       value: 
       objectReference: {fileID: 61485000}
+    - target: {fileID: 3602688709701167938, guid: 08618163981885e4c978c3e35fcb4c92, type: 3}
+      propertyPath: weaponParent
+      value: 
+      objectReference: {fileID: 770844133}
     - target: {fileID: 3602688709701167938, guid: 08618163981885e4c978c3e35fcb4c92, type: 3}
       propertyPath: playerMoneyText
       value: 
