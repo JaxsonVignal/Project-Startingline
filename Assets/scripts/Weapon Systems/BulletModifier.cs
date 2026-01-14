@@ -457,12 +457,43 @@ public class BulletModifier : MonoBehaviour
 
         if (foundValidPosition)
         {
+            // Check if anti-gravity is active
+            AntiGravityEffect antiGrav = rootTransform.GetComponent<AntiGravityEffect>();
+            bool antiGravActive = (antiGrav != null);
+
             // Get NavMeshAgent
             UnityEngine.AI.NavMeshAgent navAgent = rootTransform.GetComponent<UnityEngine.AI.NavMeshAgent>();
 
-            if (navAgent != null && navAgent.isOnNavMesh)
+            if (antiGravActive)
             {
-                // Find nearest NavMesh point to teleport position
+                // Anti-gravity active - just move transform directly (they're floating anyway)
+                Debug.Log($"[BulletModifier] Anti-gravity active - teleporting transform directly");
+
+                rootTransform.position = teleportPosition;
+
+                // Update anti-gravity to use new position as ground
+                antiGrav.UpdateGroundPosition(teleportPosition);
+
+                Debug.Log($"[BulletModifier] Teleported {rootTransform.name} to {teleportPosition} (direct transform)");
+
+                // Spawn arrival effect
+                if (modifierData.teleportArrivalEffectPrefab != null)
+                {
+                    GameObject arrivalEffect = Instantiate(modifierData.teleportArrivalEffectPrefab, teleportPosition, Quaternion.identity);
+                    Destroy(arrivalEffect, 3f);
+                    Debug.Log($"[BulletModifier] Spawned arrival effect at {teleportPosition}");
+                }
+
+                // Debug visualization
+                if (modifierData.showTeleportDebug)
+                {
+                    Debug.DrawLine(originalPosition, teleportPosition, Color.magenta, 5f);
+                    Debug.DrawLine(teleportPosition, teleportPosition + Vector3.up * 3f, Color.cyan, 5f);
+                }
+            }
+            else if (navAgent != null && navAgent.isOnNavMesh)
+            {
+                // No anti-gravity - use NavMesh for safe teleport
                 UnityEngine.AI.NavMeshHit navHit;
                 if (UnityEngine.AI.NavMesh.SamplePosition(teleportPosition, out navHit, 5f, UnityEngine.AI.NavMesh.AllAreas))
                 {
@@ -725,23 +756,6 @@ public class BulletModifier : MonoBehaviour
         }
     }
 
-    // ADD MORE EFFECT METHODS HERE
-    // Example:
-    // private void ApplyExplosion(Collision collision)
-    // {
-    //     Vector3 explosionPos = collision.contacts[0].point;
-    //     Collider[] hits = Physics.OverlapSphere(explosionPos, modifierData.explosionRadius);
-    //     
-    //     foreach (var hit in hits)
-    //     {
-    //         var enemy = hit.GetComponent<EnemyHealth>();
-    //         if (enemy != null)
-    //         {
-    //             enemy.TakeDamage(modifierData.explosionDamage);
-    //         }
-    //     }
-    // }
-
     /// <summary>
     /// Apply ricochet effect - bounce bullet off surface
     /// </summary>
@@ -930,6 +944,17 @@ public class AntiGravityEffect : MonoBehaviour
         Debug.Log($"[AntiGravityEffect] Refreshed on {gameObject.name}");
     }
 
+    /// <summary>
+    /// Update the ground position (used when enemy is teleported while floating)
+    /// </summary>
+    public void UpdateGroundPosition(Vector3 newGroundPosition)
+    {
+        groundPosition = newGroundPosition;
+        targetPosition = newGroundPosition + Vector3.up * liftHeight;
+
+        Debug.Log($"[AntiGravityEffect] Updated ground position to {newGroundPosition}, new target: {targetPosition}");
+    }
+
     private void Update()
     {
         // Check if there's an active Rigidbody (from knockback)
@@ -1016,8 +1041,6 @@ public class AntiGravityEffect : MonoBehaviour
         }
 
         Debug.LogWarning($"[AntiGravityEffect] NO RIGIDBODY FOUND on {gameObject.name} - using transform movement");
-
-        // Original transform-based movement (when no knockback active)
 
         // Original transform-based movement (when no knockback active)
         if (isLowering)
