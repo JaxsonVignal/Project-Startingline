@@ -215,5 +215,50 @@ public class ModifierData
     [Tooltip("Show teleport debug (lines showing teleport)")]
     public bool showTeleportDebug = false;
 
+    [Header("Incendiary Modifier")]
+    [Tooltip("Bullets set targets on fire, dealing damage over time")]
+    public bool incendiaryRounds = false;
+
+    [Tooltip("Duration of fire effect in seconds")]
+    [Range(1f, 10f)]
+    public float incendiaryDuration = 5f;
+
+    [Tooltip("Damage dealt per second while burning")]
+    [Range(1f, 50f)]
+    public float incendiaryDamagePerSecond = 10f;
+
+    [Tooltip("Damage tick interval (how often damage is applied)")]
+    [Range(0.1f, 1f)]
+    public float incendiaryTickInterval = 0.5f;
+
+    [Tooltip("Fire can spread to nearby enemies")]
+    public bool incendiarySpreadEnabled = false;
+
+    [Tooltip("Radius to check for nearby enemies to spread fire")]
+    [Range(2f, 10f)]
+    public float incendiarySpreadRadius = 5f;
+
+    [Tooltip("Chance for fire to spread to nearby enemy (0-1)")]
+    [Range(0f, 1f)]
+    public float incendiarySpreadChance = 0.3f;
+
+    [Header("Incendiary Visual Effects")]
+    [Tooltip("Fire particle effect prefab to attach to burning target")]
+    public GameObject incendiaryFireEffectPrefab;
+
+    [Tooltip("Tint color applied to burning targets (orange/red = fire)")]
+    public Color incendiaryTintColor = new Color(1f, 0.4f, 0f, 1f); // Orange
+
+    [Tooltip("Strength of the fire tint (0 = no tint, 1 = full tint)")]
+    [Range(0f, 1f)]
+    public float incendiaryTintStrength = 0.3f;
+
+    [Tooltip("Add emission glow to burning target")]
+    public bool incendiaryAddEmission = true;
+
+    [Tooltip("Emission intensity for burning effect")]
+    [Range(0f, 5f)]
+    public float incendiaryEmissionIntensity = 2f;
+
     // ADD MORE MODIFIERS HERE IN THE FUTURE
 }

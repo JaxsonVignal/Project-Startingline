@@ -68,6 +68,10 @@ public class BulletModifier : MonoBehaviour
                 Debug.Log($"  - Phase enabled (Transparency: {modifierData.phaseTransparency})");
                 ApplyPhaseEffect();
             }
+            if (modifierData.incendiaryRounds)
+            {
+                Debug.Log($"  - Incendiary enabled (Duration: {modifierData.incendiaryDuration}s, DPS: {modifierData.incendiaryDamagePerSecond})");
+            }
         }
     }
 
@@ -125,6 +129,12 @@ public class BulletModifier : MonoBehaviour
         if (modifierData.gravityWellRounds)
         {
             ApplyGravityWell(collision);
+        }
+
+        // INCENDIARY EFFECT
+        if (modifierData.incendiaryRounds)
+        {
+            ApplyIncendiary(collision);
         }
     }
 
@@ -386,6 +396,48 @@ public class BulletModifier : MonoBehaviour
                     );
                 }
             }
+
+            // APPLY INCENDIARY IF ENABLED!
+            if (modifierData.incendiaryRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying incendiary to explosion victim {rootTransform.name}");
+
+                IncendiaryEffect existingIncendiary = rootTransform.GetComponent<IncendiaryEffect>();
+
+                if (existingIncendiary != null)
+                {
+                    existingIncendiary.RefreshEffect(
+                        modifierData.incendiaryDuration,
+                        modifierData.incendiaryDamagePerSecond,
+                        modifierData.incendiaryTickInterval,
+                        modifierData.incendiarySpreadEnabled,
+                        modifierData.incendiarySpreadRadius,
+                        modifierData.incendiarySpreadChance,
+                        modifierData.incendiaryFireEffectPrefab,
+                        modifierData.incendiaryTintColor,
+                        modifierData.incendiaryTintStrength,
+                        modifierData.incendiaryAddEmission,
+                        modifierData.incendiaryEmissionIntensity
+                    );
+                }
+                else
+                {
+                    IncendiaryEffect effect = rootTransform.gameObject.AddComponent<IncendiaryEffect>();
+                    effect.Initialize(
+                        modifierData.incendiaryDuration,
+                        modifierData.incendiaryDamagePerSecond,
+                        modifierData.incendiaryTickInterval,
+                        modifierData.incendiarySpreadEnabled,
+                        modifierData.incendiarySpreadRadius,
+                        modifierData.incendiarySpreadChance,
+                        modifierData.incendiaryFireEffectPrefab,
+                        modifierData.incendiaryTintColor,
+                        modifierData.incendiaryTintStrength,
+                        modifierData.incendiaryAddEmission,
+                        modifierData.incendiaryEmissionIntensity
+                    );
+                }
+            }
         }
 
         Debug.Log($"[BulletModifier] Explosion hit {enemiesHit} enemies");
@@ -604,6 +656,71 @@ public class BulletModifier : MonoBehaviour
         // (No ground check = enemies can teleport into air and fall! Much funnier!)
         Debug.Log($"[BulletModifier] Position {position} is valid - clear of obstacles");
         return true;
+    }
+
+    /// <summary>
+    /// Apply incendiary/fire effect to the hit target
+    /// Burns target over time dealing damage
+    /// Only affects objects on the "Enemies" layer
+    /// </summary>
+    private void ApplyIncendiary(Collision collision)
+    {
+        if (collision.collider == null) return;
+
+        GameObject target = collision.collider.gameObject;
+
+        // Check if target is on the "Enemies" layer
+        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        {
+            Debug.Log($"[BulletModifier] Skipping incendiary on {target.name} - not on Enemies layer");
+            return;
+        }
+
+        // Get root transform
+        Transform rootTransform = target.transform.root;
+
+        Debug.Log($"[BulletModifier] Applying incendiary effect to {rootTransform.name}");
+
+        // Check if target already has an incendiary effect component
+        IncendiaryEffect existingEffect = rootTransform.GetComponent<IncendiaryEffect>();
+
+        if (existingEffect != null)
+        {
+            // Refresh the existing effect
+            existingEffect.RefreshEffect(
+                modifierData.incendiaryDuration,
+                modifierData.incendiaryDamagePerSecond,
+                modifierData.incendiaryTickInterval,
+                modifierData.incendiarySpreadEnabled,
+                modifierData.incendiarySpreadRadius,
+                modifierData.incendiarySpreadChance,
+                modifierData.incendiaryFireEffectPrefab,
+                modifierData.incendiaryTintColor,
+                modifierData.incendiaryTintStrength,
+                modifierData.incendiaryAddEmission,
+                modifierData.incendiaryEmissionIntensity
+            );
+            Debug.Log($"[BulletModifier] Refreshed existing incendiary effect");
+        }
+        else
+        {
+            // Add new incendiary effect component to the target
+            IncendiaryEffect effect = rootTransform.gameObject.AddComponent<IncendiaryEffect>();
+            effect.Initialize(
+                modifierData.incendiaryDuration,
+                modifierData.incendiaryDamagePerSecond,
+                modifierData.incendiaryTickInterval,
+                modifierData.incendiarySpreadEnabled,
+                modifierData.incendiarySpreadRadius,
+                modifierData.incendiarySpreadChance,
+                modifierData.incendiaryFireEffectPrefab,
+                modifierData.incendiaryTintColor,
+                modifierData.incendiaryTintStrength,
+                modifierData.incendiaryAddEmission,
+                modifierData.incendiaryEmissionIntensity
+            );
+            Debug.Log($"[BulletModifier] Added new incendiary effect");
+        }
     }
 
     /// <summary>
@@ -1562,6 +1679,302 @@ public class GravityWellEffect : MonoBehaviour
             Vector3 p2 = center + new Vector3(0, Mathf.Cos(angle2), Mathf.Sin(angle2)) * sphereRadius;
 
             Debug.DrawLine(p1, p2, color, Time.deltaTime);
+        }
+    }
+}
+
+/// <summary>
+/// Component that applies incendiary/fire effect to targets
+/// Burns them over time dealing damage per second
+/// Can spread to nearby enemies
+/// </summary>
+public class IncendiaryEffect : MonoBehaviour
+{
+    private float duration;
+    private float timeRemaining;
+    private float damagePerSecond;
+    private float tickInterval;
+    private float nextTickTime;
+
+    // Fire spread
+    private bool spreadEnabled;
+    private float spreadRadius;
+    private float spreadChance;
+    private float nextSpreadCheckTime;
+    private const float SPREAD_CHECK_INTERVAL = 1f; // Check for spread once per second
+
+    // Visual effects
+    private GameObject fireEffectInstance;
+    private Color tintColor;
+    private float tintStrength;
+    private bool addEmission;
+    private float emissionIntensity;
+
+    private Renderer[] renderers;
+    private Dictionary<Renderer, Color[]> originalColors = new Dictionary<Renderer, Color[]>();
+    private Dictionary<Renderer, Color[]> originalEmissionColors = new Dictionary<Renderer, Color[]>();
+
+    // Track which enemies we've already spread to (prevent infinite spread loops)
+    private static HashSet<Transform> globalBurningEnemies = new HashSet<Transform>();
+
+    public void Initialize(float burnDuration, float dps, float tickTime, bool enableSpread, float radius, float chance,
+        GameObject fireEffect, Color tint, float tintAmount, bool emission, float emissionAmount)
+    {
+        duration = burnDuration;
+        timeRemaining = duration;
+        damagePerSecond = dps;
+        tickInterval = tickTime;
+        nextTickTime = Time.time + tickInterval;
+
+        spreadEnabled = enableSpread;
+        spreadRadius = radius;
+        spreadChance = chance;
+        nextSpreadCheckTime = Time.time + SPREAD_CHECK_INTERVAL;
+
+        tintColor = tint;
+        tintStrength = tintAmount;
+        addEmission = emission;
+        emissionIntensity = emissionAmount;
+
+        // Add to global burning list
+        globalBurningEnemies.Add(transform);
+
+        // Apply visual effects
+        ApplyFireVisuals(fireEffect);
+
+        Debug.Log($"[IncendiaryEffect] Started on {gameObject.name} for {duration}s (DPS: {damagePerSecond})");
+    }
+
+    public void RefreshEffect(float burnDuration, float dps, float tickTime, bool enableSpread, float radius, float chance,
+        GameObject fireEffect, Color tint, float tintAmount, bool emission, float emissionAmount)
+    {
+        duration = burnDuration;
+        timeRemaining = duration; // Reset timer
+        damagePerSecond = dps;
+        tickInterval = tickTime;
+
+        spreadEnabled = enableSpread;
+        spreadRadius = radius;
+        spreadChance = chance;
+
+        Debug.Log($"[IncendiaryEffect] Refreshed on {gameObject.name}");
+    }
+
+    private void ApplyFireVisuals(GameObject fireEffect)
+    {
+        // Spawn fire particle effect
+        if (fireEffect != null)
+        {
+            fireEffectInstance = Instantiate(fireEffect, transform.position, Quaternion.identity, transform);
+            Debug.Log($"[IncendiaryEffect] Spawned fire effect on {gameObject.name}");
+        }
+
+        // Apply fire tint and emission
+        renderers = GetComponentsInChildren<Renderer>();
+
+        foreach (var renderer in renderers)
+        {
+            if (renderer == null) continue;
+
+            Material[] materials = renderer.materials;
+            Color[] colors = new Color[materials.Length];
+            Color[] emissionColors = new Color[materials.Length];
+
+            for (int i = 0; i < materials.Length; i++)
+            {
+                // Store and apply color tint
+                if (materials[i].HasProperty("_Color"))
+                {
+                    colors[i] = materials[i].color;
+                    Color tintedColor = Color.Lerp(colors[i], tintColor, tintStrength);
+                    materials[i].color = tintedColor;
+                }
+
+                // Store and apply emission
+                if (addEmission && materials[i].HasProperty("_EmissionColor"))
+                {
+                    materials[i].EnableKeyword("_EMISSION");
+
+                    // Store original emission (might already be emitting)
+                    if (materials[i].IsKeywordEnabled("_EMISSION"))
+                    {
+                        emissionColors[i] = materials[i].GetColor("_EmissionColor");
+                    }
+                    else
+                    {
+                        emissionColors[i] = Color.black;
+                    }
+
+                    // Apply fire emission (HDR glow)
+                    Color fireEmission = tintColor * emissionIntensity;
+                    materials[i].SetColor("_EmissionColor", fireEmission);
+                }
+            }
+
+            originalColors[renderer] = colors;
+            originalEmissionColors[renderer] = emissionColors;
+            renderer.materials = materials;
+        }
+
+        Debug.Log($"[IncendiaryEffect] Applied fire visuals to {renderers.Length} renderers");
+    }
+
+    private void RemoveFireVisuals()
+    {
+        if (renderers == null) return;
+
+        foreach (var renderer in renderers)
+        {
+            if (renderer == null) continue;
+
+            Material[] materials = renderer.materials;
+
+            // Restore colors
+            if (originalColors.ContainsKey(renderer))
+            {
+                Color[] colors = originalColors[renderer];
+                for (int i = 0; i < materials.Length && i < colors.Length; i++)
+                {
+                    if (materials[i].HasProperty("_Color"))
+                    {
+                        materials[i].color = colors[i];
+                    }
+                }
+            }
+
+            // Restore emission
+            if (addEmission && originalEmissionColors.ContainsKey(renderer))
+            {
+                Color[] emissionColors = originalEmissionColors[renderer];
+                for (int i = 0; i < materials.Length && i < emissionColors.Length; i++)
+                {
+                    if (materials[i].HasProperty("_EmissionColor"))
+                    {
+                        // If original emission was black, disable emission
+                        if (emissionColors[i] == Color.black)
+                        {
+                            materials[i].DisableKeyword("_EMISSION");
+                        }
+                        else
+                        {
+                            materials[i].SetColor("_EmissionColor", emissionColors[i]);
+                        }
+                    }
+                }
+            }
+
+            renderer.materials = materials;
+        }
+
+        Debug.Log($"[IncendiaryEffect] Removed fire visuals");
+    }
+
+    private void Update()
+    {
+        timeRemaining -= Time.deltaTime;
+
+        // Apply damage tick
+        if (Time.time >= nextTickTime)
+        {
+            ApplyBurnDamage();
+            nextTickTime = Time.time + tickInterval;
+        }
+
+        // Check for fire spread
+        if (spreadEnabled && Time.time >= nextSpreadCheckTime)
+        {
+            TrySpreadFire();
+            nextSpreadCheckTime = Time.time + SPREAD_CHECK_INTERVAL;
+        }
+
+        // End effect when duration expires
+        if (timeRemaining <= 0f)
+        {
+            EndEffect();
+        }
+    }
+
+    private void ApplyBurnDamage()
+    {
+        EnemyHealth health = GetComponent<EnemyHealth>();
+        if (health != null)
+        {
+            float damage = damagePerSecond * tickInterval;
+            health.TakeDamage(damage);
+            Debug.Log($"[IncendiaryEffect] Burned {gameObject.name} for {damage} damage");
+        }
+    }
+
+    private void TrySpreadFire()
+    {
+        // Find nearby enemies
+        Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, spreadRadius, LayerMask.GetMask("Enemies"));
+
+        foreach (Collider col in nearbyColliders)
+        {
+            if (col == null) continue;
+
+            Transform rootTransform = col.transform.root;
+
+            // Skip self
+            if (rootTransform == transform) continue;
+
+            // Skip if already burning
+            if (globalBurningEnemies.Contains(rootTransform)) continue;
+
+            // Check if enemy is already on fire
+            if (rootTransform.GetComponent<IncendiaryEffect>() != null) continue;
+
+            // Random chance to spread
+            if (Random.value > spreadChance) continue;
+
+            // Spread fire!
+            Debug.Log($"[IncendiaryEffect] Fire spreading from {gameObject.name} to {rootTransform.name}!");
+
+            IncendiaryEffect newFire = rootTransform.gameObject.AddComponent<IncendiaryEffect>();
+            newFire.Initialize(
+                duration * 0.75f, // Spread fires last 75% as long
+                damagePerSecond,
+                tickInterval,
+                spreadEnabled, // Can continue spreading
+                spreadRadius,
+                spreadChance * 0.5f, // Spread chance reduces (prevents infinite spread)
+                fireEffectInstance != null ? fireEffectInstance : null,
+                tintColor,
+                tintStrength,
+                addEmission,
+                emissionIntensity
+            );
+        }
+    }
+
+    private void EndEffect()
+    {
+        Debug.Log($"[IncendiaryEffect] Ended on {gameObject.name}");
+
+        // Remove from global burning list
+        globalBurningEnemies.Remove(transform);
+
+        // Remove visuals
+        RemoveFireVisuals();
+
+        if (fireEffectInstance != null)
+        {
+            Destroy(fireEffectInstance);
+        }
+
+        Destroy(this);
+    }
+
+    private void OnDestroy()
+    {
+        // Clean up
+        globalBurningEnemies.Remove(transform);
+        RemoveFireVisuals();
+
+        if (fireEffectInstance != null)
+        {
+            Destroy(fireEffectInstance);
         }
     }
 }

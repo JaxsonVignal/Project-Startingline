@@ -43,7 +43,7 @@ MonoBehaviour:
   underbarrelShotgunData: {fileID: 0}
   flashlightData: {fileID: 0}
   modifierData:
-    antiGravityRounds: 1
+    antiGravityRounds: 0
     antiGravityForce: 5
     antiGravityDuration: 10
     disableGravity: 1
@@ -56,7 +56,7 @@ MonoBehaviour:
     freezeTintColor: {r: 0.5, g: 0.8, b: 1, a: 1}
     freezeTintStrength: 0.5
     iceEffectPrefab: {fileID: 0}
-    explosiveRounds: 1
+    explosiveRounds: 0
     explosionRadius: 10
     explosionDamageMultiplier: 1.5
     applyExplosionKnockback: 1
@@ -92,7 +92,7 @@ MonoBehaviour:
     gravityWellDamagePerSecond: 5
     gravityWellEffectPrefab: {fileID: 8069894433506584607, guid: 2a8f4668ec7406e46b71c9406ca2e15a, type: 3}
     showGravityWellDebug: 0
-    teleportRounds: 1
+    teleportRounds: 0
     teleportMinDistance: 5
     teleportMaxDistance: 15
     teleportMaxAttempts: 20
@@ -100,3 +100,15 @@ MonoBehaviour:
     teleportDepartureEffectPrefab: {fileID: 5720272262377439168, guid: f0c7a2957654cdc4b9abae37cabef923, type: 3}
     teleportArrivalEffectPrefab: {fileID: 2124885087639729593, guid: 6ba7a0626ca720b498c4ef745fea2a06, type: 3}
     showTeleportDebug: 0
+    incendiaryRounds: 1
+    incendiaryDuration: 5
+    incendiaryDamagePerSecond: 10
+    incendiaryTickInterval: 0.5
+    incendiarySpreadEnabled: 0
+    incendiarySpreadRadius: 5
+    incendiarySpreadChance: 0.3
+    incendiaryFireEffectPrefab: {fileID: 3021981346131943567, guid: 7c6e19caaf799254985a26e6be855d0e, type: 3}
+    incendiaryTintColor: {r: 1, g: 0.4, b: 0, a: 1}
+    incendiaryTintStrength: 0.3
+    incendiaryAddEmission: 1
+    incendiaryEmissionIntensity: 2
