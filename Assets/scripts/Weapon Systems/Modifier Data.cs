@@ -260,5 +260,24 @@ public class ModifierData
     [Range(0f, 5f)]
     public float incendiaryEmissionIntensity = 2f;
 
+    [Header("Disorientation Modifier")]
+    [Tooltip("Bullets make targets spin rapidly in 360s (spinbot) while maintaining normal movement")]
+    public bool disorientationRounds = false;
+
+    [Tooltip("Duration of disorientation effect in seconds")]
+    [Range(1f, 10f)]
+    public float disorientationDuration = 3f;
+
+    [Tooltip("Rotation speed in degrees per second (360 = 1 spin/sec, 720 = 2 spins/sec, 1440 = 4 spins/sec)")]
+    [Range(180f, 2880f)]
+    public float disorientationSpinSpeed = 720f;
+
+    [Header("Disorientation Visual Effects")]
+    [Tooltip("Particle effect to show around disoriented enemy (stars, swirls, etc)")]
+    public GameObject disorientationEffectPrefab;
+
+    [Tooltip("Show debug visualization (rotation axis)")]
+    public bool showDisorientationDebug = false;
+
     // ADD MORE MODIFIERS HERE IN THE FUTURE
 }

@@ -72,6 +72,10 @@ public class BulletModifier : MonoBehaviour
             {
                 Debug.Log($"  - Incendiary enabled (Duration: {modifierData.incendiaryDuration}s, DPS: {modifierData.incendiaryDamagePerSecond})");
             }
+            if (modifierData.disorientationRounds)
+            {
+                Debug.Log($"  - Disorientation enabled (Duration: {modifierData.disorientationDuration}s, Spin Speed: {modifierData.disorientationSpinSpeed}°/s)");
+            }
         }
     }
 
@@ -135,6 +139,12 @@ public class BulletModifier : MonoBehaviour
         if (modifierData.incendiaryRounds)
         {
             ApplyIncendiary(collision);
+        }
+
+        // DISORIENTATION EFFECT
+        if (modifierData.disorientationRounds)
+        {
+            ApplyDisorientation(collision);
         }
     }
 
@@ -438,6 +448,34 @@ public class BulletModifier : MonoBehaviour
                     );
                 }
             }
+
+            // APPLY DISORIENTATION IF ENABLED!
+            if (modifierData.disorientationRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying disorientation (SPINBOT) to explosion victim {rootTransform.name}");
+
+                DisorientationEffect existingDisorientation = rootTransform.GetComponent<DisorientationEffect>();
+
+                if (existingDisorientation != null)
+                {
+                    existingDisorientation.RefreshEffect(
+                        modifierData.disorientationDuration,
+                        modifierData.disorientationSpinSpeed,
+                        modifierData.disorientationEffectPrefab,
+                        modifierData.showDisorientationDebug
+                    );
+                }
+                else
+                {
+                    DisorientationEffect effect = rootTransform.gameObject.AddComponent<DisorientationEffect>();
+                    effect.Initialize(
+                        modifierData.disorientationDuration,
+                        modifierData.disorientationSpinSpeed,
+                        modifierData.disorientationEffectPrefab,
+                        modifierData.showDisorientationDebug
+                    );
+                }
+            }
         }
 
         Debug.Log($"[BulletModifier] Explosion hit {enemiesHit} enemies");
@@ -720,6 +758,57 @@ public class BulletModifier : MonoBehaviour
                 modifierData.incendiaryEmissionIntensity
             );
             Debug.Log($"[BulletModifier] Added new incendiary effect");
+        }
+    }
+
+    /// <summary>
+    /// Apply disorientation effect to the hit target
+    /// Makes target spin rapidly (360s) like a spinbot while maintaining normal movement
+    /// Only affects objects on the "Enemies" layer
+    /// </summary>
+    private void ApplyDisorientation(Collision collision)
+    {
+        if (collision.collider == null) return;
+
+        GameObject target = collision.collider.gameObject;
+
+        // Check if target is on the "Enemies" layer
+        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        {
+            Debug.Log($"[BulletModifier] Skipping disorientation on {target.name} - not on Enemies layer");
+            return;
+        }
+
+        // Get root transform
+        Transform rootTransform = target.transform.root;
+
+        Debug.Log($"[BulletModifier] Applying disorientation (SPINBOT) effect to {rootTransform.name}");
+
+        // Check if target already has a disorientation effect component
+        DisorientationEffect existingEffect = rootTransform.GetComponent<DisorientationEffect>();
+
+        if (existingEffect != null)
+        {
+            // Refresh the existing effect
+            existingEffect.RefreshEffect(
+                modifierData.disorientationDuration,
+                modifierData.disorientationSpinSpeed,
+                modifierData.disorientationEffectPrefab,
+                modifierData.showDisorientationDebug
+            );
+            Debug.Log($"[BulletModifier] Refreshed existing disorientation effect");
+        }
+        else
+        {
+            // Add new disorientation effect component to the target
+            DisorientationEffect effect = rootTransform.gameObject.AddComponent<DisorientationEffect>();
+            effect.Initialize(
+                modifierData.disorientationDuration,
+                modifierData.disorientationSpinSpeed,
+                modifierData.disorientationEffectPrefab,
+                modifierData.showDisorientationDebug
+            );
+            Debug.Log($"[BulletModifier] Added new disorientation effect");
         }
     }
 
@@ -1975,6 +2064,96 @@ public class IncendiaryEffect : MonoBehaviour
         if (fireEffectInstance != null)
         {
             Destroy(fireEffectInstance);
+        }
+    }
+}
+
+/// <summary>
+/// Component that applies disorientation effect to targets
+/// Makes them spin rapidly (360s) like a spinbot while maintaining their normal movement/behavior
+/// Works with anti-gravity, explosions, teleport, etc.
+/// </summary>
+public class DisorientationEffect : MonoBehaviour
+{
+    private float duration;
+    private float timeRemaining;
+    private float spinSpeed;
+    private bool showDebug;
+
+    // Visual effects
+    private GameObject visualEffectInstance;
+
+    // We DON'T disable NavMeshAgent or movement - we just spin the visual model
+    // This creates the "spinbot" effect where they move normally but spin like crazy
+
+    public void Initialize(float spinDuration, float rotationSpeed, GameObject effectPrefab, bool debug)
+    {
+        duration = spinDuration;
+        timeRemaining = duration;
+        spinSpeed = rotationSpeed;
+        showDebug = debug;
+
+        // Spawn visual effect
+        if (effectPrefab != null)
+        {
+            visualEffectInstance = Instantiate(effectPrefab, transform.position, Quaternion.identity, transform);
+            Debug.Log($"[DisorientationEffect] Spawned disorientation effect on {gameObject.name}");
+        }
+
+        Debug.Log($"[DisorientationEffect] Started SPINBOT on {gameObject.name} - Spin Speed: {spinSpeed}°/s (360s while moving!)");
+    }
+
+    public void RefreshEffect(float spinDuration, float rotationSpeed, GameObject effectPrefab, bool debug)
+    {
+        duration = spinDuration;
+        timeRemaining = duration; // Reset timer
+        spinSpeed = rotationSpeed;
+
+        Debug.Log($"[DisorientationEffect] Refreshed SPINBOT on {gameObject.name}");
+    }
+
+    private void Update()
+    {
+        timeRemaining -= Time.deltaTime;
+
+        if (timeRemaining <= 0f)
+        {
+            EndEffect();
+            return;
+        }
+
+        // SPIN THE ENTIRE TRANSFORM AROUND Y-AXIS (horizontal 360s)
+        // This spins the whole enemy (including model, NavMeshAgent, etc.) while they continue their normal behavior
+        float rotationAmount = spinSpeed * Time.deltaTime;
+        transform.Rotate(Vector3.up, rotationAmount, Space.World);
+
+        // Debug visualization
+        if (showDebug)
+        {
+            Debug.DrawRay(transform.position, Vector3.up * 3f, Color.yellow, Time.deltaTime);
+            Debug.DrawRay(transform.position, transform.forward * 2f, Color.green, Time.deltaTime);
+        }
+    }
+
+    private void EndEffect()
+    {
+        Debug.Log($"[DisorientationEffect] SPINBOT ended on {gameObject.name}");
+
+        // Clean up visual effect
+        if (visualEffectInstance != null)
+        {
+            Destroy(visualEffectInstance);
+        }
+
+        Destroy(this);
+    }
+
+    private void OnDestroy()
+    {
+        // Clean up visual effect
+        if (visualEffectInstance != null)
+        {
+            Destroy(visualEffectInstance);
         }
     }
 }
