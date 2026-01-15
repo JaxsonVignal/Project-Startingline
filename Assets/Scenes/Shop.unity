@@ -665,6 +665,9 @@ GameObject:
   - component: {fileID: 61484998}
   - component: {fileID: 61484999}
   - component: {fileID: 61485000}
+  - component: {fileID: 61485001}
+  - component: {fileID: 61485002}
+  - component: {fileID: 61485003}
   m_Layer: 9
   m_Name: Player
   m_TagString: Player
@@ -867,7 +870,6 @@ MonoBehaviour:
   showDebugLogs: 1
   playerMovementScript: {fileID: 61484989}
   playerLookScript: {fileID: 61484989}
-  weaponHolder: {fileID: 770844133}
 --- !u!114 &61485000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -885,6 +887,52 @@ MonoBehaviour:
   moneyPrefix: $
   moneySuffix: 
   showDecimals: 1
+--- !u!114 &61485001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 61484988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18d72be7b87483740853c411411c51c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponConfigurations: []
+--- !u!114 &61485002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 61484988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbe1342eec584194ca75e522b101fde2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  scanOnStart: 1
+  continuousTracking: 1
+  updateInterval: 10.18
+  weaponHolder: {fileID: 770844133}
+  showDebugLogs: 1
+--- !u!114 &61485003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 61484988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e67533605ae64c49a91abba126315a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inventoryHolder: {fileID: 61484995}
+  configInventory: {fileID: 61485001}
+  weaponBuilds: []
+  showDebugLogs: 1
 --- !u!1001 &61782842
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11792,6 +11840,7 @@ GameObject:
   m_Component:
   - component: {fileID: 933538831}
   - component: {fileID: 933538830}
+  - component: {fileID: 933538832}
   m_Layer: 0
   m_Name: WeaponBuilderController
   m_TagString: Untagged
@@ -11835,6 +11884,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &933538832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 933538829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2b6479be0945ff4985aba9411a39f39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentWeapon: {fileID: 0}
+  configInventory: {fileID: 61485001}
+  showDebugLogs: 1
 --- !u!1 &945571305
 GameObject:
   m_ObjectHideFlags: 0
