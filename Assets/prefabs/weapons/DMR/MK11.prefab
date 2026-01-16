@@ -960,7 +960,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f097327b6e62fd84cb3eb3578bc420a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponData: {fileID: 0}
+  weaponData: {fileID: 11400000, guid: e1c98e4e7ad98764fbf5c1d2980d5ad6, type: 2}
   equippedAttachments: []
 --- !u!82 &2974077592218355596
 AudioSource:

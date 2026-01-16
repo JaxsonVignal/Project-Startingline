@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: MK11
   m_EditorClassIdentifier: 
   ID: 7
-  Name: Mk11
+  Name: MK11
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 1
-  weaponId: Mk11
+  weaponId: MK11
   damage: 30
   fireRate: 0.1
   reloadTime: 2.5
