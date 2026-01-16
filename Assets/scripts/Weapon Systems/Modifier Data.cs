@@ -63,11 +63,16 @@ public class ModifierData
     [Tooltip("Damage multiplier applied to weapon damage (1.0 = same as weapon, 2.0 = double)")]
     public float explosionDamageMultiplier = 1.5f;
 
-    [Tooltip("Apply explosion force to rigidbodies")]
-    public bool applyExplosionForce = true;
+    [Tooltip("Apply knockback force to enemies (no Rigidbody needed)")]
+    public bool applyExplosionKnockback = true;
 
-    [Tooltip("Force strength applied to physics objects")]
-    public float explosionForceStrength = 1000f;
+    [Tooltip("Knockback force strength")]
+    [Range(1f, 50f)]
+    public float explosionKnockbackForce = 20f;
+
+    [Tooltip("Duration of knockback effect")]
+    [Range(0.1f, 2f)]
+    public float explosionKnockbackDuration = 1f;
 
     [Header("Explosive Visual Effects")]
     [Tooltip("Explosion effect prefab to spawn at impact point")]
@@ -131,6 +136,148 @@ public class ModifierData
 
     [Tooltip("Show ricochet angle in scene (debug)")]
     public bool showRicochetDebug = false;
+
+    [Header("Phase Modifier")]
+    [Tooltip("Bullets pass through walls and obstacles, only colliding with enemies")]
+    public bool phaseRounds = false;
+
+    [Header("Phase Visual Effects")]
+    [Tooltip("Make bullet semi-transparent")]
+    public bool makeTransparent = true;
+
+    [Tooltip("Transparency amount (0 = invisible, 1 = fully visible)")]
+    [Range(0f, 1f)]
+    public float phaseTransparency = 0.4f;
+
+    [Tooltip("Phase glow color")]
+    public Color phaseGlowColor = new Color(0.5f, 0.8f, 1f, 1f); // Cyan/blue
+
+    [Tooltip("Phase particle effect prefab (optional)")]
+    public GameObject phaseEffectPrefab;
+
+    [Tooltip("Show phase debug (cyan bullet trail)")]
+    public bool showPhaseDebug = false;
+
+    [Header("Gravity Well Modifier")]
+    [Tooltip("Creates gravity field that pulls enemies toward impact point")]
+    public bool gravityWellRounds = false;
+
+    [Tooltip("Radius of gravity well effect")]
+    [Range(5f, 30f)]
+    public float gravityWellRadius = 15f;
+
+    [Tooltip("Duration of gravity well effect")]
+    [Range(1f, 10f)]
+    public float gravityWellDuration = 5f;
+
+    [Tooltip("Strength of pull force (higher = stronger pull)")]
+    [Range(1f, 20f)]
+    public float gravityWellStrength = 5f;
+
+    [Tooltip("Damage per second while in gravity well (0 = no damage)")]
+    [Range(0f, 50f)]
+    public float gravityWellDamagePerSecond = 0f;
+
+    [Header("Gravity Well Visual Effects")]
+    [Tooltip("Gravity well sphere effect prefab")]
+    public GameObject gravityWellEffectPrefab;
+
+    [Tooltip("Show gravity well radius (debug)")]
+    public bool showGravityWellDebug = false;
+
+    [Header("Teleport Modifier")]
+    [Tooltip("Teleports enemies to random nearby location")]
+    public bool teleportRounds = false;
+
+    [Tooltip("Minimum teleport distance from original position")]
+    [Range(3f, 20f)]
+    public float teleportMinDistance = 5f;
+
+    [Tooltip("Maximum teleport distance from original position")]
+    [Range(5f, 50f)]
+    public float teleportMaxDistance = 15f;
+
+    [Tooltip("Maximum attempts to find valid teleport location")]
+    [Range(5, 30)]
+    public int teleportMaxAttempts = 20;
+
+    [Tooltip("Radius around teleport point to check for obstacles")]
+    [Range(0.5f, 3f)]
+    public float teleportCheckRadius = 1f;
+
+    [Header("Teleport Visual Effects")]
+    [Tooltip("Effect at departure location")]
+    public GameObject teleportDepartureEffectPrefab;
+
+    [Tooltip("Effect at arrival location")]
+    public GameObject teleportArrivalEffectPrefab;
+
+    [Tooltip("Show teleport debug (lines showing teleport)")]
+    public bool showTeleportDebug = false;
+
+    [Header("Incendiary Modifier")]
+    [Tooltip("Bullets set targets on fire, dealing damage over time")]
+    public bool incendiaryRounds = false;
+
+    [Tooltip("Duration of fire effect in seconds")]
+    [Range(1f, 10f)]
+    public float incendiaryDuration = 5f;
+
+    [Tooltip("Damage dealt per second while burning")]
+    [Range(1f, 50f)]
+    public float incendiaryDamagePerSecond = 10f;
+
+    [Tooltip("Damage tick interval (how often damage is applied)")]
+    [Range(0.1f, 1f)]
+    public float incendiaryTickInterval = 0.5f;
+
+    [Tooltip("Fire can spread to nearby enemies")]
+    public bool incendiarySpreadEnabled = false;
+
+    [Tooltip("Radius to check for nearby enemies to spread fire")]
+    [Range(2f, 10f)]
+    public float incendiarySpreadRadius = 5f;
+
+    [Tooltip("Chance for fire to spread to nearby enemy (0-1)")]
+    [Range(0f, 1f)]
+    public float incendiarySpreadChance = 0.3f;
+
+    [Header("Incendiary Visual Effects")]
+    [Tooltip("Fire particle effect prefab to attach to burning target")]
+    public GameObject incendiaryFireEffectPrefab;
+
+    [Tooltip("Tint color applied to burning targets (orange/red = fire)")]
+    public Color incendiaryTintColor = new Color(1f, 0.4f, 0f, 1f); // Orange
+
+    [Tooltip("Strength of the fire tint (0 = no tint, 1 = full tint)")]
+    [Range(0f, 1f)]
+    public float incendiaryTintStrength = 0.3f;
+
+    [Tooltip("Add emission glow to burning target")]
+    public bool incendiaryAddEmission = true;
+
+    [Tooltip("Emission intensity for burning effect")]
+    [Range(0f, 5f)]
+    public float incendiaryEmissionIntensity = 2f;
+
+    [Header("Disorientation Modifier")]
+    [Tooltip("Bullets make targets spin rapidly in 360s (spinbot) while maintaining normal movement")]
+    public bool disorientationRounds = false;
+
+    [Tooltip("Duration of disorientation effect in seconds")]
+    [Range(1f, 10f)]
+    public float disorientationDuration = 3f;
+
+    [Tooltip("Rotation speed in degrees per second (360 = 1 spin/sec, 720 = 2 spins/sec, 1440 = 4 spins/sec)")]
+    [Range(180f, 2880f)]
+    public float disorientationSpinSpeed = 720f;
+
+    [Header("Disorientation Visual Effects")]
+    [Tooltip("Particle effect to show around disoriented enemy (stars, swirls, etc)")]
+    public GameObject disorientationEffectPrefab;
+
+    [Tooltip("Show debug visualization (rotation axis)")]
+    public bool showDisorientationDebug = false;
 
     // ADD MORE MODIFIERS HERE IN THE FUTURE
 }
