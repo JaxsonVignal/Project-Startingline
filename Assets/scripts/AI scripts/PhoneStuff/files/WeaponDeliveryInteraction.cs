@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,37 +10,80 @@ public class WeaponDeliveryInteraction : MonoBehaviour
 {
     [Header("UI")]
     public GameObject deliveryPromptUI;
-    public Text promptText;
+    public TMP_Text promptText;
     public Button deliverButton;
     public Button cancelButton;
+
+    [Header("Interaction Hint UI (Optional)")]
+    public GameObject interactionHintUI;
+    public TMP_Text hintText;
 
     [Header("Interaction Settings")]
     public float interactionRange = 3f;
     public KeyCode interactKey = KeyCode.E;
 
+    [Header("Debug")]
+    public bool showDebugLogs = true;
+
     private NPCManager nearbyNPC;
     private WeaponOrder currentOrder;
+    private bool isMenuOpen = false;
+
+    [Header("Player Control References")]
+    public MonoBehaviour playerMovementScript;
+    public MonoBehaviour playerLookScript;
+
+    private WeaponConfigurationInventory configInventory;
+    private PlayerInventoryHolder inventoryHolder;
 
     private void Start()
     {
         if (deliveryPromptUI != null)
             deliveryPromptUI.SetActive(false);
 
+        if (interactionHintUI != null)
+            interactionHintUI.SetActive(false);
+
         if (deliverButton != null)
             deliverButton.onClick.AddListener(DeliverWeapon);
 
         if (cancelButton != null)
             cancelButton.onClick.AddListener(ClosePrompt);
+
+        // Get required components
+        configInventory = GetComponent<WeaponConfigurationInventory>();
+        inventoryHolder = GetComponent<PlayerInventoryHolder>();
+
+        if (configInventory == null)
+        {
+            Debug.LogError("WeaponConfigurationInventory component not found! Please add it to the player.");
+        }
+
+        if (inventoryHolder == null)
+        {
+            Debug.LogError("PlayerInventoryHolder component not found!");
+        }
     }
 
     private void Update()
     {
-        CheckForNearbyNPC();
-
-        if (nearbyNPC != null && currentOrder != null)
+        if (!isMenuOpen)
         {
-            if (Input.GetKeyDown(interactKey))
-                ShowDeliveryPrompt();
+            CheckForNearbyNPC();
+
+            if (nearbyNPC != null && currentOrder != null)
+            {
+                ShowInteractionHint();
+
+                if (Input.GetKeyDown(interactKey))
+                {
+                    ShowDeliveryPrompt();
+                }
+            }
+            else
+            {
+                HideInteractionHint();
+            }
         }
     }
 
@@ -55,13 +99,26 @@ public class WeaponDeliveryInteraction : MonoBehaviour
             NPCManager npc = col.GetComponent<NPCManager>();
             if (npc != null)
             {
-                // Check: Is NPC waiting at meeting?
-                if (TextingManager.Instance.IsNPCReadyForDelivery(npc.npcName))
+                if (showDebugLogs)
+                    Debug.Log($"Found NPC: {npc.npcName}");
+
+                bool isReady = TextingManager.Instance.IsNPCReadyForDelivery(npc.npcName);
+
+                if (showDebugLogs)
+                    Debug.Log($"NPC {npc.npcName} ready for delivery: {isReady}");
+
+                if (isReady)
                 {
                     nearbyNPC = npc;
-
-                    // FIX: now retrieves accepted orders, not pending price orders
                     currentOrder = TextingManager.Instance.GetAcceptedOrderForNPC(npc.npcName);
+
+                    if (showDebugLogs)
+                    {
+                        if (currentOrder != null)
+                            Debug.Log($"Found order for {npc.npcName}: {currentOrder.weaponRequested.Name}");
+                        else
+                            Debug.LogWarning($"NPC {npc.npcName} is ready but no order found!");
+                    }
 
                     break;
                 }
@@ -69,11 +126,38 @@ public class WeaponDeliveryInteraction : MonoBehaviour
         }
     }
 
+    private void ShowInteractionHint()
+    {
+        if (interactionHintUI != null)
+        {
+            interactionHintUI.SetActive(true);
+            if (hintText != null)
+                hintText.text = $"Press [{interactKey}] to deliver to {nearbyNPC.npcName}";
+        }
+    }
+
+    private void HideInteractionHint()
+    {
+        if (interactionHintUI != null)
+            interactionHintUI.SetActive(false);
+    }
+
     private void ShowDeliveryPrompt()
     {
-        if (deliveryPromptUI == null || currentOrder == null) return;
+        if (deliveryPromptUI == null || currentOrder == null)
+        {
+            Debug.LogError("Cannot show delivery prompt: UI or order is null!");
+            return;
+        }
 
         deliveryPromptUI.SetActive(true);
+        isMenuOpen = true;
+
+        LockCursor(false);
+        DisablePlayerControls();
+
+        if (showDebugLogs)
+            Debug.Log($"Showing delivery prompt for {nearbyNPC.npcName}");
 
         string weaponInfo = $"{currentOrder.weaponRequested.Name}";
         string attachmentInfo = "";
@@ -97,58 +181,153 @@ public class WeaponDeliveryInteraction : MonoBehaviour
                 attachmentInfo +
                 $"\n\nPayment: ${currentOrder.agreedPrice:F0}";
         }
+
+        HideInteractionHint();
     }
 
     private void DeliverWeapon()
     {
-        if (currentOrder == null || nearbyNPC == null) return;
-
-        if (CheckPlayerHasItems())
+        if (currentOrder == null || nearbyNPC == null)
         {
-            RemoveItemsFromInventory();
-            AddMoneyToPlayer(currentOrder.agreedPrice);
+            Debug.LogError("Cannot deliver: order or NPC is null!");
+            return;
+        }
 
-            // COMPLETE DELIVERY
-            TextingManager.Instance.CompleteWeaponDelivery(nearbyNPC.npcName);
+        if (configInventory == null || inventoryHolder == null)
+        {
+            Debug.LogError("Required components missing!");
+            return;
+        }
 
-            Debug.Log($"Delivered weapon to {nearbyNPC.npcName}");
+        if (showDebugLogs)
+        {
+            Debug.Log($"\n╔═══════════════════════════════════════╗");
+            Debug.Log($"║  WEAPON DELIVERY ATTEMPT              ║");
+            Debug.Log($"╚═══════════════════════════════════════╝");
+        }
 
-            ClosePrompt();
+        // Find matching weapon configuration in inventory
+        WeaponConfiguration matchingConfig = configInventory.FindMatchingConfiguration(currentOrder);
+
+        if (matchingConfig != null)
+        {
+            if (showDebugLogs)
+            {
+                Debug.Log($"\n✓ FOUND MATCHING WEAPON!");
+                Debug.Log($"Configuration ID: {matchingConfig.configId}");
+                Debug.Log(matchingConfig.ToString());
+            }
+
+            // Remove weapon and attachments from inventory
+            if (configInventory.RemoveWeaponConfiguration(matchingConfig, inventoryHolder.PrimaryInventorySystem))
+            {
+                // Add money to player
+                AddMoneyToPlayer(currentOrder.agreedPrice);
+
+                // Mark order as complete
+                TextingManager.Instance.CompleteWeaponDelivery(nearbyNPC.npcName);
+
+                Debug.Log($"✓ Delivered weapon to {nearbyNPC.npcName} for ${currentOrder.agreedPrice}");
+
+                ClosePrompt();
+            }
+            else
+            {
+                Debug.LogError("Failed to remove weapon configuration from inventory!");
+
+                if (promptText != null)
+                {
+                    promptText.text = "ERROR: Failed to remove weapon from inventory!";
+                }
+
+                Invoke(nameof(ClosePrompt), 2.5f);
+            }
         }
         else
         {
-            Debug.LogWarning("Player does NOT have the required items!");
-            ClosePrompt();
+            Debug.LogWarning($"✗ Order FAILED: No weapon found with exact attachments!");
+            Debug.LogWarning($"Available weapon configurations: {configInventory.WeaponConfigurations.Count}");
+
+            // Still complete the order (player loses the opportunity)
+            TextingManager.Instance.CompleteWeaponDelivery(nearbyNPC.npcName);
+
+            if (promptText != null)
+            {
+                promptText.text = "Delivery FAILED!\n\nYou don't have a weapon with the exact attachments required.\n\nOrder cancelled - no payment received.";
+            }
+
+            Invoke(nameof(ClosePrompt), 2.5f);
         }
-    }
-
-    private bool CheckPlayerHasItems()
-    {
-        // TODO: hook into your inventory
-        return true;
-    }
-
-    private void RemoveItemsFromInventory()
-    {
-        // TODO: remove items
-        Debug.Log("Removed weapon from inventory (implement)");
     }
 
     private void AddMoneyToPlayer(float amount)
     {
-        // TODO: add money
-        Debug.Log($"Added ${amount} to player (implement)");
+        PlayerMoneyManager money = GetComponent<PlayerMoneyManager>();
+
+        if (money != null)
+        {
+            money.AddMoney(amount, $"Weapon delivery to {nearbyNPC.npcName}");
+            if (showDebugLogs)
+                Debug.Log($"Added ${amount} to player");
+        }
+        else
+        {
+            Debug.LogError("PlayerMoneyManager not found!");
+        }
     }
 
     private void ClosePrompt()
     {
         if (deliveryPromptUI != null)
             deliveryPromptUI.SetActive(false);
+
+        isMenuOpen = false;
+
+        LockCursor(true);
+        EnablePlayerControls();
+    }
+
+    private void LockCursor(bool locked)
+    {
+        if (locked)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+    }
+
+    private void DisablePlayerControls()
+    {
+        if (playerMovementScript != null)
+            playerMovementScript.enabled = false;
+
+        if (playerLookScript != null)
+            playerLookScript.enabled = false;
+    }
+
+    private void EnablePlayerControls()
+    {
+        if (playerMovementScript != null)
+            playerMovementScript.enabled = true;
+
+        if (playerLookScript != null)
+            playerLookScript.enabled = true;
     }
 
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, interactionRange);
+
+        if (nearbyNPC != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(transform.position, nearbyNPC.transform.position);
+        }
     }
 }

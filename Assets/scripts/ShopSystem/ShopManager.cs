@@ -30,8 +30,7 @@ public class ShopManager : MonoBehaviour
     public Button exitButton;
 
     [Header("Player Settings")]
-    public int playerMoney = 100;
-    public TextMeshProUGUI playerMoneyText;
+    public PlayerMoneyManager moneyManager; // Reference to the money manager
     public MonoBehaviour playerMovementScript;
 
     [Header("Cinemachine Cameras")]
@@ -39,7 +38,7 @@ public class ShopManager : MonoBehaviour
     public CinemachineVirtualCamera shopVCam;
 
     [Header("Cinemachine Priority Settings")]
-    public int mainPriority = 20; // Main camera has higher default priority
+    public int mainPriority = 20;
     public int shopPriority = 10;
 
     private bool shopOpen = false;
@@ -53,9 +52,18 @@ public class ShopManager : MonoBehaviour
 
     private void Start()
     {
+        // Find money manager if not assigned
+        if (moneyManager == null)
+        {
+            moneyManager = FindObjectOfType<PlayerMoneyManager>();
+            if (moneyManager == null)
+            {
+                Debug.LogError("PlayerMoneyManager not found! Please assign it in the inspector.");
+            }
+        }
+
         // Populate shop and UI
         PopulateShop();
-        UpdateMoneyUI();
 
         // Ensure shop is closed at start
         ToggleShop(false);
@@ -110,23 +118,29 @@ public class ShopManager : MonoBehaviour
         }
     }
 
-    private void UpdateMoneyUI()
-    {
-        if (playerMoneyText != null)
-            playerMoneyText.text = $"Money: ${playerMoney}";
-    }
-
     private void BuyItem(ShopItem item)
     {
-        if (playerMoney < item.price)
+        if (moneyManager == null)
         {
-            Debug.Log("Not enough money!");
+            Debug.LogError("PlayerMoneyManager is not assigned!");
             return;
         }
 
-        playerMoney -= item.price;
-        UpdateMoneyUI();
+        // Check if player can afford the item
+        if (!moneyManager.CanAfford(item.price))
+        {
+            Debug.Log($"Not enough money to buy {item.itemName}!");
+            return;
+        }
 
+        // Attempt to subtract money
+        if (!moneyManager.SubtractMoney(item.price, $"Purchased {item.itemName}"))
+        {
+            Debug.LogWarning($"Failed to purchase {item.itemName}");
+            return;
+        }
+
+        // Spawn the item
         if (item.prefab != null && spawnPoint != null)
         {
             Vector3 spawnPos = spawnPoint.position + new Vector3(
@@ -175,8 +189,8 @@ public class ShopManager : MonoBehaviour
 
         if (state)
         {
-            // Open shop shop camera active
-            shopVCam.Priority = mainPriority + 1; // higher than main
+            // Open shop - shop camera active
+            shopVCam.Priority = mainPriority + 1;
             shopVCam.MoveToTopOfPrioritySubqueue();
             mainVCam.Priority = mainPriority;
 
@@ -184,7 +198,7 @@ public class ShopManager : MonoBehaviour
         }
         else
         {
-            // Close shop main camera active
+            // Close shop - main camera active
             mainVCam.Priority = mainPriority + 1;
             mainVCam.MoveToTopOfPrioritySubqueue();
             shopVCam.Priority = shopPriority;

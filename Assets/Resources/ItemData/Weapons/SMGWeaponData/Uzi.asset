@@ -28,6 +28,11 @@ MonoBehaviour:
   requiredAmmoType: 8
   pelletsPerShot: 8
   spreadAngle: 5
+  explosionRadius: 5
+  explosionDamage: 100
+  explosionEffectPrefab: {fileID: 0}
+  explosionSound: {fileID: 0}
+  rocketPrefab: {fileID: 0}
   fireMode: 1
   canSwitchFireMode: 1
   recoilX: -1.5
@@ -39,7 +44,40 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
   - {fileID: 11400000, guid: 63d0509c5735bd54f81463000ca8ac36, type: 2}
   - {fileID: 11400000, guid: 6c79adfea28736f4594495fba5db7b57, type: 2}
+  - {fileID: 11400000, guid: 48f1c564060115148bb44dbc4d2c9bd1, type: 2}
+  - {fileID: 11400000, guid: f6c4582476dd5e440b8c97a90492cdca, type: 2}
+  - {fileID: 11400000, guid: 4a0c7c777c7db9f42a3ec5d45ad496e6, type: 2}
+  - {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
+  - {fileID: 11400000, guid: 0b885955b01696f4a8e51c7a22f81fe4, type: 2}
+  - {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
+  - {fileID: 11400000, guid: 677f5f4c3d85a6341bf7fbb503ac6387, type: 2}
+  scopeOffsets:
+  - scope: {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
+    positionOffset: {x: -0.451, y: 0.1208, z: 0.09}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: 48f1c564060115148bb44dbc4d2c9bd1, type: 2}
+    positionOffset: {x: -0.451, y: 0.115, z: 0.1}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: f6c4582476dd5e440b8c97a90492cdca, type: 2}
+    positionOffset: {x: -0.451, y: 0.105, z: 0.1}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: 4a0c7c777c7db9f42a3ec5d45ad496e6, type: 2}
+    positionOffset: {x: -0.451, y: 0.129, z: 0.1}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
+    positionOffset: {x: -0.451, y: 0.111, z: 0.1}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: 0b885955b01696f4a8e51c7a22f81fe4, type: 2}
+    positionOffset: {x: -0.451, y: 0.111, z: 0.1}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: e6418a2e25161314cbcefb0c1ad710b2, type: 2}
+    positionOffset: {x: -0.451, y: 0.12, z: 0.12}
+    rotationOffset: {x: 0, y: 0, z: 0}
+  - scope: {fileID: 11400000, guid: 677f5f4c3d85a6341bf7fbb503ac6387, type: 2}
+    positionOffset: {x: -0.451, y: 0.105, z: 0.1}
+    rotationOffset: {x: 0, y: 0, z: 0}
   partsToDisableWithSight: []
+  partsToDisableWithBarrel: []
   partToDisableWithSightPath: 
   weaponPrefab: {fileID: 5762561477495275973, guid: 0ce1af53e12d6234aad723eee8850c7e, type: 3}
   shootSound: {fileID: 8300000, guid: 2f7f3e00e8c06d24fa20a985522f9674, type: 3}
@@ -47,3 +85,4 @@ MonoBehaviour:
   reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
   muzzleFlashPrefab: {fileID: 0}
   ShootingSoundDelay: 0
+  partsToDisableWithMagazine: []
