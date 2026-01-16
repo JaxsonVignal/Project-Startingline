@@ -24,6 +24,7 @@ public class TextingManager : MonoBehaviour
     [Header("Timing Settings")]
     public float minTimeBetweenTexts = 120f;
     public float maxTimeBetweenTexts = 300f;
+    public float meetingWindowDuration = 300f; // How long NPC waits (in seconds)
 
     private Dictionary<string, TextConversation> conversations = new Dictionary<string, TextConversation>();
     private List<WeaponOrder> activeOrders = new List<WeaponOrder>();
@@ -64,6 +65,7 @@ public class TextingManager : MonoBehaviour
         }
 
         CheckOrderPickups();
+        CheckExpiredOrders(); // NEW: Check for expired orders
     }
 
     private void ScheduleNextText()
@@ -203,7 +205,7 @@ public class TextingManager : MonoBehaviour
         foreach (WeaponOrder order in activeOrders)
         {
             // Only spawn NPC once when the scheduled time is reached
-            if (order.isAccepted && !order.isCompleted)
+            if (order.isAccepted && !order.isCompleted && !order.npcHasBeenSpawned)
             {
                 float currentGameHour = DayNightCycleManager.Instance.currentTimeOfDay;
 
@@ -229,9 +231,83 @@ public class TextingManager : MonoBehaviour
                 if (timeToMeet)
                 {
                     SpawnNPCAtLocation(order);
-                    order.isCompleted = true;
+                    order.npcHasBeenSpawned = true;
+                    Debug.Log($"NPC {order.npcName} spawned and waiting at meeting location");
                 }
             }
+        }
+    }
+
+    // NEW: Check for expired orders and clean them up
+    private void CheckExpiredOrders()
+    {
+        if (DayNightCycleManager.Instance == null) return;
+
+        List<WeaponOrder> ordersToRemove = new List<WeaponOrder>();
+
+        foreach (WeaponOrder order in activeOrders)
+        {
+            // Only check accepted orders that have been spawned but not completed
+            if (order.isAccepted && order.npcHasBeenSpawned && !order.isCompleted)
+            {
+                float currentTime = DayNightCycleManager.Instance.currentTimeOfDay;
+                float meetingTime = order.pickupTimeGameHour;
+
+                // Convert meeting window duration from seconds to game hours
+                float meetingWindowHours = meetingWindowDuration / 3600f;
+                float meetingEndTime = meetingTime + meetingWindowHours;
+
+                if (meetingEndTime >= 24f)
+                    meetingEndTime -= 24f;
+
+                // Check if the meeting window has passed
+                bool hasExpired = !IsTimeBetween(currentTime, meetingTime, meetingEndTime) &&
+                                  HasTimePassedEnd(currentTime, meetingTime, meetingEndTime);
+
+                if (hasExpired)
+                {
+                    Debug.Log($"Order with {order.npcName} has expired. Removing order.");
+
+                    // Send a message about missing the meeting
+                    SendMessage(order.npcName, "Where were you? I couldn't wait any longer.", false, TextMessage.MessageType.General);
+
+                    // Despawn the NPC
+                    NPCManager npc = allNPCs.Find(n => n.npcName == order.npcName);
+                    if (npc != null)
+                    {
+                        npc.CompleteWeaponDeal(); // This should despawn them
+                    }
+
+                    // Remove task from HUD
+                    if (TaskNotificationUI.Instance != null)
+                        TaskNotificationUI.Instance.RemoveTask(order.npcName);
+
+                    ordersToRemove.Add(order);
+                }
+            }
+        }
+
+        // Remove all expired orders
+        foreach (WeaponOrder order in ordersToRemove)
+        {
+            activeOrders.Remove(order);
+        }
+    }
+
+    // Helper method to check if current time has passed the end time
+    private bool HasTimePassedEnd(float now, float start, float end)
+    {
+        if (start < end)
+        {
+            // Normal case: start=10, end=12
+            // Time has passed if now >= end
+            return now >= end;
+        }
+        else
+        {
+            // Midnight crossover: start=23, end=1
+            // Time has passed if now >= end AND now < start (we're in the "after" zone)
+            return now >= end && now < start;
         }
     }
 
@@ -283,7 +359,57 @@ public class TextingManager : MonoBehaviour
     public bool IsNPCReadyForDelivery(string npcName)
     {
         WeaponOrder order = GetAcceptedOrderForNPC(npcName);
-        return order != null && order.isAccepted;
+
+        if (order == null || !order.isAccepted)
+        {
+            Debug.Log($"IsNPCReadyForDelivery({npcName}): No accepted order");
+            return false;
+        }
+
+        // Check if NPC has actually been spawned at the meeting location
+        if (!order.npcHasBeenSpawned)
+        {
+            Debug.Log($"IsNPCReadyForDelivery({npcName}): NPC hasn't been spawned yet");
+            return false;
+        }
+
+        if (DayNightCycleManager.Instance == null)
+        {
+            Debug.LogWarning("DayNightCycleManager not found!");
+            return false;
+        }
+
+        float currentTime = DayNightCycleManager.Instance.currentTimeOfDay;
+        float meetingTime = order.pickupTimeGameHour;
+
+        // Convert meeting window duration from seconds to game hours
+        float meetingWindowHours = meetingWindowDuration / 3600f;
+        float meetingEndTime = meetingTime + meetingWindowHours;
+
+        if (meetingEndTime >= 24f)
+            meetingEndTime -= 24f;
+
+        // Check if current time is within the meeting window
+        bool isReady = IsTimeBetween(currentTime, meetingTime, meetingEndTime);
+
+        Debug.Log($"IsNPCReadyForDelivery({npcName}): currentTime={currentTime:F2}, meetingTime={meetingTime:F2}, meetingEnd={meetingEndTime:F2}, isReady={isReady}");
+
+        return isReady;
+    }
+
+    // Helper method to check if time is between start and end (handles midnight crossover)
+    private bool IsTimeBetween(float now, float start, float end)
+    {
+        if (start < end)
+        {
+            // Normal case: start=10, end=12, now should be between 10-12
+            return now >= start && now < end;
+        }
+        else
+        {
+            // Midnight crossover: start=23, end=1, now should be >=23 OR <1
+            return now >= start || now < end;
+        }
     }
 
     public void CompleteWeaponDelivery(string npcName)
