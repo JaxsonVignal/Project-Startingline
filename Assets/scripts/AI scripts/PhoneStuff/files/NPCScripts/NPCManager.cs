@@ -1,5 +1,5 @@
 using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Animator), typeof(CivilianMovementController))]
 public class NPCManager : MonoBehaviour
@@ -14,11 +14,45 @@ public class NPCManager : MonoBehaviour
         Fleeing
     }
 
+    // NEW: Schedule entry for a specific time and location
+    [System.Serializable]
+    public class ScheduleEntry
+    {
+        public float startTime;
+        public float endTime;
+        public NPCState state;
+        public Transform location;
+
+        public bool IsActiveAt(float hour)
+        {
+            if (startTime < endTime)
+                return hour >= startTime && hour < endTime;
+            return hour >= startTime || hour < endTime;
+        }
+    }
+
+    // NEW: Daily schedule
+    [System.Serializable]
+    public class DailySchedule
+    {
+        public DayNightCycleManager.DayOfWeek dayOfWeek;
+        public List<ScheduleEntry> scheduleEntries = new List<ScheduleEntry>();
+    }
+
     [Header("NPC Info")]
     public string npcName = "Civilian";
     public NPCState currentState;
 
-    [Header("Schedule Settings")]
+    [Header("Weekly Schedule")]
+    public List<DailySchedule> weeklySchedule = new List<DailySchedule>();
+
+    [Header("Fallback Locations (if schedule not set)")]
+    public Transform bedLocation;
+    public Transform workLocation;
+    public Transform eatLocation;
+    public Transform idleLocation;
+
+    [Header("Fallback Times (if schedule not set)")]
     public float wakeUpTime = 6f;
     public float workStartTime = 9f;
     public float workEndTime = 17f;
@@ -26,15 +60,9 @@ public class NPCManager : MonoBehaviour
     public float breakStartTime = 12f;
     public float breakEndTime = 13f;
 
-    [Header("Waypoints")]
-    public Transform bedLocation;
-    public Transform workLocation;
-    public Transform eatLocation;
-    public Transform idleLocation;
-
     [Header("Weapon Deal Settings")]
     public float meetingWaitTime = 300f;
-    public float playerNearbyRange = 5f; // NEW: Don't leave if player is this close
+    public float playerNearbyRange = 5f;
 
     [Header("Flee Settings")]
     public float fleeDistance = 20f;
@@ -59,39 +87,61 @@ public class NPCManager : MonoBehaviour
     private float fleeEndTime;
     private float lastGunshotReactionTime = -999f;
 
+    private DayNightCycleManager.DayOfWeek currentDayOfWeek;
+
     private void OnEnable()
     {
         DayNightCycleManager.OnTimeChanged += HandleTimeUpdate;
+        DayNightCycleManager.OnDayChanged += HandleDayChanged; // NEW
     }
 
     private void OnDisable()
     {
         DayNightCycleManager.OnTimeChanged -= HandleTimeUpdate;
+        DayNightCycleManager.OnDayChanged -= HandleDayChanged; // NEW
     }
 
     private void Start()
     {
         animator = GetComponent<Animator>();
         movement = GetComponent<CivilianMovementController>();
+
+        // Get current day of week
+        if (DayNightCycleManager.Instance != null)
+        {
+            currentDayOfWeek = DayNightCycleManager.Instance.CurrentDayOfWeek;
+        }
     }
 
     private void Update()
     {
-        // Check if flee duration has ended
         if (isFleeing && Time.time >= fleeEndTime)
         {
             isFleeing = false;
 
-            // Return to normal schedule
             float now = DayNightCycleManager.Instance != null ?
                 DayNightCycleManager.Instance.currentTimeOfDay : 12f;
             SwitchState(DetermineState(now));
         }
     }
 
+    // NEW: Handle day changes
+    private void HandleDayChanged(DayNightCycleManager.DayOfWeek newDay)
+    {
+        currentDayOfWeek = newDay;
+        Debug.Log($"{npcName}: Day changed to {newDay}");
+
+        // Force re-evaluation of schedule
+        if (DayNightCycleManager.Instance != null)
+        {
+            float currentTime = DayNightCycleManager.Instance.currentTimeOfDay;
+            NPCState newState = DetermineState(currentTime);
+            SwitchState(newState);
+        }
+    }
+
     private void HandleTimeUpdate(float hour)
     {
-        // Don't update schedule while fleeing
         if (isFleeing)
             return;
 
@@ -108,7 +158,6 @@ public class NPCManager : MonoBehaviour
 
             if (IsTimePast(hour, meetingEnd))
             {
-                // NEW: Don't leave if player is nearby
                 if (IsPlayerNearby())
                 {
                     Debug.Log($"{npcName}: Meeting time expired but player is nearby, waiting...");
@@ -129,7 +178,6 @@ public class NPCManager : MonoBehaviour
         }
     }
 
-    // NEW: Check if player is nearby
     private bool IsPlayerNearby()
     {
         GameObject player = FindPlayer();
@@ -159,8 +207,25 @@ public class NPCManager : MonoBehaviour
         return false;
     }
 
+    // NEW: Determine state using weekly schedule or fallback
     private NPCState DetermineState(float hour)
     {
+        // Try to find schedule for current day
+        DailySchedule todaySchedule = GetScheduleForDay(currentDayOfWeek);
+
+        if (todaySchedule != null && todaySchedule.scheduleEntries.Count > 0)
+        {
+            // Use schedule-based system
+            foreach (var entry in todaySchedule.scheduleEntries)
+            {
+                if (entry.IsActiveAt(hour))
+                {
+                    return entry.state;
+                }
+            }
+        }
+
+        // Fallback to old time-based system
         if (hour >= sleepTime || hour < wakeUpTime)
             return NPCState.Sleeping;
 
@@ -173,6 +238,53 @@ public class NPCManager : MonoBehaviour
         return NPCState.Idle;
     }
 
+    // NEW: Get location for current state
+    private Transform GetLocationForState(NPCState state)
+    {
+        // Try to find from schedule
+        DailySchedule todaySchedule = GetScheduleForDay(currentDayOfWeek);
+
+        if (todaySchedule != null && todaySchedule.scheduleEntries.Count > 0)
+        {
+            float currentHour = DayNightCycleManager.Instance != null ?
+                DayNightCycleManager.Instance.currentTimeOfDay : 12f;
+
+            foreach (var entry in todaySchedule.scheduleEntries)
+            {
+                if (entry.IsActiveAt(currentHour) && entry.state == state && entry.location != null)
+                {
+                    return entry.location;
+                }
+            }
+        }
+
+        // Fallback to default locations
+        switch (state)
+        {
+            case NPCState.Sleeping:
+                return bedLocation;
+            case NPCState.Eating:
+                return eatLocation;
+            case NPCState.Working:
+                return workLocation;
+            case NPCState.Idle:
+                return idleLocation;
+            default:
+                return null;
+        }
+    }
+
+    // NEW: Get schedule for specific day
+    private DailySchedule GetScheduleForDay(DayNightCycleManager.DayOfWeek day)
+    {
+        foreach (var schedule in weeklySchedule)
+        {
+            if (schedule.dayOfWeek == day)
+                return schedule;
+        }
+        return null;
+    }
+
     private void SwitchState(NPCState newState)
     {
         if (newState == currentState)
@@ -182,26 +294,14 @@ public class NPCManager : MonoBehaviour
 
         animator?.SetTrigger(newState.ToString());
 
-        switch (newState)
+        Transform destination = GetLocationForState(newState);
+        if (destination != null)
         {
-            case NPCState.Sleeping:
-                movement?.MoveTo(bedLocation);
-                break;
-            case NPCState.Eating:
-                movement?.MoveTo(eatLocation);
-                break;
-            case NPCState.Working:
-                movement?.MoveTo(workLocation);
-                break;
-            case NPCState.Idle:
-                movement?.MoveTo(idleLocation);
-                break;
+            movement?.MoveTo(destination);
         }
     }
 
-    // ---------------------
-    // MEETING SYSTEM
-    // ---------------------
+    // Meeting system methods remain the same
     public void ScheduleWeaponMeeting(Transform location, float pickupHours)
     {
         meetingLocation = location;
@@ -257,29 +357,21 @@ public class NPCManager : MonoBehaviour
             CompleteMeeting();
     }
 
-    // ---------------------
-    // GUNSHOT DETECTION
-    // ---------------------
-    /// <summary>
-    /// Called by GunshotDetectionSystem when a gunshot is heard
-    /// </summary>
+    // Gunshot and flee methods remain the same
     public void OnGunshotHeard(Vector3 gunshotPosition)
     {
-        // Check if NPC should react to gunshots
         if (!fleeFromGunshots)
         {
             Debug.Log($"{npcName} heard gunshot but is set to not flee");
             return;
         }
 
-        // Check cooldown to prevent spam reactions
         if (Time.time - lastGunshotReactionTime < gunshotReactionCooldown)
         {
             Debug.Log($"{npcName} heard gunshot but is on cooldown");
             return;
         }
 
-        // Already fleeing
         if (isFleeing)
         {
             Debug.Log($"{npcName} heard gunshot but is already fleeing");
@@ -290,13 +382,9 @@ public class NPCManager : MonoBehaviour
 
         Debug.Log($"{npcName} reacting to gunshot at {gunshotPosition}!");
 
-        // Flee away from the gunshot
         RunAwayFromPosition(gunshotPosition);
     }
 
-    // ---------------------
-    // FLEE SYSTEM
-    // ---------------------
     public void RunAwayFromPlayer()
     {
         if (isFleeing)
@@ -307,7 +395,6 @@ public class NPCManager : MonoBehaviour
 
         Debug.Log($"{npcName} RunAwayFromPlayer() called!");
 
-        // Find player
         GameObject player = FindPlayer();
 
         if (player != null)
@@ -320,9 +407,6 @@ public class NPCManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Makes NPC flee away from a specific position
-    /// </summary>
     public void RunAwayFromPosition(Vector3 dangerPosition)
     {
         if (isFleeing)
@@ -337,11 +421,9 @@ public class NPCManager : MonoBehaviour
         fleeEndTime = Time.time + fleeDuration;
         currentState = NPCState.Fleeing;
 
-        // Calculate flee direction (away from danger)
         Vector3 directionAwayFromDanger = (transform.position - dangerPosition).normalized;
         Vector3 fleePosition = transform.position + directionAwayFromDanger * fleeDistance;
 
-        // Make sure the flee position is on the ground
         if (Physics.Raycast(fleePosition + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f))
         {
             fleePosition = hit.point;
@@ -349,10 +431,8 @@ public class NPCManager : MonoBehaviour
 
         Debug.Log($"{npcName} fleeing to position: {fleePosition}");
 
-        // Move to flee position
         if (movement != null)
         {
-            // Create a temporary transform for the flee location
             GameObject tempFleePoint = new GameObject("TempFleePoint_" + npcName);
             tempFleePoint.transform.position = fleePosition;
             movement.MoveTo(tempFleePoint.transform);
@@ -368,9 +448,6 @@ public class NPCManager : MonoBehaviour
         Debug.Log($"{npcName} is fleeing!");
     }
 
-    /// <summary>
-    /// Helper method to find the player in the scene
-    /// </summary>
     private GameObject FindPlayer()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -391,27 +468,21 @@ public class NPCManager : MonoBehaviour
         return player;
     }
 
-    // ---------------------
-    // RESET SYSTEM
-    // ---------------------
     public void ResetToBed()
     {
-        // Cancel any ongoing activities
         hasScheduledMeeting = false;
         meetingLocation = null;
         isFleeing = false;
 
-        // Force NPC to bed
         currentState = NPCState.Sleeping;
 
-        if (bedLocation != null)
+        Transform bed = GetLocationForState(NPCState.Sleeping);
+        if (bed != null)
         {
-            // Teleport to bed immediately
-            transform.position = bedLocation.position;
-            transform.rotation = bedLocation.rotation;
+            transform.position = bed.position;
+            transform.rotation = bed.rotation;
 
-            // Update movement controller
-            movement?.MoveTo(bedLocation);
+            movement?.MoveTo(bed);
         }
         else
         {

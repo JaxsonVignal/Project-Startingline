@@ -45,7 +45,7 @@ MonoBehaviour:
   modifierData:
     antiGravityRounds: 0
     antiGravityForce: 5
-    antiGravityDuration: 5
+    antiGravityDuration: 10
     disableGravity: 1
     initialUpwardImpulse: 5
     bobbingAmount: 0.61
@@ -57,30 +57,63 @@ MonoBehaviour:
     freezeTintStrength: 0.5
     iceEffectPrefab: {fileID: 0}
     explosiveRounds: 0
-    explosionRadius: 5
+    explosionRadius: 10
     explosionDamageMultiplier: 1.5
-    applyExplosionForce: 1
-    explosionForceStrength: 1000
+    applyExplosionKnockback: 1
+    explosionKnockbackForce: 25
+    explosionKnockbackDuration: 2
     explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
     showExplosionRadius: 0
     tracerRounds: 1
     tracerColor: {r: 0, g: 1, b: 0.2879982, a: 1}
-    tracerIntensity: 1.97
+    tracerIntensity: 5.03
     tracerLightRange: 15.08
     addEmission: 0
     emissionIntensity: 2
     trailEffectPrefab: {fileID: 0}
     trailDuration: 0.3
-    ricochetRounds: 0
+    ricochetRounds: 1
     maxBounces: 1
     bounceSpeedMultiplier: 0.9
     bounceDamageMultiplier: 0.8
-    ricochetSparkPrefab: {fileID: 0}
+    ricochetSparkPrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
     ricochetSound: {fileID: 0}
     showRicochetDebug: 0
-    homingRounds: 1
-    homingStrength: 3
-    homingDetectionRange: 30
-    homingActivationDelay: 0.1
-    homingUpdateInterval: 0.2
-    showHomingDebug: 0
+    phaseRounds: 0
+    makeTransparent: 1
+    phaseTransparency: 0.4
+    phaseGlowColor: {r: 0.5, g: 0.8, b: 1, a: 1}
+    phaseEffectPrefab: {fileID: 0}
+    showPhaseDebug: 0
+    gravityWellRounds: 0
+    gravityWellRadius: 15
+    gravityWellDuration: 5
+    gravityWellStrength: 5
+    gravityWellDamagePerSecond: 5
+    gravityWellEffectPrefab: {fileID: 8069894433506584607, guid: 2a8f4668ec7406e46b71c9406ca2e15a, type: 3}
+    showGravityWellDebug: 0
+    teleportRounds: 0
+    teleportMinDistance: 5
+    teleportMaxDistance: 15
+    teleportMaxAttempts: 20
+    teleportCheckRadius: 1
+    teleportDepartureEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
+    teleportArrivalEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
+    showTeleportDebug: 0
+    incendiaryRounds: 0
+    incendiaryDuration: 5
+    incendiaryDamagePerSecond: 10
+    incendiaryTickInterval: 0.5
+    incendiarySpreadEnabled: 0
+    incendiarySpreadRadius: 5
+    incendiarySpreadChance: 0.3
+    incendiaryFireEffectPrefab: {fileID: 3021981346131943567, guid: 7c6e19caaf799254985a26e6be855d0e, type: 3}
+    incendiaryTintColor: {r: 1, g: 0.4, b: 0, a: 1}
+    incendiaryTintStrength: 0.3
+    incendiaryAddEmission: 1
+    incendiaryEmissionIntensity: 2
+    disorientationRounds: 0
+    disorientationDuration: 3
+    disorientationSpinSpeed: 1440
+    disorientationEffectPrefab: {fileID: 0}
+    showDisorientationDebug: 0
