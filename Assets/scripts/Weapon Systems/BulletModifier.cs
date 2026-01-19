@@ -1860,11 +1860,14 @@ public class IncendiaryEffect : MonoBehaviour
 
         // Apply fire tint and emission
         renderers = GetComponentsInChildren<Renderer>();
+        originalColors.Clear();
+        originalEmissionColors.Clear();
 
         foreach (var renderer in renderers)
         {
             if (renderer == null) continue;
 
+            // Get a fresh copy of materials
             Material[] materials = renderer.materials;
             Color[] colors = new Color[materials.Length];
             Color[] emissionColors = new Color[materials.Length];
@@ -1882,9 +1885,7 @@ public class IncendiaryEffect : MonoBehaviour
                 // Store and apply emission
                 if (addEmission && materials[i].HasProperty("_EmissionColor"))
                 {
-                    materials[i].EnableKeyword("_EMISSION");
-
-                    // Store original emission (might already be emitting)
+                    // Store original emission
                     if (materials[i].IsKeywordEnabled("_EMISSION"))
                     {
                         emissionColors[i] = materials[i].GetColor("_EmissionColor");
@@ -1894,7 +1895,8 @@ public class IncendiaryEffect : MonoBehaviour
                         emissionColors[i] = Color.black;
                     }
 
-                    // Apply fire emission (HDR glow)
+                    // Enable and apply fire emission
+                    materials[i].EnableKeyword("_EMISSION");
                     Color fireEmission = tintColor * emissionIntensity;
                     materials[i].SetColor("_EmissionColor", fireEmission);
                 }
@@ -1902,6 +1904,8 @@ public class IncendiaryEffect : MonoBehaviour
 
             originalColors[renderer] = colors;
             originalEmissionColors[renderer] = emissionColors;
+
+            // CRITICAL: Apply the modified materials back
             renderer.materials = materials;
         }
 
@@ -1916,6 +1920,7 @@ public class IncendiaryEffect : MonoBehaviour
         {
             if (renderer == null) continue;
 
+            // Important: Get fresh material array reference
             Material[] materials = renderer.materials;
 
             // Restore colors
@@ -1952,6 +1957,7 @@ public class IncendiaryEffect : MonoBehaviour
                 }
             }
 
+            // CRITICAL: Reassign the modified materials back to the renderer
             renderer.materials = materials;
         }
 
