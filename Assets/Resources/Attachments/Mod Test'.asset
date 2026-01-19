@@ -43,7 +43,7 @@ MonoBehaviour:
   underbarrelShotgunData: {fileID: 0}
   flashlightData: {fileID: 0}
   modifierData:
-    antiGravityRounds: 1
+    antiGravityRounds: 0
     antiGravityForce: 5
     antiGravityDuration: 10
     disableGravity: 1
@@ -64,19 +64,19 @@ MonoBehaviour:
     explosionKnockbackDuration: 2
     explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
     showExplosionRadius: 0
-    tracerRounds: 0
+    tracerRounds: 1
     tracerColor: {r: 0, g: 1, b: 0.2879982, a: 1}
-    tracerIntensity: 1.97
+    tracerIntensity: 5.03
     tracerLightRange: 15.08
     addEmission: 0
     emissionIntensity: 2
     trailEffectPrefab: {fileID: 0}
     trailDuration: 0.3
-    ricochetRounds: 0
+    ricochetRounds: 1
     maxBounces: 1
     bounceSpeedMultiplier: 0.9
     bounceDamageMultiplier: 0.8
-    ricochetSparkPrefab: {fileID: 0}
+    ricochetSparkPrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
     ricochetSound: {fileID: 0}
     showRicochetDebug: 0
     phaseRounds: 0
@@ -97,8 +97,8 @@ MonoBehaviour:
     teleportMaxDistance: 15
     teleportMaxAttempts: 20
     teleportCheckRadius: 1
-    teleportDepartureEffectPrefab: {fileID: 5720272262377439168, guid: f0c7a2957654cdc4b9abae37cabef923, type: 3}
-    teleportArrivalEffectPrefab: {fileID: 2124885087639729593, guid: 6ba7a0626ca720b498c4ef745fea2a06, type: 3}
+    teleportDepartureEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
+    teleportArrivalEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
     showTeleportDebug: 0
     incendiaryRounds: 0
     incendiaryDuration: 5
@@ -112,7 +112,7 @@ MonoBehaviour:
     incendiaryTintStrength: 0.3
     incendiaryAddEmission: 1
     incendiaryEmissionIntensity: 2
-    disorientationRounds: 1
+    disorientationRounds: 0
     disorientationDuration: 3
     disorientationSpinSpeed: 1440
     disorientationEffectPrefab: {fileID: 0}

@@ -53,7 +53,6 @@ public class WeaponInstanceSaveData
         instanceId = instance.instanceId;
         displayName = instance.displayName;
         currentAmmo = instance.currentAmmo;
-
         attachments = new List<WeaponAttachmentSaveData>();
         foreach (var att in instance.attachments)
         {
@@ -70,12 +69,10 @@ public class WeaponInstanceSaveData
             displayName = displayName,
             currentAmmo = currentAmmo
         };
-
         foreach (var attData in attachments)
         {
             instance.attachments.Add(attData.ToEntry());
         }
-
         return instance;
     }
 }
@@ -88,9 +85,12 @@ public class SaveData
     public InventorySaveData playerInventory;
     public SerializableDictionary<string, int> weaponAmmoData;
     public SerializableDictionary<string, WeaponInstanceSaveData> weaponInstances;
-
-    // NEW: Store faction reputation data
     public SerializableDictionary<string, int> factionReputation;
+
+    // NEW: Day/Night cycle data
+    public int currentDayOfWeek; // Store as int (0-6)
+    public float currentTimeOfDay; // Store current hour
+    public int totalDaysPassed; // Optional: track total days
 
     public SaveData()
     {
@@ -100,6 +100,11 @@ public class SaveData
         playerInventory = new InventorySaveData();
         weaponAmmoData = new SerializableDictionary<string, int>();
         weaponInstances = new SerializableDictionary<string, WeaponInstanceSaveData>();
-        factionReputation = new SerializableDictionary<string, int>(); // NEW
+        factionReputation = new SerializableDictionary<string, int>();
+
+        // NEW: Initialize time data
+        currentDayOfWeek = 0; // Monday
+        currentTimeOfDay = 6f; // 6 AM
+        totalDaysPassed = 0;
     }
 }
