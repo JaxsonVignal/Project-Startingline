@@ -5,15 +5,28 @@ public class DayNightCycleManager : MonoBehaviour
 {
     public static DayNightCycleManager Instance { get; private set; }
 
+    // Day of week enum
+    public enum DayOfWeek
+    {
+        Monday,
+        Tuesday,
+        Wednesday,
+        Thursday,
+        Friday,
+        Saturday,
+        Sunday
+    }
+
     [Header("Time Settings")]
     public float dayLengthInMinutes = 24f;
     public float startHour = 6f;
+    public DayOfWeek startingDay = DayOfWeek.Monday; // NEW
 
     [Header("Midnight Pause Settings")]
     public bool pauseAtMidnight = true;
-    public float midnightPauseTime = 0f; // 0 = midnight
+    public float midnightPauseTime = 0f;
     [Tooltip("How close to midnight triggers the pause (in hours)")]
-    public float midnightThreshold = 0.1f; // Pauses when time is within 0.1 hours of midnight
+    public float midnightThreshold = 0.1f;
 
     [Header("References")]
     public Light directionalLight;
@@ -23,16 +36,18 @@ public class DayNightCycleManager : MonoBehaviour
     [Range(0, 24)] public float currentTimeOfDay;
 
     public static event Action<float> OnTimeChanged;
-    public static event Action OnMidnightReached; // Event when midnight is reached
-    public static event Action OnPlayerSlept; // Event when player sleeps and time resumes
+    public static event Action OnMidnightReached;
+    public static event Action OnPlayerSlept;
+    public static event Action<DayOfWeek> OnDayChanged; // NEW
 
     private float timeScale;
     private bool isPausedAtMidnight = false;
     private bool hasReachedMidnightToday = false;
     private int currentDay = 0;
+    private DayOfWeek currentDayOfWeek; // NEW
 
-    // Public property to check if time is paused
     public bool IsPausedAtMidnight => isPausedAtMidnight;
+    public DayOfWeek CurrentDayOfWeek => currentDayOfWeek; // NEW
 
     private void Awake()
     {
@@ -46,11 +61,11 @@ public class DayNightCycleManager : MonoBehaviour
     {
         timeScale = 24f / (dayLengthInMinutes * 60f);
         currentTimeOfDay = startHour;
+        currentDayOfWeek = startingDay; // NEW
     }
 
     void Update()
     {
-        // Don't update time if paused at midnight
         if (isPausedAtMidnight)
         {
             return;
@@ -58,12 +73,10 @@ public class DayNightCycleManager : MonoBehaviour
 
         currentTimeOfDay += Time.deltaTime * timeScale;
 
-        // Check if we've reached midnight
         if (pauseAtMidnight && !hasReachedMidnightToday)
         {
             if (currentTimeOfDay >= (24f - midnightThreshold) || currentTimeOfDay <= midnightThreshold)
             {
-                // Snap to exactly midnight
                 currentTimeOfDay = midnightPauseTime;
                 isPausedAtMidnight = true;
                 hasReachedMidnightToday = true;
@@ -73,7 +86,6 @@ public class DayNightCycleManager : MonoBehaviour
             }
         }
 
-        // Handle day rollover when NOT paused
         if (currentTimeOfDay >= 24f)
         {
             currentTimeOfDay -= 24f;
@@ -97,27 +109,43 @@ public class DayNightCycleManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Call this when the player sleeps to resume time and start a new day
-    /// </summary>
     public void PlayerSlept(float wakeUpHour = 6f)
     {
-        // Reset time to morning
         currentTimeOfDay = wakeUpHour;
         isPausedAtMidnight = false;
         hasReachedMidnightToday = false;
         currentDay++;
 
-        Debug.Log($"Player slept! New day started. Current time: {wakeUpHour:F2}, Day: {currentDay}");
+        // Advance to next day of week
+        AdvanceDayOfWeek(); // NEW
+
+        Debug.Log($"Player slept! New day started. Current time: {wakeUpHour:F2}, Day: {currentDay}, {currentDayOfWeek}");
 
         UpdateLighting();
         OnTimeChanged?.Invoke(currentTimeOfDay);
         OnPlayerSlept?.Invoke();
     }
 
-    /// <summary>
-    /// Force resume time without sleeping (for debugging or special cases)
-    /// </summary>
+    // NEW: Advance to next day of week
+    private void AdvanceDayOfWeek()
+    {
+        DayOfWeek previousDay = currentDayOfWeek;
+        currentDayOfWeek = (DayOfWeek)(((int)currentDayOfWeek + 1) % 7);
+
+        Debug.Log($"Day changed from {previousDay} to {currentDayOfWeek}");
+        OnDayChanged?.Invoke(currentDayOfWeek);
+    }
+
+    // NEW: Set specific day of week
+    public void SetDayOfWeek(DayOfWeek day)
+    {
+        DayOfWeek previousDay = currentDayOfWeek;
+        currentDayOfWeek = day;
+
+        Debug.Log($"Day manually set from {previousDay} to {currentDayOfWeek}");
+        OnDayChanged?.Invoke(currentDayOfWeek);
+    }
+
     public void ResumeTime()
     {
         if (isPausedAtMidnight)
@@ -128,18 +156,12 @@ public class DayNightCycleManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Force pause time at current hour
-    /// </summary>
     public void PauseTime()
     {
         isPausedAtMidnight = true;
         Debug.Log($"Time manually paused at {currentTimeOfDay:F2}");
     }
 
-    /// <summary>
-    /// Check if it's currently midnight and paused
-    /// </summary>
     public bool IsCurrentlyMidnight()
     {
         return isPausedAtMidnight && Mathf.Approximately(currentTimeOfDay, midnightPauseTime);
@@ -149,7 +171,6 @@ public class DayNightCycleManager : MonoBehaviour
     {
         currentTimeOfDay = hour;
 
-        // Reset midnight pause if setting time away from midnight
         if (Mathf.Abs(hour - midnightPauseTime) > midnightThreshold)
         {
             isPausedAtMidnight = false;
@@ -164,9 +185,6 @@ public class DayNightCycleManager : MonoBehaviour
     public int GetMinute() => Mathf.FloorToInt((currentTimeOfDay % 1f) * 60f);
     public int GetCurrentDay() => currentDay;
 
-    /// <summary>
-    /// Converts real-time seconds into in-game hours.
-    /// </summary>
     public float GetGameTimeFromRealTime(float realTimeSeconds)
     {
         float secondsPerFullDay = dayLengthInMinutes * 60f;

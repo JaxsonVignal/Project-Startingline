@@ -16,6 +16,7 @@ public class WeaponOrder
     public bool isPriceSet;
     public bool isAccepted;
     public bool isCompleted;
+    public bool npcHasBeenSpawned; // NEW: Track if NPC has been sent to meeting
     public float pickupTimeGameHour;
 
     public WeaponOrder(string npc, WeaponData weapon, Transform location)
@@ -26,5 +27,6 @@ public class WeaponOrder
         isPriceSet = false;
         isAccepted = false;
         isCompleted = false;
+        npcHasBeenSpawned = false; // Initialize to false
     }
 }

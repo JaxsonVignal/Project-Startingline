@@ -15,6 +15,15 @@ public class BulletModifier : MonoBehaviour
     private int bouncesRemaining = 0;
     private float currentDamageMultiplier = 1f;
 
+    private void Start()
+    {
+        // Setup phase collision if enabled
+        if (modifierData != null && modifierData.phaseRounds)
+        {
+            SetupPhaseCollision();
+        }
+    }
+
     /// <summary>
     /// Call this from PlayerShooting to pass modifier data to the bullet
     /// </summary>
@@ -54,6 +63,19 @@ public class BulletModifier : MonoBehaviour
             {
                 Debug.Log($"  - Ricochet enabled (Max Bounces: {modifierData.maxBounces}, Speed Mult: {modifierData.bounceSpeedMultiplier}x, Damage Mult: {modifierData.bounceDamageMultiplier}x)");
             }
+            if (modifierData.phaseRounds)
+            {
+                Debug.Log($"  - Phase enabled (Transparency: {modifierData.phaseTransparency})");
+                ApplyPhaseEffect();
+            }
+            if (modifierData.incendiaryRounds)
+            {
+                Debug.Log($"  - Incendiary enabled (Duration: {modifierData.incendiaryDuration}s, DPS: {modifierData.incendiaryDamagePerSecond})");
+            }
+            if (modifierData.disorientationRounds)
+            {
+                Debug.Log($"  - Disorientation enabled (Duration: {modifierData.disorientationDuration}s, Spin Speed: {modifierData.disorientationSpinSpeed}°/s)");
+            }
         }
     }
 
@@ -64,6 +86,13 @@ public class BulletModifier : MonoBehaviour
     public void OnBulletHit(Collision collision)
     {
         if (modifierData == null) return;
+
+        // TELEPORT EFFECT - Apply FIRST before other effects!
+        // This way if you combine teleport + gravity, they teleport first, THEN float up
+        if (modifierData.teleportRounds)
+        {
+            ApplyTeleport(collision);
+        }
 
         // RICOCHET CHECK - If enabled and bounces remaining, bounce instead of applying effects
         if (modifierData.ricochetRounds && bouncesRemaining > 0)
@@ -98,6 +127,24 @@ public class BulletModifier : MonoBehaviour
         if (modifierData.cryoRounds)
         {
             ApplyCryo(collision);
+        }
+
+        // GRAVITY WELL EFFECT
+        if (modifierData.gravityWellRounds)
+        {
+            ApplyGravityWell(collision);
+        }
+
+        // INCENDIARY EFFECT
+        if (modifierData.incendiaryRounds)
+        {
+            ApplyIncendiary(collision);
+        }
+
+        // DISORIENTATION EFFECT
+        if (modifierData.disorientationRounds)
+        {
+            ApplyDisorientation(collision);
         }
     }
 
@@ -135,6 +182,7 @@ public class BulletModifier : MonoBehaviour
                 modifierData.bobbingAmount,
                 modifierData.bobbingSpeed
             );
+            Debug.Log($"[BulletModifier] Refreshed existing anti-gravity effect");
         }
         else
         {
@@ -148,6 +196,7 @@ public class BulletModifier : MonoBehaviour
                 modifierData.bobbingAmount,
                 modifierData.bobbingSpeed
             );
+            Debug.Log($"[BulletModifier] Added new anti-gravity effect");
         }
     }
 
@@ -227,6 +276,9 @@ public class BulletModifier : MonoBehaviour
 
         int enemiesHit = 0;
 
+        // Track which root transforms we've already processed (avoid duplicate effects)
+        HashSet<Transform> processedRoots = new HashSet<Transform>();
+
         foreach (Collider hitCollider in hitColliders)
         {
             // Only damage objects on Enemies layer
@@ -234,6 +286,16 @@ public class BulletModifier : MonoBehaviour
             {
                 continue;
             }
+
+            // Get root transform to avoid processing same enemy multiple times
+            Transform rootTransform = hitCollider.transform.root;
+
+            // Skip if we already processed this enemy
+            if (processedRoots.Contains(rootTransform))
+            {
+                continue;
+            }
+            processedRoots.Add(rootTransform);
 
             // Calculate distance-based damage falloff
             float distance = Vector3.Distance(explosionPos, hitCollider.transform.position);
@@ -249,14 +311,169 @@ public class BulletModifier : MonoBehaviour
                 Debug.Log($"[BulletModifier] Explosion hit {hitCollider.gameObject.name} for {finalDamage} damage (distance: {distance:F1})");
             }
 
-            // Apply physics force if enabled
-            if (modifierData.applyExplosionForce)
+            // APPLY TELEPORT IF ENABLED!
+            if (modifierData.teleportRounds)
             {
-                Rigidbody rb = hitCollider.GetComponent<Rigidbody>();
-                if (rb != null)
+                Debug.Log($"[BulletModifier] Applying teleport to explosion victim {rootTransform.name}");
+                ApplyTeleportToTarget(rootTransform);
+            }
+
+            // Apply knockback if enabled (no Rigidbody needed!)
+            if (modifierData.applyExplosionKnockback)
+            {
+                // Calculate knockback direction (away from explosion)
+                Vector3 knockbackDirection = (rootTransform.position - explosionPos).normalized;
+
+                // Use full knockback force (NOT reduced by distance - damage falloff is enough!)
+                float knockbackStrength = modifierData.explosionKnockbackForce;
+
+                // Get or add KnockbackHandler component on the ENEMY (not the bullet!)
+                KnockbackHandler knockbackHandler = rootTransform.GetComponent<KnockbackHandler>();
+                if (knockbackHandler == null)
                 {
-                    rb.AddExplosionForce(modifierData.explosionForceStrength, explosionPos, modifierData.explosionRadius);
-                    Debug.Log($"[BulletModifier] Applied explosion force to {hitCollider.gameObject.name}");
+                    knockbackHandler = rootTransform.gameObject.AddComponent<KnockbackHandler>();
+                }
+
+                // Apply knockback (handler will check if already being knocked back)
+                knockbackHandler.ApplyKnockback(knockbackDirection, knockbackStrength, modifierData.explosionKnockbackDuration);
+
+                Debug.Log($"[BulletModifier] Applied knockback to {rootTransform.name} (force: {knockbackStrength:F1}, direction: {knockbackDirection})");
+            }
+
+            // APPLY ANTI-GRAVITY IF ENABLED!
+            if (modifierData.antiGravityRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying anti-gravity to explosion victim {rootTransform.name}");
+
+                // Check if target already has an anti-gravity effect component
+                AntiGravityEffect existingEffect = rootTransform.GetComponent<AntiGravityEffect>();
+
+                if (existingEffect != null)
+                {
+                    // Refresh the existing effect
+                    existingEffect.RefreshEffect(
+                        modifierData.antiGravityForce,
+                        modifierData.antiGravityDuration,
+                        modifierData.disableGravity,
+                        modifierData.initialUpwardImpulse,
+                        modifierData.bobbingAmount,
+                        modifierData.bobbingSpeed
+                    );
+                    Debug.Log($"[BulletModifier] Refreshed anti-gravity on explosion victim");
+                }
+                else
+                {
+                    // Add new anti-gravity effect component to the target
+                    AntiGravityEffect effect = rootTransform.gameObject.AddComponent<AntiGravityEffect>();
+                    effect.Initialize(
+                        modifierData.antiGravityForce,
+                        modifierData.antiGravityDuration,
+                        modifierData.disableGravity,
+                        modifierData.initialUpwardImpulse,
+                        modifierData.bobbingAmount,
+                        modifierData.bobbingSpeed
+                    );
+                    Debug.Log($"[BulletModifier] Added anti-gravity to explosion victim");
+                }
+            }
+
+            // APPLY CRYO IF ENABLED!
+            if (modifierData.cryoRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying cryo to explosion victim {rootTransform.name}");
+
+                CryoEffect existingCryo = rootTransform.GetComponent<CryoEffect>();
+
+                if (existingCryo != null)
+                {
+                    existingCryo.RefreshEffect(
+                        modifierData.cryoDuration,
+                        modifierData.freezeAnimation,
+                        modifierData.freezeTintColor,
+                        modifierData.freezeTintStrength,
+                        modifierData.iceEffectPrefab
+                    );
+                }
+                else
+                {
+                    CryoEffect effect = rootTransform.gameObject.AddComponent<CryoEffect>();
+                    effect.Initialize(
+                        modifierData.cryoDuration,
+                        modifierData.freezeAnimation,
+                        modifierData.freezeTintColor,
+                        modifierData.freezeTintStrength,
+                        modifierData.iceEffectPrefab
+                    );
+                }
+            }
+
+            // APPLY INCENDIARY IF ENABLED!
+            if (modifierData.incendiaryRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying incendiary to explosion victim {rootTransform.name}");
+
+                IncendiaryEffect existingIncendiary = rootTransform.GetComponent<IncendiaryEffect>();
+
+                if (existingIncendiary != null)
+                {
+                    existingIncendiary.RefreshEffect(
+                        modifierData.incendiaryDuration,
+                        modifierData.incendiaryDamagePerSecond,
+                        modifierData.incendiaryTickInterval,
+                        modifierData.incendiarySpreadEnabled,
+                        modifierData.incendiarySpreadRadius,
+                        modifierData.incendiarySpreadChance,
+                        modifierData.incendiaryFireEffectPrefab,
+                        modifierData.incendiaryTintColor,
+                        modifierData.incendiaryTintStrength,
+                        modifierData.incendiaryAddEmission,
+                        modifierData.incendiaryEmissionIntensity
+                    );
+                }
+                else
+                {
+                    IncendiaryEffect effect = rootTransform.gameObject.AddComponent<IncendiaryEffect>();
+                    effect.Initialize(
+                        modifierData.incendiaryDuration,
+                        modifierData.incendiaryDamagePerSecond,
+                        modifierData.incendiaryTickInterval,
+                        modifierData.incendiarySpreadEnabled,
+                        modifierData.incendiarySpreadRadius,
+                        modifierData.incendiarySpreadChance,
+                        modifierData.incendiaryFireEffectPrefab,
+                        modifierData.incendiaryTintColor,
+                        modifierData.incendiaryTintStrength,
+                        modifierData.incendiaryAddEmission,
+                        modifierData.incendiaryEmissionIntensity
+                    );
+                }
+            }
+
+            // APPLY DISORIENTATION IF ENABLED!
+            if (modifierData.disorientationRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying disorientation (SPINBOT) to explosion victim {rootTransform.name}");
+
+                DisorientationEffect existingDisorientation = rootTransform.GetComponent<DisorientationEffect>();
+
+                if (existingDisorientation != null)
+                {
+                    existingDisorientation.RefreshEffect(
+                        modifierData.disorientationDuration,
+                        modifierData.disorientationSpinSpeed,
+                        modifierData.disorientationEffectPrefab,
+                        modifierData.showDisorientationDebug
+                    );
+                }
+                else
+                {
+                    DisorientationEffect effect = rootTransform.gameObject.AddComponent<DisorientationEffect>();
+                    effect.Initialize(
+                        modifierData.disorientationDuration,
+                        modifierData.disorientationSpinSpeed,
+                        modifierData.disorientationEffectPrefab,
+                        modifierData.showDisorientationDebug
+                    );
                 }
             }
         }
@@ -267,6 +484,331 @@ public class BulletModifier : MonoBehaviour
         if (modifierData.showExplosionRadius)
         {
             Debug.DrawLine(explosionPos, explosionPos + Vector3.up * modifierData.explosionRadius, Color.red, 2f);
+        }
+    }
+
+    /// <summary>
+    /// Create gravity well at impact point that pulls enemies toward center
+    /// </summary>
+    private void ApplyGravityWell(Collision collision)
+    {
+        if (collision.contacts.Length == 0) return;
+
+        Vector3 wellPosition = collision.contacts[0].point;
+
+        Debug.Log($"[BulletModifier] Creating gravity well at {wellPosition} with radius {modifierData.gravityWellRadius}");
+
+        // Create gravity well GameObject
+        GameObject wellObject = new GameObject("GravityWell");
+        wellObject.transform.position = wellPosition;
+
+        // Add the gravity well component
+        GravityWellEffect wellEffect = wellObject.AddComponent<GravityWellEffect>();
+        wellEffect.Initialize(
+            wellPosition,
+            modifierData.gravityWellRadius,
+            modifierData.gravityWellDuration,
+            modifierData.gravityWellStrength,
+            modifierData.gravityWellDamagePerSecond,
+            modifierData.gravityWellEffectPrefab,
+            modifierData.showGravityWellDebug
+        );
+
+        // Destroy after duration
+        Destroy(wellObject, modifierData.gravityWellDuration);
+    }
+
+    /// <summary>
+    /// Teleport enemy to random nearby location (with collision checks)
+    /// </summary>
+    private void ApplyTeleport(Collision collision)
+    {
+        if (collision.collider == null) return;
+
+        GameObject target = collision.collider.gameObject;
+
+        // Check if target is on the "Enemies" layer
+        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        {
+            Debug.Log($"[BulletModifier] Skipping teleport on {target.name} - not on Enemies layer");
+            return;
+        }
+
+        // Get root transform (whole enemy, not just a body part)
+        Transform rootTransform = target.transform.root;
+
+        // Use helper method
+        ApplyTeleportToTarget(rootTransform);
+    }
+
+    /// <summary>
+    /// Apply teleport to a specific target transform
+    /// Helper method used by both direct hits and explosion hits
+    /// </summary>
+    private void ApplyTeleportToTarget(Transform rootTransform)
+    {
+        Vector3 originalPosition = rootTransform.position;
+
+        Debug.Log($"[BulletModifier] Attempting to teleport {rootTransform.name} from {originalPosition}");
+
+        // Spawn departure effect
+        if (modifierData.teleportDepartureEffectPrefab != null)
+        {
+            GameObject departureEffect = Instantiate(modifierData.teleportDepartureEffectPrefab, originalPosition, Quaternion.identity);
+            Destroy(departureEffect, 3f);
+            Debug.Log($"[BulletModifier] Spawned departure effect at {originalPosition}");
+        }
+
+        // Try to find valid teleport location
+        Vector3 teleportPosition;
+        bool foundValidPosition = FindValidTeleportPosition(originalPosition, out teleportPosition);
+
+        if (foundValidPosition)
+        {
+            // Check if anti-gravity is active
+            AntiGravityEffect antiGrav = rootTransform.GetComponent<AntiGravityEffect>();
+            bool antiGravActive = (antiGrav != null);
+
+            // Get NavMeshAgent
+            UnityEngine.AI.NavMeshAgent navAgent = rootTransform.GetComponent<UnityEngine.AI.NavMeshAgent>();
+
+            if (antiGravActive)
+            {
+                // Anti-gravity active - just move transform directly (they're floating anyway)
+                Debug.Log($"[BulletModifier] Anti-gravity active - teleporting transform directly");
+
+                rootTransform.position = teleportPosition;
+
+                // Update anti-gravity to use new position as ground
+                antiGrav.UpdateGroundPosition(teleportPosition);
+
+                Debug.Log($"[BulletModifier] Teleported {rootTransform.name} to {teleportPosition} (direct transform)");
+
+                // Spawn arrival effect
+                if (modifierData.teleportArrivalEffectPrefab != null)
+                {
+                    GameObject arrivalEffect = Instantiate(modifierData.teleportArrivalEffectPrefab, teleportPosition, Quaternion.identity);
+                    Destroy(arrivalEffect, 3f);
+                    Debug.Log($"[BulletModifier] Spawned arrival effect at {teleportPosition}");
+                }
+
+                // Debug visualization
+                if (modifierData.showTeleportDebug)
+                {
+                    Debug.DrawLine(originalPosition, teleportPosition, Color.magenta, 5f);
+                    Debug.DrawLine(teleportPosition, teleportPosition + Vector3.up * 3f, Color.cyan, 5f);
+                }
+            }
+            else if (navAgent != null && navAgent.isOnNavMesh)
+            {
+                // No anti-gravity - use NavMesh for safe teleport
+                UnityEngine.AI.NavMeshHit navHit;
+                if (UnityEngine.AI.NavMesh.SamplePosition(teleportPosition, out navHit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+                {
+                    // Teleport using NavMeshAgent.Warp (safe method)
+                    navAgent.Warp(navHit.position);
+
+                    Debug.Log($"[BulletModifier] Teleported {rootTransform.name} to {navHit.position}");
+
+                    // Spawn arrival effect
+                    if (modifierData.teleportArrivalEffectPrefab != null)
+                    {
+                        GameObject arrivalEffect = Instantiate(modifierData.teleportArrivalEffectPrefab, navHit.position, Quaternion.identity);
+                        Destroy(arrivalEffect, 3f);
+                        Debug.Log($"[BulletModifier] Spawned arrival effect at {navHit.position}");
+                    }
+
+                    // Debug visualization
+                    if (modifierData.showTeleportDebug)
+                    {
+                        Debug.DrawLine(originalPosition, navHit.position, Color.magenta, 5f);
+                        Debug.DrawLine(navHit.position, navHit.position + Vector3.up * 3f, Color.cyan, 5f);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[BulletModifier] No NavMesh found near teleport position {teleportPosition}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[BulletModifier] Enemy {rootTransform.name} has no NavMeshAgent or not on NavMesh");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[BulletModifier] Failed to find valid teleport position for {rootTransform.name} after {modifierData.teleportMaxAttempts} attempts");
+        }
+    }
+
+    /// <summary>
+    /// Find a valid teleport position that isn't inside objects
+    /// </summary>
+    private bool FindValidTeleportPosition(Vector3 originalPosition, out Vector3 validPosition)
+    {
+        validPosition = originalPosition;
+
+        for (int i = 0; i < modifierData.teleportMaxAttempts; i++)
+        {
+            // Generate random point within distance range (horizontal only - no vertical!)
+            Vector2 randomCircle = Random.insideUnitCircle.normalized;
+            float randomDistance = Random.Range(modifierData.teleportMinDistance, modifierData.teleportMaxDistance);
+
+            Vector3 randomOffset = new Vector3(randomCircle.x, 0f, randomCircle.y) * randomDistance;
+            Vector3 candidatePosition = originalPosition + randomOffset;
+
+            // Check if position is valid (not inside objects)
+            if (IsPositionValid(candidatePosition))
+            {
+                validPosition = candidatePosition;
+                Debug.Log($"[BulletModifier] Found valid position on attempt {i + 1}: {validPosition}");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Check if a position is valid (not inside walls/objects)
+    /// </summary>
+    private bool IsPositionValid(Vector3 position)
+    {
+        // Check sphere around position for collisions
+        Collider[] colliders = Physics.OverlapSphere(position, modifierData.teleportCheckRadius);
+
+        foreach (Collider col in colliders)
+        {
+            // Ignore enemies (we want to check for walls/obstacles, not other enemies)
+            if (col.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+            {
+                continue;
+            }
+
+            // If we hit something that's not an enemy, position is invalid
+            Debug.Log($"[BulletModifier] Position {position} invalid - colliding with {col.gameObject.name} on layer {LayerMask.LayerToName(col.gameObject.layer)}");
+            return false;
+        }
+
+        // Position is valid - no obstacles detected
+        // (No ground check = enemies can teleport into air and fall! Much funnier!)
+        Debug.Log($"[BulletModifier] Position {position} is valid - clear of obstacles");
+        return true;
+    }
+
+    /// <summary>
+    /// Apply incendiary/fire effect to the hit target
+    /// Burns target over time dealing damage
+    /// Only affects objects on the "Enemies" layer
+    /// </summary>
+    private void ApplyIncendiary(Collision collision)
+    {
+        if (collision.collider == null) return;
+
+        GameObject target = collision.collider.gameObject;
+
+        // Check if target is on the "Enemies" layer
+        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        {
+            Debug.Log($"[BulletModifier] Skipping incendiary on {target.name} - not on Enemies layer");
+            return;
+        }
+
+        // Get root transform
+        Transform rootTransform = target.transform.root;
+
+        Debug.Log($"[BulletModifier] Applying incendiary effect to {rootTransform.name}");
+
+        // Check if target already has an incendiary effect component
+        IncendiaryEffect existingEffect = rootTransform.GetComponent<IncendiaryEffect>();
+
+        if (existingEffect != null)
+        {
+            // Refresh the existing effect
+            existingEffect.RefreshEffect(
+                modifierData.incendiaryDuration,
+                modifierData.incendiaryDamagePerSecond,
+                modifierData.incendiaryTickInterval,
+                modifierData.incendiarySpreadEnabled,
+                modifierData.incendiarySpreadRadius,
+                modifierData.incendiarySpreadChance,
+                modifierData.incendiaryFireEffectPrefab,
+                modifierData.incendiaryTintColor,
+                modifierData.incendiaryTintStrength,
+                modifierData.incendiaryAddEmission,
+                modifierData.incendiaryEmissionIntensity
+            );
+            Debug.Log($"[BulletModifier] Refreshed existing incendiary effect");
+        }
+        else
+        {
+            // Add new incendiary effect component to the target
+            IncendiaryEffect effect = rootTransform.gameObject.AddComponent<IncendiaryEffect>();
+            effect.Initialize(
+                modifierData.incendiaryDuration,
+                modifierData.incendiaryDamagePerSecond,
+                modifierData.incendiaryTickInterval,
+                modifierData.incendiarySpreadEnabled,
+                modifierData.incendiarySpreadRadius,
+                modifierData.incendiarySpreadChance,
+                modifierData.incendiaryFireEffectPrefab,
+                modifierData.incendiaryTintColor,
+                modifierData.incendiaryTintStrength,
+                modifierData.incendiaryAddEmission,
+                modifierData.incendiaryEmissionIntensity
+            );
+            Debug.Log($"[BulletModifier] Added new incendiary effect");
+        }
+    }
+
+    /// <summary>
+    /// Apply disorientation effect to the hit target
+    /// Makes target spin rapidly (360s) like a spinbot while maintaining normal movement
+    /// Only affects objects on the "Enemies" layer
+    /// </summary>
+    private void ApplyDisorientation(Collision collision)
+    {
+        if (collision.collider == null) return;
+
+        GameObject target = collision.collider.gameObject;
+
+        // Check if target is on the "Enemies" layer
+        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        {
+            Debug.Log($"[BulletModifier] Skipping disorientation on {target.name} - not on Enemies layer");
+            return;
+        }
+
+        // Get root transform
+        Transform rootTransform = target.transform.root;
+
+        Debug.Log($"[BulletModifier] Applying disorientation (SPINBOT) effect to {rootTransform.name}");
+
+        // Check if target already has a disorientation effect component
+        DisorientationEffect existingEffect = rootTransform.GetComponent<DisorientationEffect>();
+
+        if (existingEffect != null)
+        {
+            // Refresh the existing effect
+            existingEffect.RefreshEffect(
+                modifierData.disorientationDuration,
+                modifierData.disorientationSpinSpeed,
+                modifierData.disorientationEffectPrefab,
+                modifierData.showDisorientationDebug
+            );
+            Debug.Log($"[BulletModifier] Refreshed existing disorientation effect");
+        }
+        else
+        {
+            // Add new disorientation effect component to the target
+            DisorientationEffect effect = rootTransform.gameObject.AddComponent<DisorientationEffect>();
+            effect.Initialize(
+                modifierData.disorientationDuration,
+                modifierData.disorientationSpinSpeed,
+                modifierData.disorientationEffectPrefab,
+                modifierData.showDisorientationDebug
+            );
+            Debug.Log($"[BulletModifier] Added new disorientation effect");
         }
     }
 
@@ -330,22 +872,113 @@ public class BulletModifier : MonoBehaviour
         }
     }
 
-    // ADD MORE EFFECT METHODS HERE
-    // Example:
-    // private void ApplyExplosion(Collision collision)
-    // {
-    //     Vector3 explosionPos = collision.contacts[0].point;
-    //     Collider[] hits = Physics.OverlapSphere(explosionPos, modifierData.explosionRadius);
-    //     
-    //     foreach (var hit in hits)
-    //     {
-    //         var enemy = hit.GetComponent<EnemyHealth>();
-    //         if (enemy != null)
-    //         {
-    //             enemy.TakeDamage(modifierData.explosionDamage);
-    //         }
-    //     }
-    // }
+    /// <summary>
+    /// Apply phase effect to bullet - visual changes
+    /// Makes bullet semi-transparent and glowy
+    /// </summary>
+    private void ApplyPhaseEffect()
+    {
+        Debug.Log($"[BulletModifier] Applying phase effect to bullet");
+
+        // Make bullet semi-transparent
+        if (modifierData.makeTransparent)
+        {
+            Renderer bulletRenderer = GetComponent<Renderer>();
+            if (bulletRenderer != null && bulletRenderer.material != null)
+            {
+                Material mat = bulletRenderer.material;
+
+                // Set material to transparent mode
+                mat.SetFloat("_Mode", 3); // Transparent mode
+                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                mat.SetInt("_ZWrite", 0);
+                mat.DisableKeyword("_ALPHATEST_ON");
+                mat.EnableKeyword("_ALPHABLEND_ON");
+                mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                mat.renderQueue = 3000;
+
+                // Set transparency
+                Color color = mat.color;
+                color.a = modifierData.phaseTransparency;
+                mat.color = color;
+
+                // Add phase glow
+                mat.EnableKeyword("_EMISSION");
+                Color emissionColor = modifierData.phaseGlowColor * 2f; // HDR glow
+                mat.SetColor("_EmissionColor", emissionColor);
+
+                Debug.Log($"[BulletModifier] Set bullet transparency to {modifierData.phaseTransparency}");
+            }
+        }
+
+        // Add phase particle effect
+        if (modifierData.phaseEffectPrefab != null)
+        {
+            GameObject phaseEffect = Instantiate(modifierData.phaseEffectPrefab, transform.position, Quaternion.identity, transform);
+            Debug.Log($"[BulletModifier] Added phase particle effect");
+        }
+    }
+
+    /// <summary>
+    /// Setup collision to only hit enemies
+    /// Called in Start after Initialize
+    /// </summary>
+    private void SetupPhaseCollision()
+    {
+        // Get the bullet's collider
+        Collider bulletCollider = GetComponent<Collider>();
+        if (bulletCollider == null)
+        {
+            Debug.LogWarning("[BulletModifier] No collider found on bullet! Phase rounds need a collider.");
+            return;
+        }
+
+        // Ignore collisions with everything except Enemies layer
+        int enemyLayer = LayerMask.NameToLayer("Enemies");
+
+        // Iterate through all layers (0-31)
+        for (int i = 0; i < 32; i++)
+        {
+            // Ignore collision with all layers except Enemies
+            if (i != enemyLayer)
+            {
+                Physics.IgnoreLayerCollision(gameObject.layer, i, true);
+            }
+        }
+
+        Debug.Log($"[BulletModifier] Phase collision setup - bullet will only collide with Enemies layer");
+
+        // Debug visualization
+        if (modifierData.showPhaseDebug)
+        {
+            // Draw a trail behind the bullet
+            StartCoroutine(DrawPhaseDebugTrail());
+        }
+    }
+
+    /// <summary>
+    /// Draw debug trail for phase bullets
+    /// </summary>
+    private IEnumerator DrawPhaseDebugTrail()
+    {
+        Vector3 lastPos = transform.position;
+
+        while (true)
+        {
+            yield return new WaitForSeconds(0.1f);
+
+            if (transform != null)
+            {
+                Debug.DrawLine(lastPos, transform.position, Color.cyan, 2f);
+                lastPos = transform.position;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
 
     /// <summary>
     /// Apply ricochet effect - bounce bullet off surface
@@ -478,6 +1111,16 @@ public class AntiGravityEffect : MonoBehaviour
         groundPosition = startPosition; // Remember where ground level is
         isLifting = true;
 
+        // Check if knockback is active (Rigidbody present)
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            Debug.Log($"[AntiGravityEffect] Found Rigidbody - will use physics-based anti-gravity on {gameObject.name}");
+            // Don't disable NavMeshAgent - knockback already did it
+            return;
+        }
+
+        // No Rigidbody - use transform-based movement
         // Disable NavMeshAgent if present
         navAgent = GetComponent<UnityEngine.AI.NavMeshAgent>();
         if (navAgent != null)
@@ -525,8 +1168,105 @@ public class AntiGravityEffect : MonoBehaviour
         Debug.Log($"[AntiGravityEffect] Refreshed on {gameObject.name}");
     }
 
+    /// <summary>
+    /// Update the ground position (used when enemy is teleported while floating)
+    /// </summary>
+    public void UpdateGroundPosition(Vector3 newGroundPosition)
+    {
+        groundPosition = newGroundPosition;
+        targetPosition = newGroundPosition + Vector3.up * liftHeight;
+
+        Debug.Log($"[AntiGravityEffect] Updated ground position to {newGroundPosition}, new target: {targetPosition}");
+    }
+
     private void Update()
     {
+        // Check if there's an active Rigidbody (from knockback)
+        Rigidbody rb = GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            Debug.Log($"[AntiGravityEffect] UPDATE: Found RB on {gameObject.name}, isKinematic: {rb.isKinematic}, useGravity: {rb.useGravity}");
+
+            // Make sure it's active for anti-gravity
+            if (rb.isKinematic)
+            {
+                rb.isKinematic = false;
+                rb.useGravity = false; // Disable Unity's gravity, we'll control it
+                Debug.Log($"[AntiGravityEffect] Re-enabled Rigidbody for anti-gravity on {gameObject.name}");
+            }
+
+            // Check if knockback is still active
+            KnockbackHandler knockback = GetComponent<KnockbackHandler>();
+            if (knockback != null && knockback.IsBeingKnockedBack)
+            {
+                Debug.Log($"[AntiGravityEffect] Knockback still active - WAITING");
+                // Knockback is active - don't interfere! Just wait
+                // Only disable gravity so they fly higher
+                rb.useGravity = false;
+
+                timeRemaining -= Time.deltaTime;
+                return; // Let knockback handle movement
+            }
+
+            Debug.Log($"[AntiGravityEffect] Knockback finished - TAKING OVER, currentY: {transform.position.y}, targetY: {groundPosition.y + liftHeight}");
+
+            // Knockback finished or not present - anti-gravity takes over
+            rb.useGravity = false; // Keep gravity off
+
+            // Use Rigidbody but mimic the transform-based behavior
+            float currentHeight = transform.position.y;
+            float targetHeight = groundPosition.y + liftHeight;
+
+            // Damp velocity to stop it at target height
+            rb.velocity = new Vector3(rb.velocity.x * 0.95f, rb.velocity.y * 0.9f, rb.velocity.z * 0.95f);
+
+            if (isLifting)
+            {
+                // Still lifting - apply force toward target
+                if (currentHeight < targetHeight - 0.5f)
+                {
+                    // Not at target yet - apply upward force
+                    float forceNeeded = (targetHeight - currentHeight) * 50f; // Proportional force
+                    forceNeeded = Mathf.Clamp(forceNeeded, 0f, 300f); // Cap it
+                    rb.AddForce(Vector3.up * forceNeeded, ForceMode.Force);
+                    Debug.Log($"[AntiGravityEffect] LIFTING - Applied {forceNeeded}N upward");
+                }
+                else
+                {
+                    // Reached target - start floating
+                    isLifting = false;
+                    rb.velocity = Vector3.zero; // Stop movement
+                    Debug.Log($"[AntiGravityEffect] {gameObject.name} reached target height with Rigidbody, now floating");
+                }
+            }
+            else
+            {
+                // Floating - apply bobbing force
+                float bob = Mathf.Sin(Time.time * bobbingSpeed) * bobbingAmount;
+                float bobTargetY = targetHeight + bob;
+                float heightDiff = bobTargetY - currentHeight;
+
+                // Apply gentle force to maintain bobbing
+                rb.AddForce(Vector3.up * heightDiff * 20f, ForceMode.Force);
+                Debug.Log($"[AntiGravityEffect] BOBBING - heightDiff: {heightDiff}");
+            }
+
+            // Reduce time
+            timeRemaining -= Time.deltaTime;
+            if (timeRemaining <= 0f)
+            {
+                // Effect over - re-enable gravity and let them fall
+                rb.useGravity = true;
+                Debug.Log($"[AntiGravityEffect] Duration expired, re-enabling gravity");
+                Destroy(this);
+            }
+            return;
+        }
+
+        Debug.LogWarning($"[AntiGravityEffect] NO RIGIDBODY FOUND on {gameObject.name} - using transform movement");
+
+        // Original transform-based movement (when no knockback active)
         if (isLowering)
         {
             // Lower back to ground
@@ -853,6 +1593,567 @@ public class CryoEffect : MonoBehaviour
         if (iceEffectInstance != null)
         {
             Destroy(iceEffectInstance);
+        }
+    }
+}
+
+/// <summary>
+/// Component that creates a gravity well that pulls enemies toward a point
+/// Does NOT require Rigidbody - uses transform-based movement
+/// </summary>
+public class GravityWellEffect : MonoBehaviour
+{
+    private Vector3 wellCenter;
+    private float radius;
+    private float duration;
+    private float strength;
+    private float damagePerSecond;
+    private bool showDebug;
+
+    private float timeRemaining;
+    private GameObject visualEffect;
+    private List<Transform> affectedEnemies = new List<Transform>();
+
+    public void Initialize(Vector3 center, float wellRadius, float wellDuration, float pullStrength, float dps, GameObject effectPrefab, bool debug)
+    {
+        wellCenter = center;
+        radius = wellRadius;
+        duration = wellDuration;
+        strength = pullStrength;
+        damagePerSecond = dps;
+        showDebug = debug;
+        timeRemaining = duration;
+
+        Debug.Log($"[GravityWellEffect] Created at {wellCenter} - Radius: {radius}, Duration: {duration}s, Strength: {strength}");
+
+        // Spawn visual effect
+        if (effectPrefab != null)
+        {
+            visualEffect = Instantiate(effectPrefab, wellCenter, Quaternion.identity);
+            visualEffect.transform.localScale = Vector3.one * radius * 2f; // Scale to match radius
+            Debug.Log($"[GravityWellEffect] Spawned visual effect");
+        }
+    }
+
+    private void Update()
+    {
+        timeRemaining -= Time.deltaTime;
+
+        if (timeRemaining <= 0f)
+        {
+            EndEffect();
+            return;
+        }
+
+        // Find all enemies in radius
+        Collider[] enemies = Physics.OverlapSphere(wellCenter, radius, LayerMask.GetMask("Enemies"));
+
+        affectedEnemies.Clear();
+
+        // Track which root transforms we've already processed
+        HashSet<Transform> processedRoots = new HashSet<Transform>();
+
+        foreach (Collider enemy in enemies)
+        {
+            if (enemy == null) continue;
+
+            // Get the root transform (top-level parent)
+            Transform rootTransform = enemy.transform.root;
+
+            // Skip if we've already processed this root
+            if (processedRoots.Contains(rootTransform))
+            {
+                continue;
+            }
+
+            processedRoots.Add(rootTransform);
+            affectedEnemies.Add(rootTransform);
+
+            // Calculate pull direction and distance (use root position)
+            Vector3 directionToCenter = (wellCenter - rootTransform.position).normalized;
+            float distanceToCenter = Vector3.Distance(rootTransform.position, wellCenter);
+
+            // Calculate pull strength (stronger closer to center, weaker at edges)
+            float distanceMultiplier = 1f - (distanceToCenter / radius);
+            float pullForce = strength * distanceMultiplier * Time.deltaTime;
+
+            // Pull ONLY the root transform (this moves the entire enemy hierarchy)
+            rootTransform.position += directionToCenter * pullForce;
+
+            // Apply damage if enabled (get health from the collider we hit, not the root)
+            if (damagePerSecond > 0f)
+            {
+                EnemyHealth health = enemy.GetComponent<EnemyHealth>();
+                if (health != null)
+                {
+                    float damage = damagePerSecond * Time.deltaTime;
+                    health.TakeDamage(damage);
+                }
+            }
+
+            // Debug visualization
+            if (showDebug)
+            {
+                Debug.DrawLine(rootTransform.position, wellCenter, Color.magenta, Time.deltaTime);
+            }
+        }
+
+        // Debug visualization - draw sphere
+        if (showDebug)
+        {
+            DrawDebugSphere(wellCenter, radius, Color.magenta);
+        }
+    }
+
+    private void EndEffect()
+    {
+        Debug.Log($"[GravityWellEffect] Ended at {wellCenter}");
+
+        if (visualEffect != null)
+        {
+            Destroy(visualEffect);
+        }
+
+        Destroy(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        if (visualEffect != null)
+        {
+            Destroy(visualEffect);
+        }
+    }
+
+    /// <summary>
+    /// Draw a debug sphere using lines
+    /// </summary>
+    private void DrawDebugSphere(Vector3 center, float sphereRadius, Color color)
+    {
+        // Draw 3 circles (XY, XZ, YZ planes)
+        int segments = 16;
+        float angleStep = 360f / segments;
+
+        // XY plane circle
+        for (int i = 0; i < segments; i++)
+        {
+            float angle1 = i * angleStep * Mathf.Deg2Rad;
+            float angle2 = (i + 1) * angleStep * Mathf.Deg2Rad;
+
+            Vector3 p1 = center + new Vector3(Mathf.Cos(angle1), Mathf.Sin(angle1), 0) * sphereRadius;
+            Vector3 p2 = center + new Vector3(Mathf.Cos(angle2), Mathf.Sin(angle2), 0) * sphereRadius;
+
+            Debug.DrawLine(p1, p2, color, Time.deltaTime);
+        }
+
+        // XZ plane circle
+        for (int i = 0; i < segments; i++)
+        {
+            float angle1 = i * angleStep * Mathf.Deg2Rad;
+            float angle2 = (i + 1) * angleStep * Mathf.Deg2Rad;
+
+            Vector3 p1 = center + new Vector3(Mathf.Cos(angle1), 0, Mathf.Sin(angle1)) * sphereRadius;
+            Vector3 p2 = center + new Vector3(Mathf.Cos(angle2), 0, Mathf.Sin(angle2)) * sphereRadius;
+
+            Debug.DrawLine(p1, p2, color, Time.deltaTime);
+        }
+
+        // YZ plane circle
+        for (int i = 0; i < segments; i++)
+        {
+            float angle1 = i * angleStep * Mathf.Deg2Rad;
+            float angle2 = (i + 1) * angleStep * Mathf.Deg2Rad;
+
+            Vector3 p1 = center + new Vector3(0, Mathf.Cos(angle1), Mathf.Sin(angle1)) * sphereRadius;
+            Vector3 p2 = center + new Vector3(0, Mathf.Cos(angle2), Mathf.Sin(angle2)) * sphereRadius;
+
+            Debug.DrawLine(p1, p2, color, Time.deltaTime);
+        }
+    }
+}
+
+/// <summary>
+/// Component that applies incendiary/fire effect to targets
+/// Burns them over time dealing damage per second
+/// Can spread to nearby enemies
+/// </summary>
+public class IncendiaryEffect : MonoBehaviour
+{
+    private float duration;
+    private float timeRemaining;
+    private float damagePerSecond;
+    private float tickInterval;
+    private float nextTickTime;
+
+    // Fire spread
+    private bool spreadEnabled;
+    private float spreadRadius;
+    private float spreadChance;
+    private float nextSpreadCheckTime;
+    private const float SPREAD_CHECK_INTERVAL = 1f; // Check for spread once per second
+
+    // Visual effects
+    private GameObject fireEffectInstance;
+    private Color tintColor;
+    private float tintStrength;
+    private bool addEmission;
+    private float emissionIntensity;
+
+    private Renderer[] renderers;
+    private Dictionary<Renderer, Color[]> originalColors = new Dictionary<Renderer, Color[]>();
+    private Dictionary<Renderer, Color[]> originalEmissionColors = new Dictionary<Renderer, Color[]>();
+
+    // Track which enemies we've already spread to (prevent infinite spread loops)
+    private static HashSet<Transform> globalBurningEnemies = new HashSet<Transform>();
+
+    public void Initialize(float burnDuration, float dps, float tickTime, bool enableSpread, float radius, float chance,
+        GameObject fireEffect, Color tint, float tintAmount, bool emission, float emissionAmount)
+    {
+        duration = burnDuration;
+        timeRemaining = duration;
+        damagePerSecond = dps;
+        tickInterval = tickTime;
+        nextTickTime = Time.time + tickInterval;
+
+        spreadEnabled = enableSpread;
+        spreadRadius = radius;
+        spreadChance = chance;
+        nextSpreadCheckTime = Time.time + SPREAD_CHECK_INTERVAL;
+
+        tintColor = tint;
+        tintStrength = tintAmount;
+        addEmission = emission;
+        emissionIntensity = emissionAmount;
+
+        // Add to global burning list
+        globalBurningEnemies.Add(transform);
+
+        // Apply visual effects
+        ApplyFireVisuals(fireEffect);
+
+        Debug.Log($"[IncendiaryEffect] Started on {gameObject.name} for {duration}s (DPS: {damagePerSecond})");
+    }
+
+    public void RefreshEffect(float burnDuration, float dps, float tickTime, bool enableSpread, float radius, float chance,
+        GameObject fireEffect, Color tint, float tintAmount, bool emission, float emissionAmount)
+    {
+        duration = burnDuration;
+        timeRemaining = duration; // Reset timer
+        damagePerSecond = dps;
+        tickInterval = tickTime;
+
+        spreadEnabled = enableSpread;
+        spreadRadius = radius;
+        spreadChance = chance;
+
+        Debug.Log($"[IncendiaryEffect] Refreshed on {gameObject.name}");
+    }
+
+    private void ApplyFireVisuals(GameObject fireEffect)
+    {
+        // Spawn fire particle effect
+        if (fireEffect != null)
+        {
+            fireEffectInstance = Instantiate(fireEffect, transform.position, Quaternion.identity, transform);
+            Debug.Log($"[IncendiaryEffect] Spawned fire effect on {gameObject.name}");
+        }
+
+        // Apply fire tint and emission
+        renderers = GetComponentsInChildren<Renderer>();
+
+        foreach (var renderer in renderers)
+        {
+            if (renderer == null) continue;
+
+            Material[] materials = renderer.materials;
+            Color[] colors = new Color[materials.Length];
+            Color[] emissionColors = new Color[materials.Length];
+
+            for (int i = 0; i < materials.Length; i++)
+            {
+                // Store and apply color tint
+                if (materials[i].HasProperty("_Color"))
+                {
+                    colors[i] = materials[i].color;
+                    Color tintedColor = Color.Lerp(colors[i], tintColor, tintStrength);
+                    materials[i].color = tintedColor;
+                }
+
+                // Store and apply emission
+                if (addEmission && materials[i].HasProperty("_EmissionColor"))
+                {
+                    materials[i].EnableKeyword("_EMISSION");
+
+                    // Store original emission (might already be emitting)
+                    if (materials[i].IsKeywordEnabled("_EMISSION"))
+                    {
+                        emissionColors[i] = materials[i].GetColor("_EmissionColor");
+                    }
+                    else
+                    {
+                        emissionColors[i] = Color.black;
+                    }
+
+                    // Apply fire emission (HDR glow)
+                    Color fireEmission = tintColor * emissionIntensity;
+                    materials[i].SetColor("_EmissionColor", fireEmission);
+                }
+            }
+
+            originalColors[renderer] = colors;
+            originalEmissionColors[renderer] = emissionColors;
+            renderer.materials = materials;
+        }
+
+        Debug.Log($"[IncendiaryEffect] Applied fire visuals to {renderers.Length} renderers");
+    }
+
+    private void RemoveFireVisuals()
+    {
+        if (renderers == null) return;
+
+        foreach (var renderer in renderers)
+        {
+            if (renderer == null) continue;
+
+            Material[] materials = renderer.materials;
+
+            // Restore colors
+            if (originalColors.ContainsKey(renderer))
+            {
+                Color[] colors = originalColors[renderer];
+                for (int i = 0; i < materials.Length && i < colors.Length; i++)
+                {
+                    if (materials[i].HasProperty("_Color"))
+                    {
+                        materials[i].color = colors[i];
+                    }
+                }
+            }
+
+            // Restore emission
+            if (addEmission && originalEmissionColors.ContainsKey(renderer))
+            {
+                Color[] emissionColors = originalEmissionColors[renderer];
+                for (int i = 0; i < materials.Length && i < emissionColors.Length; i++)
+                {
+                    if (materials[i].HasProperty("_EmissionColor"))
+                    {
+                        // If original emission was black, disable emission
+                        if (emissionColors[i] == Color.black)
+                        {
+                            materials[i].DisableKeyword("_EMISSION");
+                        }
+                        else
+                        {
+                            materials[i].SetColor("_EmissionColor", emissionColors[i]);
+                        }
+                    }
+                }
+            }
+
+            renderer.materials = materials;
+        }
+
+        Debug.Log($"[IncendiaryEffect] Removed fire visuals");
+    }
+
+    private void Update()
+    {
+        timeRemaining -= Time.deltaTime;
+
+        // Apply damage tick
+        if (Time.time >= nextTickTime)
+        {
+            ApplyBurnDamage();
+            nextTickTime = Time.time + tickInterval;
+        }
+
+        // Check for fire spread
+        if (spreadEnabled && Time.time >= nextSpreadCheckTime)
+        {
+            TrySpreadFire();
+            nextSpreadCheckTime = Time.time + SPREAD_CHECK_INTERVAL;
+        }
+
+        // End effect when duration expires
+        if (timeRemaining <= 0f)
+        {
+            EndEffect();
+        }
+    }
+
+    private void ApplyBurnDamage()
+    {
+        EnemyHealth health = GetComponent<EnemyHealth>();
+        if (health != null)
+        {
+            float damage = damagePerSecond * tickInterval;
+            health.TakeDamage(damage);
+            Debug.Log($"[IncendiaryEffect] Burned {gameObject.name} for {damage} damage");
+        }
+    }
+
+    private void TrySpreadFire()
+    {
+        // Find nearby enemies
+        Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, spreadRadius, LayerMask.GetMask("Enemies"));
+
+        foreach (Collider col in nearbyColliders)
+        {
+            if (col == null) continue;
+
+            Transform rootTransform = col.transform.root;
+
+            // Skip self
+            if (rootTransform == transform) continue;
+
+            // Skip if already burning
+            if (globalBurningEnemies.Contains(rootTransform)) continue;
+
+            // Check if enemy is already on fire
+            if (rootTransform.GetComponent<IncendiaryEffect>() != null) continue;
+
+            // Random chance to spread
+            if (Random.value > spreadChance) continue;
+
+            // Spread fire!
+            Debug.Log($"[IncendiaryEffect] Fire spreading from {gameObject.name} to {rootTransform.name}!");
+
+            IncendiaryEffect newFire = rootTransform.gameObject.AddComponent<IncendiaryEffect>();
+            newFire.Initialize(
+                duration * 0.75f, // Spread fires last 75% as long
+                damagePerSecond,
+                tickInterval,
+                spreadEnabled, // Can continue spreading
+                spreadRadius,
+                spreadChance * 0.5f, // Spread chance reduces (prevents infinite spread)
+                fireEffectInstance != null ? fireEffectInstance : null,
+                tintColor,
+                tintStrength,
+                addEmission,
+                emissionIntensity
+            );
+        }
+    }
+
+    private void EndEffect()
+    {
+        Debug.Log($"[IncendiaryEffect] Ended on {gameObject.name}");
+
+        // Remove from global burning list
+        globalBurningEnemies.Remove(transform);
+
+        // Remove visuals
+        RemoveFireVisuals();
+
+        if (fireEffectInstance != null)
+        {
+            Destroy(fireEffectInstance);
+        }
+
+        Destroy(this);
+    }
+
+    private void OnDestroy()
+    {
+        // Clean up
+        globalBurningEnemies.Remove(transform);
+        RemoveFireVisuals();
+
+        if (fireEffectInstance != null)
+        {
+            Destroy(fireEffectInstance);
+        }
+    }
+}
+
+/// <summary>
+/// Component that applies disorientation effect to targets
+/// Makes them spin rapidly (360s) like a spinbot while maintaining their normal movement/behavior
+/// Works with anti-gravity, explosions, teleport, etc.
+/// </summary>
+public class DisorientationEffect : MonoBehaviour
+{
+    private float duration;
+    private float timeRemaining;
+    private float spinSpeed;
+    private bool showDebug;
+
+    // Visual effects
+    private GameObject visualEffectInstance;
+
+    // We DON'T disable NavMeshAgent or movement - we just spin the visual model
+    // This creates the "spinbot" effect where they move normally but spin like crazy
+
+    public void Initialize(float spinDuration, float rotationSpeed, GameObject effectPrefab, bool debug)
+    {
+        duration = spinDuration;
+        timeRemaining = duration;
+        spinSpeed = rotationSpeed;
+        showDebug = debug;
+
+        // Spawn visual effect
+        if (effectPrefab != null)
+        {
+            visualEffectInstance = Instantiate(effectPrefab, transform.position, Quaternion.identity, transform);
+            Debug.Log($"[DisorientationEffect] Spawned disorientation effect on {gameObject.name}");
+        }
+
+        Debug.Log($"[DisorientationEffect] Started SPINBOT on {gameObject.name} - Spin Speed: {spinSpeed}°/s (360s while moving!)");
+    }
+
+    public void RefreshEffect(float spinDuration, float rotationSpeed, GameObject effectPrefab, bool debug)
+    {
+        duration = spinDuration;
+        timeRemaining = duration; // Reset timer
+        spinSpeed = rotationSpeed;
+
+        Debug.Log($"[DisorientationEffect] Refreshed SPINBOT on {gameObject.name}");
+    }
+
+    private void Update()
+    {
+        timeRemaining -= Time.deltaTime;
+
+        if (timeRemaining <= 0f)
+        {
+            EndEffect();
+            return;
+        }
+
+        // SPIN THE ENTIRE TRANSFORM AROUND Y-AXIS (horizontal 360s)
+        // This spins the whole enemy (including model, NavMeshAgent, etc.) while they continue their normal behavior
+        float rotationAmount = spinSpeed * Time.deltaTime;
+        transform.Rotate(Vector3.up, rotationAmount, Space.World);
+
+        // Debug visualization
+        if (showDebug)
+        {
+            Debug.DrawRay(transform.position, Vector3.up * 3f, Color.yellow, Time.deltaTime);
+            Debug.DrawRay(transform.position, transform.forward * 2f, Color.green, Time.deltaTime);
+        }
+    }
+
+    private void EndEffect()
+    {
+        Debug.Log($"[DisorientationEffect] SPINBOT ended on {gameObject.name}");
+
+        // Clean up visual effect
+        if (visualEffectInstance != null)
+        {
+            Destroy(visualEffectInstance);
+        }
+
+        Destroy(this);
+    }
+
+    private void OnDestroy()
+    {
+        // Clean up visual effect
+        if (visualEffectInstance != null)
+        {
+            Destroy(visualEffectInstance);
         }
     }
 }
