@@ -9798,7 +9798,8 @@ MonoBehaviour:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_fontSharedMaterials: []
+  m_fontSharedMaterials:
+  - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
@@ -14538,6 +14539,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dayLengthInMinutes: 24
   startHour: 6
+  startingDay: 0
   pauseAtMidnight: 1
   midnightPauseTime: 0
   midnightThreshold: 0.1
@@ -16702,17 +16704,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   npcName: Bill
   currentState: 0
+  weeklySchedule: []
+  bedLocation: {fileID: 625360910}
+  workLocation: {fileID: 856914319}
+  eatLocation: {fileID: 143881687}
+  idleLocation: {fileID: 0}
   wakeUpTime: 6
   workStartTime: 6.2
   workEndTime: 17
   sleepTime: 22
   breakStartTime: 12
   breakEndTime: 13
-  bedLocation: {fileID: 625360910}
-  workLocation: {fileID: 856914319}
-  eatLocation: {fileID: 143881687}
-  idleLocation: {fileID: 0}
   meetingWaitTime: 300
+  playerNearbyRange: 5
   fleeDistance: 20
   fleeDuration: 20
   fleeFromGunshots: 1
