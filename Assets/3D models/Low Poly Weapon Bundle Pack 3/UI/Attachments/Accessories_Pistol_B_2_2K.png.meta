@@ -67,7 +67,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,7 +80,7 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: Standalone
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -95,21 +95,260 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_0
+      rect:
+        serializedVersion: 2
+        x: 533
+        y: 1141
+        width: 214
+        height: 161
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6d572d21dd710b84cb75d1175aac9bd5
+      internalID: -1292437638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_1
+      rect:
+        serializedVersion: 2
+        x: 996
+        y: 1141
+        width: 196
+        height: 148
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 00b594314fd8f6c4b8f4134dcec3662b
+      internalID: 1835375951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_2
+      rect:
+        serializedVersion: 2
+        x: 1434
+        y: 1151
+        width: 939
+        height: 239
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 886fa9d8997984d4aaa6b068e168b3a3
+      internalID: 542837813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_3
+      rect:
+        serializedVersion: 2
+        x: 641
+        y: 842
+        width: 125
+        height: 97
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cc3f8a562c470eb448be2edf4c8b2e4d
+      internalID: 1002917982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_4
+      rect:
+        serializedVersion: 2
+        x: 1147
+        y: 797
+        width: 219
+        height: 157
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df2168d6d3cf85342afdbed3b7ba43a8
+      internalID: 435845957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_5
+      rect:
+        serializedVersion: 2
+        x: 1791
+        y: 836
+        width: 246
+        height: 110
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6ec2d5677a28a2641b56a481393f353d
+      internalID: -1948888857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_6
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 458
+        width: 330
+        height: 196
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8c0adb4a8a7e9304bb6440a0c780d17d
+      internalID: 822809603
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_7
+      rect:
+        serializedVersion: 2
+        x: 1548
+        y: 478
+        width: 408
+        height: 181
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 892df07f00ea50349b69f0dd6fbca7a7
+      internalID: -1226762981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_8
+      rect:
+        serializedVersion: 2
+        x: 601
+        y: 291
+        width: 215
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 714a0c2bfd0c56443882b43684ce173d
+      internalID: -54259213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_9
+      rect:
+        serializedVersion: 2
+        x: 601
+        y: 103
+        width: 216
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c96d360389a97b4492e7037a0ba8a25
+      internalID: 310118749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Accessories_Pistol_B_2_2K_10
+      rect:
+        serializedVersion: 2
+        x: 1439
+        y: 107
+        width: 710
+        height: 146
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cf58f482fbfa8624e9443f711258a5e2
+      internalID: -1470277484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
-    customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e788a194b97008439e3a629a937d1af
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Accessories_Pistol_B_2_2K_0: -1292437638
+      Accessories_Pistol_B_2_2K_1: 1835375951
+      Accessories_Pistol_B_2_2K_10: -1470277484
+      Accessories_Pistol_B_2_2K_2: 542837813
+      Accessories_Pistol_B_2_2K_3: 1002917982
+      Accessories_Pistol_B_2_2K_4: 435845957
+      Accessories_Pistol_B_2_2K_5: -1948888857
+      Accessories_Pistol_B_2_2K_6: 822809603
+      Accessories_Pistol_B_2_2K_7: -1226762981
+      Accessories_Pistol_B_2_2K_8: -54259213
+      Accessories_Pistol_B_2_2K_9: 310118749
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
