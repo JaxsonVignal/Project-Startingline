@@ -1854,8 +1854,24 @@ public class IncendiaryEffect : MonoBehaviour
         // Spawn fire particle effect
         if (fireEffect != null)
         {
-            fireEffectInstance = Instantiate(fireEffect, transform.position, Quaternion.identity, transform);
-            Debug.Log($"[IncendiaryEffect] Spawned fire effect on {gameObject.name}");
+            // Try to find a better position - use the renderer bounds center
+            Vector3 spawnPosition = transform.position;
+
+            // Get all renderers to find the center of the visual mesh
+            Renderer[] allRenderers = GetComponentsInChildren<Renderer>();
+            if (allRenderers.Length > 0)
+            {
+                // Calculate the center point of all renderers (visual center of character)
+                Bounds combinedBounds = allRenderers[0].bounds;
+                for (int i = 1; i < allRenderers.Length; i++)
+                {
+                    combinedBounds.Encapsulate(allRenderers[i].bounds);
+                }
+                spawnPosition = combinedBounds.center;
+            }
+
+            fireEffectInstance = Instantiate(fireEffect, spawnPosition, Quaternion.identity, transform);
+            Debug.Log($"[IncendiaryEffect] Spawned fire effect on {gameObject.name} at {spawnPosition}");
         }
 
         // Apply fire tint and emission
