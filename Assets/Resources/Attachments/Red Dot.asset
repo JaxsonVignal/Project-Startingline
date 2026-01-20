@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Infared Scope
+  m_Name: Red Dot
   m_EditorClassIdentifier: 
   ID: 3
   Name: InfaredScope
