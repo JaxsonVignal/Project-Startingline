@@ -12,8 +12,9 @@ public class WeaponBuilderController : MonoBehaviour
     [SerializeField] private WeaponBuilderUI builderUI;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private Camera previewCamera;
-    [SerializeField] private GameObject mainUIPanel; // <-- Added
+    [SerializeField] private GameObject mainUIPanel;
     [SerializeField] private HotbarDisplay playerHotbar;
+    [SerializeField] private AttachmentMinigameManager minigameManager;
 
     [Header("Settings")]
     [SerializeField] private bool pauseGameWhenOpen = true;
@@ -72,8 +73,8 @@ public class WeaponBuilderController : MonoBehaviour
             mainCamera.enabled = false;
 
         // Pause game
-       // if (pauseGameWhenOpen)
-            //Time.timeScale = 0f;
+        // if (pauseGameWhenOpen)
+        //     Time.timeScale = 0f;
 
         // Show cursor
         Cursor.lockState = CursorLockMode.None;
@@ -85,13 +86,28 @@ public class WeaponBuilderController : MonoBehaviour
     public void CloseBuilder()
     {
         if (!isBuilderOpen) return;
+
+        // CRITICAL: Cancel minigame and clean up BEFORE disabling anything
+        if (minigameManager != null && minigameManager.IsMinigameActive())
+        {
+            Debug.Log("Closing builder - cancelling active minigame");
+            minigameManager.CancelCurrentMinigame();
+        }
+
+        // CRITICAL: Clean up preview container BEFORE disabling it
+        if (builderUI != null)
+        {
+            Debug.Log("Cleaning up preview before closing builder");
+            builderUI.CleanupPreviewContainer();
+        }
+
         isBuilderOpen = false;
 
         // Hide builder UI
         if (builderUIPanel != null)
             builderUIPanel.SetActive(false);
 
-        // Hide preview container
+        // Hide preview container (AFTER cleanup)
         if (previewContainer != null)
             previewContainer.SetActive(false);
 
@@ -108,8 +124,8 @@ public class WeaponBuilderController : MonoBehaviour
             mainUIPanel.SetActive(true);
 
         // Unpause game
-       // if (pauseGameWhenOpen)
-            //Time.timeScale = 1f;
+        // if (pauseGameWhenOpen)
+        //     Time.timeScale = 1f;
 
         // Hide cursor (adjust based on your game's needs)
         Cursor.lockState = CursorLockMode.Locked;

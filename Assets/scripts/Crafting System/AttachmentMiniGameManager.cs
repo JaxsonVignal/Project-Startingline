@@ -83,9 +83,6 @@ public class AttachmentMinigameManager : MonoBehaviour
     /// <summary>
     /// Start a barrel replacement minigame (unscrew old, screw in new)
     /// </summary>
-    /// <summary>
-    /// Start a barrel replacement minigame (unscrew old, screw in new)
-    /// </summary>
     public void StartBarrelReplacementMinigame(
         AttachmentData oldBarrel,
         AttachmentData newBarrel,
@@ -318,15 +315,12 @@ public class AttachmentMinigameManager : MonoBehaviour
     /// <summary>
     /// Start an underbarrel replacement minigame (unscrew old, screw in new)
     /// </summary>
-    /// <summary>
-    /// Start an underbarrel replacement minigame (unscrew old, screw in new)
-    /// </summary>
     public void StartUnderbarrelReplacementMinigame(
-    AttachmentData oldUnderbarrel,
-    AttachmentData newUnderbarrel,
-    WeaponData weapon,
-    Transform socket,
-    Action<AttachmentData> onComplete)
+        AttachmentData oldUnderbarrel,
+        AttachmentData newUnderbarrel,
+        WeaponData weapon,
+        Transform socket,
+        Action<AttachmentData> onComplete)
     {
         Debug.Log($"StartUnderbarrelReplacementMinigame: {oldUnderbarrel.name} -> {newUnderbarrel.name}");
 
@@ -517,7 +511,29 @@ public class AttachmentMinigameManager : MonoBehaviour
 
     private void OnMinigameCancelled()
     {
-        Debug.Log("Minigame cancelled");
+        Debug.Log("Minigame cancelled - cleaning up all minigame objects");
+
+        // UPDATED: Clean up ALL children in the minigame parent
+        if (minigameParent != null)
+        {
+            Debug.Log($"Destroying all children of minigameParent ({minigameParent.childCount} children)");
+
+            // Create a list to avoid modifying collection while iterating
+            var childrenToDestroy = new System.Collections.Generic.List<GameObject>();
+
+            foreach (Transform child in minigameParent)
+            {
+                childrenToDestroy.Add(child.gameObject);
+                Debug.Log($"Marking for destruction: {child.gameObject.name}");
+            }
+
+            // Destroy all children
+            foreach (var child in childrenToDestroy)
+            {
+                Destroy(child);
+            }
+        }
+
         currentMinigame = null;
         onMinigameCompleteCallback = null;
     }
@@ -531,9 +547,34 @@ public class AttachmentMinigameManager : MonoBehaviour
     {
         if (currentMinigame != null)
         {
+            Debug.Log($"CancelCurrentMinigame called - destroying {currentMinigame.gameObject.name}");
+
+            // UPDATED: Make sure to unsubscribe from events before destroying
+            currentMinigame.OnMinigameComplete -= OnMinigameCompleted;
+            currentMinigame.OnMinigameCancelled -= OnMinigameCancelled;
+
             Destroy(currentMinigame.gameObject);
             currentMinigame = null;
             onMinigameCompleteCallback = null;
+        }
+
+        // ADDED: Also clean up ALL children in minigame parent as a safety measure
+        if (minigameParent != null)
+        {
+            Debug.Log($"CancelCurrentMinigame - cleaning up minigameParent ({minigameParent.childCount} children)");
+
+            var childrenToDestroy = new System.Collections.Generic.List<GameObject>();
+
+            foreach (Transform child in minigameParent)
+            {
+                childrenToDestroy.Add(child.gameObject);
+                Debug.Log($"Marking for destruction: {child.gameObject.name}");
+            }
+
+            foreach (var child in childrenToDestroy)
+            {
+                Destroy(child);
+            }
         }
     }
 }

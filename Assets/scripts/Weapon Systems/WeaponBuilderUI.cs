@@ -14,6 +14,7 @@ public class WeaponBuilderUI : MonoBehaviour
     public GameObject previewContainer;
     public PlayerInventoryHolder playerInventory;
     public AttachmentMinigameManager minigameManager;
+    public Camera previewCamera; // ADDED: Reference to preview camera so we don't destroy it
 
     [Header("Asset Data")]
     public List<AttachmentData> allAttachments; // Keep for lookup reference
@@ -46,6 +47,51 @@ public class WeaponBuilderUI : MonoBehaviour
     {
         // Refresh items whenever the builder UI is opened
         RefreshAvailableItems();
+    }
+
+    /// <summary>
+    /// FIXED: Clean up preview container while it's still active, but DON'T destroy cameras
+    /// Called by WeaponBuilderController BEFORE disabling the container
+    /// </summary>
+    public void CleanupPreviewContainer()
+    {
+        Debug.Log("=== CLEANUP PREVIEW CONTAINER ===");
+
+        if (previewContainer != null && previewContainer.activeSelf)
+        {
+            Debug.Log($"Preview container is active - cleaning up {previewContainer.transform.childCount} children");
+
+            // Destroy ALL children EXCEPT cameras (check by component type)
+            var childrenToDestroy = new List<GameObject>();
+            foreach (Transform child in previewContainer.transform)
+            {
+                // Skip any GameObject with a Camera component
+                if (child.GetComponent<Camera>() != null)
+                {
+                    Debug.Log($"Skipping camera object: {child.gameObject.name}");
+                    continue;
+                }
+
+                childrenToDestroy.Add(child.gameObject);
+                Debug.Log($"Queuing for immediate destruction: {child.gameObject.name}");
+            }
+
+            // Use DestroyImmediate for instant cleanup while still active
+            foreach (var child in childrenToDestroy)
+            {
+                Debug.Log($"Immediately destroying: {child.name}");
+                DestroyImmediate(child);
+            }
+
+            Debug.Log($"Cleanup complete - preview container now has {previewContainer.transform.childCount} children");
+        }
+        else
+        {
+            Debug.LogWarning("Preview container is null or inactive - cannot clean up");
+        }
+
+        // Clear references
+        previewRuntime = null;
     }
 
     /// <summary>
@@ -871,8 +917,6 @@ public class WeaponBuilderUI : MonoBehaviour
         }
     }
 
-
-    // Add this method:
     void StartScopeReplacementMinigame(AttachmentData newScopeAttachment)
     {
         Debug.Log($"StartScopeReplacementMinigame called for {newScopeAttachment.name}");
@@ -1071,6 +1115,13 @@ public class WeaponBuilderUI : MonoBehaviour
             {
                 Debug.Log($"  - Original: {attData.name} (ID: {id})");
             }
+        }
+
+        // Cancel any active minigame when UI is disabled
+        if (minigameManager != null && minigameManager.IsMinigameActive())
+        {
+            Debug.Log("WeaponBuilderUI disabled - cancelling active minigame");
+            minigameManager.CancelCurrentMinigame();
         }
     }
 }

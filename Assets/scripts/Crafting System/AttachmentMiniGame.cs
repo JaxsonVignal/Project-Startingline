@@ -66,8 +66,21 @@ public abstract class AttachmentMinigameBase : MonoBehaviour
     /// </summary>
     protected virtual void CancelMinigame()
     {
+        Debug.Log($"CancelMinigame called on {gameObject.name}");
         OnMinigameCancelled?.Invoke();
+
+        // UPDATED: Ensure proper cleanup before destroying
+        CleanupMinigame();
         Destroy(gameObject);
+    }
+
+    /// <summary>
+    /// ADDED: Override this in child classes to perform custom cleanup
+    /// </summary>
+    protected virtual void CleanupMinigame()
+    {
+        // Child classes can override this to clean up spawned objects, etc.
+        Debug.Log($"CleanupMinigame called on {gameObject.name}");
     }
 
     /// <summary>
@@ -88,5 +101,16 @@ public abstract class AttachmentMinigameBase : MonoBehaviour
     {
         if (targetSocket == null) return false;
         return Vector3.Distance(transform.position, targetSocket.position) < threshold;
+    }
+
+    /// <summary>
+    /// ADDED: Called when GameObject is about to be destroyed
+    /// </summary>
+    protected virtual void OnDestroy()
+    {
+        Debug.Log($"OnDestroy called on minigame: {gameObject.name}");
+        // Ensure events are cleared
+        OnMinigameComplete = null;
+        OnMinigameCancelled = null;
     }
 }
