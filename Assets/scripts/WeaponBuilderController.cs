@@ -21,6 +21,8 @@ public class WeaponBuilderController : MonoBehaviour
     [SerializeField] private KeyCode exitKey = KeyCode.Escape;
 
     private bool isBuilderOpen = false;
+    private Vector3 originalPreviewCameraPosition; // Store original position
+    private Quaternion originalPreviewCameraRotation; // Store original rotation
 
     private void Start()
     {
@@ -66,7 +68,12 @@ public class WeaponBuilderController : MonoBehaviour
 
         // Enable preview camera if it exists
         if (previewCamera != null)
+        {
+            // Store the original position and rotation
+            originalPreviewCameraPosition = previewCamera.transform.position;
+            originalPreviewCameraRotation = previewCamera.transform.rotation;
             previewCamera.enabled = true;
+        }
 
         // Disable main camera if needed
         if (mainCamera != null && previewCamera != null)
@@ -87,18 +94,31 @@ public class WeaponBuilderController : MonoBehaviour
     {
         if (!isBuilderOpen) return;
 
-        // CRITICAL: Cancel minigame and clean up BEFORE disabling anything
-        if (minigameManager != null && minigameManager.IsMinigameActive())
+        // ALWAYS reset the preview camera position first, before anything else
+        if (previewCamera != null)
+        {
+            previewCamera.transform.position = originalPreviewCameraPosition;
+            previewCamera.transform.rotation = originalPreviewCameraRotation;
+            Debug.Log($"Reset preview camera to original position: {originalPreviewCameraPosition}");
+        }
+
+        // Check if minigame is active
+        bool hadActiveMinigame = minigameManager != null && minigameManager.IsMinigameActive();
+
+        if (hadActiveMinigame)
         {
             Debug.Log("Closing builder - cancelling active minigame");
             minigameManager.CancelCurrentMinigame();
+            // DON'T call CleanupPreviewContainer - let the minigame cleanup handle everything
         }
-
-        // CRITICAL: Clean up preview container BEFORE disabling it
-        if (builderUI != null)
+        else
         {
-            Debug.Log("Cleaning up preview before closing builder");
-            builderUI.CleanupPreviewContainer();
+            // No active minigame - safe to clean up preview
+            if (builderUI != null)
+            {
+                Debug.Log("Cleaning up preview before closing builder (no active minigame)");
+                builderUI.CleanupPreviewContainer();
+            }
         }
 
         isBuilderOpen = false;
@@ -107,7 +127,7 @@ public class WeaponBuilderController : MonoBehaviour
         if (builderUIPanel != null)
             builderUIPanel.SetActive(false);
 
-        // Hide preview container (AFTER cleanup)
+        // Hide preview container
         if (previewContainer != null)
             previewContainer.SetActive(false);
 

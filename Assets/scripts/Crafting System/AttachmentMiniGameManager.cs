@@ -547,15 +547,18 @@ public class AttachmentMinigameManager : MonoBehaviour
     {
         if (currentMinigame != null)
         {
-            Debug.Log($"CancelCurrentMinigame called - destroying {currentMinigame.gameObject.name}");
+            Debug.Log($"CancelCurrentMinigame called - cancelling {currentMinigame.gameObject.name}");
 
-            // UPDATED: Make sure to unsubscribe from events before destroying
-            currentMinigame.OnMinigameComplete -= OnMinigameCompleted;
-            currentMinigame.OnMinigameCancelled -= OnMinigameCancelled;
+            // Store reference before clearing
+            var minigameToCancel = currentMinigame;
 
-            Destroy(currentMinigame.gameObject);
+            // Clear our reference first
             currentMinigame = null;
             onMinigameCompleteCallback = null;
+
+            // Now call CancelMinigame on the stored reference
+            // This will trigger cleanup (camera reset) and destroy the GameObject
+            minigameToCancel.CancelMinigame();
         }
 
         // ADDED: Also clean up ALL children in minigame parent as a safety measure

@@ -64,7 +64,7 @@ public abstract class AttachmentMinigameBase : MonoBehaviour
     /// <summary>
     /// Called when minigame is cancelled
     /// </summary>
-    protected virtual void CancelMinigame()
+    public virtual void CancelMinigame()
     {
         Debug.Log($"CancelMinigame called on {gameObject.name}");
         OnMinigameCancelled?.Invoke();
