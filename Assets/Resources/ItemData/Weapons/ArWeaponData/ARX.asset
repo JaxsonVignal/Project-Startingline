@@ -55,24 +55,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7ecb167fe2179d946985bda80bab1ab9, type: 2}
   - {fileID: 11400000, guid: de8e061e67c381f4d8330e788c87ee44, type: 2}
   - {fileID: 11400000, guid: 5ba0ebd455758f641ae4151659dc07f1, type: 2}
-  - {fileID: 11400000, guid: 3e7afcdc6c075e641a19482d445fc2c0, type: 2}
-  - {fileID: 11400000, guid: 90e8387b0737ef442951c93cff619a23, type: 2}
-  - {fileID: 11400000, guid: 1ccf5cd6f0b944f49ae61cbd13ef33e2, type: 2}
-  - {fileID: 11400000, guid: e0d6eaf244409fc438bdf365874afb73, type: 2}
-  - {fileID: 11400000, guid: 8dc0d14692c4b2a4e9bd7a407da26965, type: 2}
-  - {fileID: 11400000, guid: e9fa3237ae73b674e8b3d451165cb71f, type: 2}
-  - {fileID: 11400000, guid: 7e76848ddcbb5fa4094750fe09ebf66f, type: 2}
-  - {fileID: 11400000, guid: 20ec4550681e4894ab3ae8a07c8c3999, type: 2}
-  - {fileID: 11400000, guid: 746dd0365830f774681aea6d027f8652, type: 2}
-  - {fileID: 11400000, guid: d974206c20ec3e04090ea122cc92e82b, type: 2}
-  - {fileID: 11400000, guid: 6b4984868db4ccd44beb13b39cd3715b, type: 2}
-  - {fileID: 11400000, guid: 8a33ae08d16fae048b4e2163d866ee6a, type: 2}
-  - {fileID: 11400000, guid: bf419e23055a9244bb3ff27fa396eabf, type: 2}
-  - {fileID: 11400000, guid: c9d6981b255e8e243a59cce8f4359eac, type: 2}
-  - {fileID: 11400000, guid: 3e7afcdc6c075e641a19482d445fc2c0, type: 2}
-  - {fileID: 11400000, guid: c8ed962085e964c42ab0044035c8c603, type: 2}
-  - {fileID: 11400000, guid: fce16153d8e0b42449a0c92d9aef21ef, type: 2}
-  - {fileID: 11400000, guid: 808f298fb4368cf4a98cdae09d7d514f, type: 2}
+  - {fileID: 11400000, guid: 2536a1c3b1855f448b7127935ab9d8f6, type: 2}
   scopeOffsets:
   - scope: {fileID: 11400000, guid: cd481b15feaf24447872617cdb007289, type: 2}
     positionOffset: {x: -0.451, y: 0.089, z: 0}
@@ -96,57 +79,6 @@ MonoBehaviour:
     positionOffset: {x: -0.451, y: 0.098, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: 48f1c564060115148bb44dbc4d2c9bd1, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 90e8387b0737ef442951c93cff619a23, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 1ccf5cd6f0b944f49ae61cbd13ef33e2, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: e0d6eaf244409fc438bdf365874afb73, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 8dc0d14692c4b2a4e9bd7a407da26965, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: e9fa3237ae73b674e8b3d451165cb71f, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 7e76848ddcbb5fa4094750fe09ebf66f, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 20ec4550681e4894ab3ae8a07c8c3999, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 746dd0365830f774681aea6d027f8652, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: d974206c20ec3e04090ea122cc92e82b, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 8a33ae08d16fae048b4e2163d866ee6a, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 6b4984868db4ccd44beb13b39cd3715b, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: bf419e23055a9244bb3ff27fa396eabf, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 3e7afcdc6c075e641a19482d445fc2c0, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: c9d6981b255e8e243a59cce8f4359eac, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: fce16153d8e0b42449a0c92d9aef21ef, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: c8ed962085e964c42ab0044035c8c603, type: 2}
-    positionOffset: {x: -0.451, y: 0.092, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-  - scope: {fileID: 11400000, guid: 808f298fb4368cf4a98cdae09d7d514f, type: 2}
     positionOffset: {x: -0.451, y: 0.092, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   partsToDisableWithSight:
