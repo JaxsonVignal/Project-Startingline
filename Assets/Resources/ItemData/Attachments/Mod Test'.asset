@@ -72,7 +72,7 @@ MonoBehaviour:
     emissionIntensity: 2
     trailEffectPrefab: {fileID: 0}
     trailDuration: 0.3
-    ricochetRounds: 1
+    ricochetRounds: 0
     maxBounces: 1
     bounceSpeedMultiplier: 0.9
     bounceDamageMultiplier: 0.8
@@ -100,14 +100,14 @@ MonoBehaviour:
     teleportDepartureEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
     teleportArrivalEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
     showTeleportDebug: 0
-    incendiaryRounds: 0
+    incendiaryRounds: 1
     incendiaryDuration: 5
     incendiaryDamagePerSecond: 10
     incendiaryTickInterval: 0.5
     incendiarySpreadEnabled: 0
     incendiarySpreadRadius: 5
     incendiarySpreadChance: 0.3
-    incendiaryFireEffectPrefab: {fileID: 3021981346131943567, guid: 7c6e19caaf799254985a26e6be855d0e, type: 3}
+    incendiaryFireEffectPrefab: {fileID: 6294508013172393196, guid: 043176b6a68be2b43b073aaaa4782c7d, type: 3}
     incendiaryTintColor: {r: 1, g: 0.4, b: 0, a: 1}
     incendiaryTintStrength: 0.3
     incendiaryAddEmission: 1
