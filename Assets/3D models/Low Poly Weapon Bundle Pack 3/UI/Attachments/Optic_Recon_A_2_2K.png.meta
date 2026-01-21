@@ -67,7 +67,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,7 +80,7 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: Standalone
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -95,21 +95,172 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Optic_Recon_A_2_2K_0
+      rect:
+        serializedVersion: 2
+        x: 413
+        y: 1117
+        width: 46
+        height: 120
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3bdb9f1fde304274dbd040a5aac93b0e
+      internalID: -2108493719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Optic_Recon_A_2_2K_1
+      rect:
+        serializedVersion: 2
+        x: 752
+        y: 1117
+        width: 42
+        height: 157
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f25e13af0b8654448b2c94a3fa9870c
+      internalID: 108282040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Optic_Recon_A_2_2K_2
+      rect:
+        serializedVersion: 2
+        x: 1344
+        y: 1097
+        width: 952
+        height: 236
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ca940f98b8c3e24469e399f41876125c
+      internalID: -332245192
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Optic_Recon_A_2_2K_3
+      rect:
+        serializedVersion: 2
+        x: 324
+        y: 662
+        width: 514
+        height: 221
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1dd8e823f303c584689504ff7aa600b7
+      internalID: -1685394517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Optic_Recon_A_2_2K_4
+      rect:
+        serializedVersion: 2
+        x: 1297
+        y: 638
+        width: 1125
+        height: 254
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6ae780be89313cd42a7b425d4468f814
+      internalID: -485051032
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Optic_Recon_A_2_2K_5
+      rect:
+        serializedVersion: 2
+        x: 62
+        y: 228
+        width: 991
+        height: 244
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4efcb6a7e15b77749844bab5d819dfc2
+      internalID: -398707966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Optic_Recon_A_2_2K_6
+      rect:
+        serializedVersion: 2
+        x: 1218
+        y: 217
+        width: 1214
+        height: 255
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5ed4c96a2ea20ed4194b8c2d33361029
+      internalID: -675371443
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
-    customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 67e02c16706b6844e8bff9be0ee6382a
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Optic_Recon_A_2_2K_0: -2108493719
+      Optic_Recon_A_2_2K_1: 108282040
+      Optic_Recon_A_2_2K_2: -332245192
+      Optic_Recon_A_2_2K_3: -1685394517
+      Optic_Recon_A_2_2K_4: -485051032
+      Optic_Recon_A_2_2K_5: -398707966
+      Optic_Recon_A_2_2K_6: -675371443
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
