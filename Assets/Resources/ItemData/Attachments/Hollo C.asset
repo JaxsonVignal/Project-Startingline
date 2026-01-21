@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: 5x
+  m_Name: Hollo C
   m_EditorClassIdentifier: 
-  ID: -1
-  Name: 
+  ID: 15
+  Name: Hollo C
   Description: 
-  Icon: {fileID: 0}
-  maxStackSize: 0
-  id: 
+  Icon: {fileID: -90456685, guid: 91b7538bf4fd02f478d6f1f4888479e4, type: 3}
+  maxStackSize: 5
+  id: Hollo C
   type: 0
-  prefab: {fileID: 0}
-  icon: {fileID: 0}
+  prefab: {fileID: 1708939099571364712, guid: 204f7fce10b08fd4d829c5e1ef52caea, type: 3}
+  icon: {fileID: -90456685, guid: 91b7538bf4fd02f478d6f1f4888479e4, type: 3}
   description: 
-  Value: 0
+  Value: 175
   localPosition: {x: 0, y: 0, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
@@ -32,7 +32,7 @@ MonoBehaviour:
   spreadMultiplier: 1
   recoilMultiplier: 1
   magazineBonus: 0
-  scopeFOVOverride: 0
+  scopeFOVOverride: 30
   scopeReticle: {fileID: 0}
   reticleScale: 1
   reticleColor: {r: 1, g: 0, b: 0, a: 1}

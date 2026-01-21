@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Red Dot D
+  m_Name: Hollo B
   m_EditorClassIdentifier: 
-  ID: -1
-  Name: Red Dot D
+  ID: 14
+  Name: Hollo B
   Description: 
-  Icon: {fileID: 1376665423, guid: 91b7538bf4fd02f478d6f1f4888479e4, type: 3}
+  Icon: {fileID: -1509564429, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
   maxStackSize: 5
-  id: Red Dot D
+  id: Hollo B
   type: 0
-  prefab: {fileID: 7292498286577505626, guid: bbeec3bcf26a51e4d8033220e646c693, type: 3}
-  icon: {fileID: 1376665423, guid: 91b7538bf4fd02f478d6f1f4888479e4, type: 3}
+  prefab: {fileID: 5193679429023568283, guid: f061699b2471304448795b8f17b664ca, type: 3}
+  icon: {fileID: -1509564429, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
   description: 
   Value: 100
   localPosition: {x: 0, y: 0, z: 0}
