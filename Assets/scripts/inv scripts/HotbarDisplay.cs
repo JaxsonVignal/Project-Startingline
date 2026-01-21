@@ -11,6 +11,7 @@ public class HotbarDisplay : StaticInventoryDisplay
     private GameInput _gameInput;
 
     [SerializeField] private Transform weaponHolder;
+    [SerializeField] private Database itemDatabase; // ADD THIS
     private GameObject currentWeapon;
 
     private bool isAiming = false;
@@ -157,6 +158,7 @@ public class HotbarDisplay : StaticInventoryDisplay
             Debug.Log($"[HotbarDisplay] SetWeaponData called successfully");
         }
     }
+
     private WeaponAttachmentSystem ApplyStoredAttachments(GameObject weaponObject, string slotID, WeaponData weaponData)
     {
         WeaponInstance storedInstance = WeaponInstanceStorage.GetInstance(slotID);
@@ -166,12 +168,18 @@ public class HotbarDisplay : StaticInventoryDisplay
             return null;
         }
 
-        var allAttachments = Resources.LoadAll<AttachmentData>("Attachments");
-        var attachmentLookup = new Dictionary<string, AttachmentData>();
-        foreach (var att in allAttachments)
+        // CHANGED: Load from database instead of Resources
+        Dictionary<string, AttachmentData> attachmentLookup;
+
+        if (itemDatabase != null)
         {
-            if (att != null && !string.IsNullOrEmpty(att.id))
-                attachmentLookup[att.id] = att;
+            attachmentLookup = itemDatabase.GetAttachmentLookup();
+            Debug.Log($"[HotbarDisplay] Loaded {attachmentLookup.Count} attachments from database");
+        }
+        else
+        {
+            Debug.LogError("[HotbarDisplay] Database not assigned! Cannot load attachments!");
+            return null;
         }
 
         var runtime = weaponObject.GetComponent<WeaponRuntime>();
