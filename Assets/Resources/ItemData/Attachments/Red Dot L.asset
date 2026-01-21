@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Red Dot F
+  m_Name: Red Dot L
   m_EditorClassIdentifier: 
-  ID: -1
-  Name: Red Dot F
+  ID: 24
+  Name: Red Dot L
   Description: 
-  Icon: {fileID: 2136378960, guid: 91b7538bf4fd02f478d6f1f4888479e4, type: 3}
+  Icon: {fileID: -1223442119, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
   maxStackSize: 5
-  id: Red Dot F
+  id: Red Dot L
   type: 0
-  prefab: {fileID: 1450485406645308081, guid: 192e108ca277ede44bfe73bae2ec234d, type: 3}
-  icon: {fileID: 2136378960, guid: 91b7538bf4fd02f478d6f1f4888479e4, type: 3}
+  prefab: {fileID: 1486201349600031323, guid: 62bddb0be1f4a794fa8424fbee4fb6b2, type: 3}
+  icon: {fileID: -1223442119, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
   description: 
-  Value: 0
+  Value: 10
   localPosition: {x: 0, y: 0, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}

@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Red Dot H
+  m_Name: Russian 3x
   m_EditorClassIdentifier: 
-  ID: -1
-  Name: Red Dot H
+  ID: 26
+  Name: Russian 3x
   Description: 
-  Icon: {fileID: -1741157015, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
+  Icon: {fileID: -2018741883, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
   maxStackSize: 5
-  id: Red Dot H
+  id: Russian 3x
   type: 0
-  prefab: {fileID: 7576884342565927224, guid: f4bad256c1952d84089306812686e960, type: 3}
-  icon: {fileID: -1741157015, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
+  prefab: {fileID: 1269733526682900202, guid: 7657a0b6c7cdf4d4ea045e68dc8304dc, type: 3}
+  icon: {fileID: -2018741883, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
   description: 
-  Value: 300
+  Value: 100
   localPosition: {x: 0, y: 0, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}

@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Russian 5x
+  m_Name: Red Dot H
   m_EditorClassIdentifier: 
-  ID: -1
-  Name: 
+  ID: 21
+  Name: Red Dot H
   Description: 
-  Icon: {fileID: 0}
-  maxStackSize: 0
-  id: 
+  Icon: {fileID: -1741157015, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
+  maxStackSize: 5
+  id: Red Dot H
   type: 0
-  prefab: {fileID: 0}
-  icon: {fileID: 0}
+  prefab: {fileID: 7576884342565927224, guid: f4bad256c1952d84089306812686e960, type: 3}
+  icon: {fileID: -1741157015, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
   description: 
-  Value: 0
+  Value: 300
   localPosition: {x: 0, y: 0, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
@@ -32,7 +32,7 @@ MonoBehaviour:
   spreadMultiplier: 1
   recoilMultiplier: 1
   magazineBonus: 0
-  scopeFOVOverride: 0
+  scopeFOVOverride: 30
   scopeReticle: {fileID: 0}
   reticleScale: 1
   reticleColor: {r: 1, g: 0, b: 0, a: 1}
