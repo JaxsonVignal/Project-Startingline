@@ -376,6 +376,13 @@ public class WeaponBuilderUI : MonoBehaviour
                 return;
             }
 
+            if (att.type == AttachmentType.SideRail && RequiresMinigame(att))
+            {
+                Debug.Log($"Siderail attachment already equipped. Starting replacement minigame...");
+                StartSiderailReplacementMinigame(att);
+                return;
+            }
+
             Debug.Log($"Already have a {att.type} equipped. Remove it first.");
             return;
         }
@@ -405,11 +412,112 @@ public class WeaponBuilderUI : MonoBehaviour
             case AttachmentType.Sight:
             case AttachmentType.Underbarrel:
             case AttachmentType.Magazine:
+            case AttachmentType.SideRail:  // ADD THIS LINE
                 return true;
             default:
                 return false;
         }
     }
+
+    /// <summary>
+    /// Start a siderail replacement minigame (slide old off, slide new on)
+    /// </summary>
+    void StartSiderailReplacementMinigame(AttachmentData newSiderailAttachment)
+    {
+        Debug.Log($"StartSiderailReplacementMinigame called for {newSiderailAttachment.name}");
+
+        if (minigameManager == null)
+        {
+            Debug.LogError("MinigameManager not assigned!");
+            return;
+        }
+
+        // Get the currently equipped siderail attachment
+        var currentSiderailEntry = previewInstance.attachments.Find(e => e.type == AttachmentType.SideRail);
+
+        if (currentSiderailEntry == null)
+        {
+            Debug.LogError("No current siderail attachment found!");
+            return;
+        }
+
+        AttachmentData currentSiderailAttachment = null;
+        if (attachmentLookup.TryGetValue(currentSiderailEntry.attachmentId, out var att))
+        {
+            currentSiderailAttachment = att;
+        }
+
+        if (currentSiderailAttachment == null)
+        {
+            Debug.LogError($"Could not find current siderail attachment in lookup: {currentSiderailEntry.attachmentId}");
+            return;
+        }
+
+        Debug.Log($"Current siderail: {currentSiderailAttachment.name}, New siderail: {newSiderailAttachment.name}");
+
+        // Get the siderail socket
+        Transform socket = GetSocketForAttachmentType(AttachmentType.SideRail);
+
+        if (socket == null)
+        {
+            Debug.LogError($"No socket found for Siderail type!");
+            return;
+        }
+
+        // Disable finalize button and attachment buttons while minigame is active
+        if (finalizeButton != null)
+            finalizeButton.interactable = false;
+
+        DisableAllAttachmentButtons();
+
+        // Start the siderail replacement minigame
+        minigameManager.StartSiderailReplacementMinigame(
+            currentSiderailAttachment,
+            newSiderailAttachment,
+            selectedBase,
+            socket,
+            (replacedAttachment) =>
+            {
+                Debug.Log("Siderail replacement minigame complete!");
+
+                // Remove the old siderail attachment from preview
+                previewInstance.attachments.RemoveAll(e => e.type == AttachmentType.SideRail);
+                previewRuntime.attachmentSystem.UnequipType(AttachmentType.SideRail);
+
+                // CRITICAL: Check if the old siderail was an ORIGINAL attachment
+                bool wasOriginal = originalAttachmentIds.Contains(currentSiderailEntry.attachmentId);
+
+                if (wasOriginal)
+                {
+                    // This was on the weapon when we opened the builder - return it to inventory
+                    Debug.Log($"Old siderail {currentSiderailAttachment.name} was ORIGINAL - returning to inventory");
+
+                    if (playerInventory.PrimaryInventorySystem.AddToInventory(currentSiderailAttachment, 1))
+                    {
+                        Debug.Log($"Successfully returned {currentSiderailAttachment.name} to inventory");
+                        originalAttachmentIds.Remove(currentSiderailEntry.attachmentId);
+                    }
+                    else
+                    {
+                        Debug.LogError($"Failed to return {currentSiderailAttachment.name} to inventory - inventory full?");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"Old siderail {currentSiderailAttachment.name} was newly added - already in inventory");
+                }
+
+                // Add the new siderail attachment
+                AddAttachmentDirectly(replacedAttachment);
+
+                // Re-enable finalize button and attachment buttons
+                if (finalizeButton != null)
+                    finalizeButton.interactable = true;
+
+                // Note: AddAttachmentDirectly already calls PopulateAttachmentButtons(), so we don't need to call it again
+            });
+    }
+
 
     /// <summary>
     /// Start a barrel replacement minigame (remove old, attach new)
@@ -479,10 +587,29 @@ public class WeaponBuilderUI : MonoBehaviour
                 // NOTE: We DON'T call ReEnableDefaultBarrelParts() here because we're replacing with another barrel
                 // The default parts should stay disabled
 
-                // IMPORTANT: DO NOT add old barrel back to inventory here!
-                // It stays "consumed" from when it was originally added
-                // Only the NEW barrel will be removed from inventory when finalizing
-                Debug.Log($"Old barrel {currentBarrelAttachment.name} remains consumed (not returned to inventory)");
+                // CRITICAL: Check if the old barrel was an ORIGINAL attachment
+                bool wasOriginal = originalAttachmentIds.Contains(currentBarrelEntry.attachmentId);
+
+                if (wasOriginal)
+                {
+                    // This was on the weapon when we opened the builder - return it to inventory
+                    Debug.Log($"Old barrel {currentBarrelAttachment.name} was ORIGINAL - returning to inventory");
+
+                    if (playerInventory.PrimaryInventorySystem.AddToInventory(currentBarrelAttachment, 1))
+                    {
+                        Debug.Log($"Successfully returned {currentBarrelAttachment.name} to inventory");
+                        originalAttachmentIds.Remove(currentBarrelEntry.attachmentId);
+                    }
+                    else
+                    {
+                        Debug.LogError($"Failed to return {currentBarrelAttachment.name} to inventory - inventory full?");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"Old barrel {currentBarrelAttachment.name} was newly added - already in inventory");
+                }
+
 
                 // Add the new barrel attachment
                 AddAttachmentDirectly(replacedAttachment);
@@ -560,10 +687,29 @@ public class WeaponBuilderUI : MonoBehaviour
                 previewInstance.attachments.RemoveAll(e => e.type == AttachmentType.Underbarrel);
                 previewRuntime.attachmentSystem.UnequipType(AttachmentType.Underbarrel);
 
-                // IMPORTANT: DO NOT add old underbarrel back to inventory here!
-                // It stays "consumed" from when it was originally added
-                // Only the NEW underbarrel will be removed from inventory when finalizing
-                Debug.Log($"Old underbarrel {currentUnderbarrelAttachment.name} remains consumed (not returned to inventory)");
+                // CRITICAL: Check if the old underbarrel was an ORIGINAL attachment
+                bool wasOriginal = originalAttachmentIds.Contains(currentUnderbarrelEntry.attachmentId);
+
+                if (wasOriginal)
+                {
+                    // This was on the weapon when we opened the builder - return it to inventory
+                    Debug.Log($"Old underbarrel {currentUnderbarrelAttachment.name} was ORIGINAL - returning to inventory");
+
+                    if (playerInventory.PrimaryInventorySystem.AddToInventory(currentUnderbarrelAttachment, 1))
+                    {
+                        Debug.Log($"Successfully returned {currentUnderbarrelAttachment.name} to inventory");
+                        originalAttachmentIds.Remove(currentUnderbarrelEntry.attachmentId);
+                    }
+                    else
+                    {
+                        Debug.LogError($"Failed to return {currentUnderbarrelAttachment.name} to inventory - inventory full?");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"Old underbarrel {currentUnderbarrelAttachment.name} was newly added - already in inventory");
+                }
+
 
                 // Add the new underbarrel attachment
                 AddAttachmentDirectly(replacedAttachment);
@@ -974,7 +1120,29 @@ public class WeaponBuilderUI : MonoBehaviour
                 previewInstance.attachments.RemoveAll(e => e.type == AttachmentType.Sight);
                 previewRuntime.attachmentSystem.UnequipType(AttachmentType.Sight);
 
-                Debug.Log($"Old scope {currentScopeAttachment.name} remains consumed (not returned to inventory)");
+                // CRITICAL: Check if the old scope was an ORIGINAL attachment
+                bool wasOriginal = originalAttachmentIds.Contains(currentScopeEntry.attachmentId);
+
+                if (wasOriginal)
+                {
+                    // This was on the weapon when we opened the builder - return it to inventory
+                    Debug.Log($"Old scope {currentScopeAttachment.name} was ORIGINAL - returning to inventory");
+
+                    if (playerInventory.PrimaryInventorySystem.AddToInventory(currentScopeAttachment, 1))
+                    {
+                        Debug.Log($"Successfully returned {currentScopeAttachment.name} to inventory");
+                        originalAttachmentIds.Remove(currentScopeEntry.attachmentId);
+                    }
+                    else
+                    {
+                        Debug.LogError($"Failed to return {currentScopeAttachment.name} to inventory - inventory full?");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"Old scope {currentScopeAttachment.name} was newly added - already in inventory");
+                }
+
 
                 AddAttachmentDirectly(replacedAttachment);
 

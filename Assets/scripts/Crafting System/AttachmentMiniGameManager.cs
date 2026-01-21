@@ -61,6 +61,10 @@ public class AttachmentMinigameManager : MonoBehaviour
                 minigame = SetupMagazineMinigame(attachmentObj, weapon, socket);
                 break;
 
+            case AttachmentType.SideRail:
+                minigame = SetupSiderailMinigame(attachmentObj);
+                break;
+
             default:
                 Debug.LogWarning($"No minigame implementation for {attachment.type}");
                 onComplete?.Invoke(attachment);
@@ -404,6 +408,84 @@ public class AttachmentMinigameManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Start a siderail replacement minigame (slide old off, slide new on)
+    /// </summary>
+    public void StartSiderailReplacementMinigame(
+        AttachmentData oldSiderail,
+        AttachmentData newSiderail,
+        WeaponData weapon,
+        Transform socket,
+        Action<AttachmentData> onComplete)
+    {
+        Debug.Log($"StartSiderailReplacementMinigame: {oldSiderail.name} -> {newSiderail.name}");
+
+        if (currentMinigame != null)
+        {
+            Destroy(currentMinigame.gameObject);
+        }
+
+        onMinigameCompleteCallback = onComplete;
+
+        // Spawn the NEW siderail attachment prefab
+        GameObject newSiderailObj = Instantiate(newSiderail.prefab, minigameParent);
+
+        if (newSiderailObj.GetComponent<Collider>() == null)
+        {
+            newSiderailObj.AddComponent<BoxCollider>();
+        }
+
+        SiderailMinigame minigame = newSiderailObj.AddComponent<SiderailMinigame>();
+
+        // Find the old siderail GameObject in the scene to remove it
+        GameObject oldSiderailInScene = FindOldSiderailInScene(socket, oldSiderail);
+
+        if (oldSiderailInScene != null)
+        {
+            Debug.Log($"Found old siderail in scene: {oldSiderailInScene.name}");
+
+            // Create a list with just the old siderail's name
+            var partsToRemove = new System.Collections.Generic.List<string> { oldSiderailInScene.name };
+
+            minigame.SetOldSiderailParts(socket.root, partsToRemove);
+        }
+        else
+        {
+            Debug.LogWarning("Could not find old siderail in scene - will skip removal phase");
+        }
+
+        minigame.attachmentData = newSiderail;
+        minigame.targetSocket = socket;
+        minigame.weaponData = weapon;
+        minigame.minigameCamera = previewCamera;
+
+        minigame.OnMinigameComplete += OnMinigameCompleted;
+        minigame.OnMinigameCancelled += OnMinigameCancelled;
+
+        currentMinigame = minigame;
+        minigame.StartMinigame();
+
+        Debug.Log($"Started siderail replacement minigame");
+    }
+
+    private GameObject FindOldSiderailInScene(Transform socket, AttachmentData oldSiderail)
+    {
+        if (socket == null) return null;
+
+        string expectedName = $"ATT_{oldSiderail.id}";
+
+        foreach (Transform child in socket)
+        {
+            if (child.name == expectedName || child.name.Contains(oldSiderail.prefab.name))
+            {
+                return child.gameObject;
+            }
+        }
+
+        Debug.LogWarning($"Could not find old siderail with name '{expectedName}' in socket");
+        return null;
+    }
+
     private SilencerMinigame SetupSilencerMinigame(GameObject attachmentObj, WeaponData weapon, Transform socket)
     {
         SilencerMinigame silencerMinigame = attachmentObj.AddComponent<SilencerMinigame>();
@@ -481,6 +563,16 @@ public class AttachmentMinigameManager : MonoBehaviour
         return magazineMinigame;
     }
 
+    private SiderailMinigame SetupSiderailMinigame(GameObject attachmentObj)
+    {
+        SiderailMinigame siderailMinigame = attachmentObj.AddComponent<SiderailMinigame>();
+
+        // Siderail minigame doesn't need any special setup for initial attachment
+        // The slide mechanics are handled internally
+
+        return siderailMinigame;
+    }
+
     private bool HasMinigameImplementation(AttachmentType type)
     {
         switch (type)
@@ -489,6 +581,7 @@ public class AttachmentMinigameManager : MonoBehaviour
             case AttachmentType.Sight:
             case AttachmentType.Underbarrel:
             case AttachmentType.Magazine:
+            case AttachmentType.SideRail:
                 return true;
             default:
                 return false;
