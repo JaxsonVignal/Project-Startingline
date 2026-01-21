@@ -817,15 +817,24 @@ public class SilencerMinigame : AttachmentMinigameBase
         StartCoroutine(CompleteAfterZoomOut());
     }
 
-    protected override void CancelMinigame()
+    protected override void CleanupMinigame()
     {
-        // Reset camera immediately on cancel
+        Debug.Log("SilencerMinigame.CleanupMinigame called");
+        isComplete = true;
+        // CRITICAL: Stop all camera movement FIRST before resetting position
+        isZooming = false;
+        isZoomingOut = false;
+
+        // Reset camera position
         if (mainCamera != null)
         {
+            Debug.Log($"Resetting camera from {mainCamera.transform.position} to {originalCameraPosition}");
             mainCamera.transform.position = originalCameraPosition;
-            isZooming = false;
-            isZoomingOut = false;
             Debug.Log("Camera reset on cancel");
+        }
+        else
+        {
+            Debug.LogError("mainCamera is NULL in CleanupMinigame!");
         }
 
         // Reset weapon parts to original positions if minigame was cancelled
@@ -853,6 +862,12 @@ public class SilencerMinigame : AttachmentMinigameBase
             }
         }
 
+        base.CleanupMinigame();
+    }
+
+    public override void CancelMinigame()
+    {
+        Debug.Log("SilencerMinigame.CancelMinigame called");
         base.CancelMinigame();
     }
 
