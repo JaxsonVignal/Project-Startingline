@@ -41,6 +41,12 @@ public class WeaponAttachmentSystem : MonoBehaviour
         RecalculateStats();
     }
 
+    public bool HasAttachment(string attachmentId)
+    {
+        return equippedAttachments.Any(a => a != null && a.id == attachmentId);
+    }
+
+
     public void EquipAttachment(AttachmentData att, WeaponAttachmentEntry entry)
     {
         if (att == null || entry == null)
