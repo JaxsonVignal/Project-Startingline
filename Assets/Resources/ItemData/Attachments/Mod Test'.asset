@@ -1,0 +1,119 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
+  m_Name: Mod Test'
+  m_EditorClassIdentifier: 
+  ID: 15555
+  Name: mod
+  Description: 
+  Icon: {fileID: 0}
+  maxStackSize: 1
+  id: 155555
+  type: 8
+  prefab: {fileID: 6512965436742219101, guid: 7d9ecb626b78a1f41a2e79765019013d, type: 3}
+  icon: {fileID: 0}
+  description: 
+  Value: 0
+  localPosition: {x: 0, y: 0, z: 0}
+  localEuler: {x: 0, y: 0, z: 0}
+  localScale: {x: 1, y: 1, z: 1}
+  damageBonus: 0
+  fireRateMultiplier: 1
+  reloadTimeMultiplier: 1
+  spreadMultiplier: 1
+  recoilMultiplier: 1
+  magazineBonus: 0
+  scopeFOVOverride: 0
+  scopeReticle: {fileID: 0}
+  reticleScale: 1
+  reticleColor: {r: 1, g: 0, b: 0, a: 1}
+  frontScrewLocalPos: {x: -0.05, y: 0.05, z: -0.05}
+  backScrewLocalPos: {x: 0.05, y: 0.05, z: -0.05}
+  screwRadius: 0.015
+  grenadeLauncherData: {fileID: 0}
+  underbarrelShotgunData: {fileID: 0}
+  flashlightData: {fileID: 0}
+  modifierData:
+    antiGravityRounds: 0
+    antiGravityForce: 5
+    antiGravityDuration: 10
+    disableGravity: 1
+    initialUpwardImpulse: 5
+    bobbingAmount: 0.61
+    bobbingSpeed: 2
+    cryoRounds: 0
+    cryoDuration: 5
+    freezeAnimation: 1
+    freezeTintColor: {r: 0.5, g: 0.8, b: 1, a: 1}
+    freezeTintStrength: 0.5
+    iceEffectPrefab: {fileID: 0}
+    explosiveRounds: 0
+    explosionRadius: 10
+    explosionDamageMultiplier: 1.5
+    applyExplosionKnockback: 1
+    explosionKnockbackForce: 25
+    explosionKnockbackDuration: 2
+    explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
+    showExplosionRadius: 0
+    tracerRounds: 1
+    tracerColor: {r: 0, g: 1, b: 0.2879982, a: 1}
+    tracerIntensity: 5.03
+    tracerLightRange: 15.08
+    addEmission: 0
+    emissionIntensity: 2
+    trailEffectPrefab: {fileID: 0}
+    trailDuration: 0.3
+    ricochetRounds: 0
+    maxBounces: 1
+    bounceSpeedMultiplier: 0.9
+    bounceDamageMultiplier: 0.8
+    ricochetSparkPrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
+    ricochetSound: {fileID: 0}
+    showRicochetDebug: 0
+    phaseRounds: 0
+    makeTransparent: 1
+    phaseTransparency: 0.4
+    phaseGlowColor: {r: 0.5, g: 0.8, b: 1, a: 1}
+    phaseEffectPrefab: {fileID: 0}
+    showPhaseDebug: 0
+    gravityWellRounds: 0
+    gravityWellRadius: 15
+    gravityWellDuration: 5
+    gravityWellStrength: 5
+    gravityWellDamagePerSecond: 5
+    gravityWellEffectPrefab: {fileID: 8069894433506584607, guid: 2a8f4668ec7406e46b71c9406ca2e15a, type: 3}
+    showGravityWellDebug: 0
+    teleportRounds: 0
+    teleportMinDistance: 5
+    teleportMaxDistance: 15
+    teleportMaxAttempts: 20
+    teleportCheckRadius: 1
+    teleportDepartureEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
+    teleportArrivalEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
+    showTeleportDebug: 0
+    incendiaryRounds: 1
+    incendiaryDuration: 5
+    incendiaryDamagePerSecond: 10
+    incendiaryTickInterval: 0.5
+    incendiarySpreadEnabled: 0
+    incendiarySpreadRadius: 5
+    incendiarySpreadChance: 0.3
+    incendiaryFireEffectPrefab: {fileID: 6294508013172393196, guid: 043176b6a68be2b43b073aaaa4782c7d, type: 3}
+    incendiaryTintColor: {r: 1, g: 0.4, b: 0, a: 1}
+    incendiaryTintStrength: 0.3
+    incendiaryAddEmission: 1
+    incendiaryEmissionIntensity: 2
+    disorientationRounds: 0
+    disorientationDuration: 3
+    disorientationSpinSpeed: 1440
+    disorientationEffectPrefab: {fileID: 0}
+    showDisorientationDebug: 0
