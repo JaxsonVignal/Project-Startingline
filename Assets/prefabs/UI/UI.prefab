@@ -1158,6 +1158,7 @@ MonoBehaviour:
     itemData: {fileID: 0}
     _itemID: -1
     stackSize: -1
+    _uniqueSlotID: 15917d03-f558-482b-998b-d46fa7b42d8c
 --- !u!1 &6973652554525930252
 GameObject:
   m_ObjectHideFlags: 0

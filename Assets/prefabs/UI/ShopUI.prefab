@@ -874,8 +874,7 @@ MonoBehaviour:
   shopContentParent: {fileID: 4463441640150635267}
   playerHUD: {fileID: 0}
   exitButton: {fileID: 6209935193212566482}
-  playerMoney: 100
-  playerMoneyText: {fileID: 2901192345240047683}
+  moneyManager: {fileID: 0}
   playerMovementScript: {fileID: 0}
   mainVCam: {fileID: 0}
   shopVCam: {fileID: 0}
