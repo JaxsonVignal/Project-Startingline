@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 public class AttachmentMinigameManager : MonoBehaviour
 {
@@ -15,6 +16,368 @@ public class AttachmentMinigameManager : MonoBehaviour
 
     private AttachmentMinigameBase currentMinigame;
     private Action<AttachmentData> onMinigameCompleteCallback;
+
+    // ========== REMOVAL MINIGAMES ==========
+
+    /// <summary>
+    /// Start a barrel removal minigame (unscrew and remove)
+    /// </summary>
+    public void StartBarrelRemovalMinigame(
+        AttachmentData barrelToRemove,
+        WeaponData weapon,
+        Transform socket,
+        Action<AttachmentData> onComplete)
+    {
+        Debug.Log($"StartBarrelRemovalMinigame: {barrelToRemove.name}");
+
+        if (currentMinigame != null)
+        {
+            Destroy(currentMinigame.gameObject);
+        }
+
+        onMinigameCompleteCallback = onComplete;
+
+        // Find the barrel GameObject in the scene
+        GameObject barrelInScene = FindAttachmentInScene(socket, barrelToRemove);
+
+        if (barrelInScene == null)
+        {
+            Debug.LogWarning("Could not find barrel in scene - completing without minigame");
+
+            // Still re-enable default barrel parts even if minigame is skipped
+            if (weapon != null)
+            {
+                var partsToReEnable = weapon.GetPartsToDisableWithBarrel();
+                if (partsToReEnable != null && partsToReEnable.Count > 0)
+                {
+                    ReEnableWeaponParts(socket.root, partsToReEnable);
+                }
+            }
+
+            onComplete?.Invoke(barrelToRemove);
+            return;
+        }
+
+        // Add the BarrelRemovalMinigame component
+        BarrelRemovalMinigame minigame = barrelInScene.AddComponent<BarrelRemovalMinigame>();
+
+        // Get the parts to re-enable when barrel is removed (default barrel parts)
+        if (weapon != null)
+        {
+            var partsToReEnable = weapon.GetPartsToDisableWithBarrel();
+            if (partsToReEnable != null && partsToReEnable.Count > 0)
+            {
+                minigame.SetWeaponPartsToReEnable(socket.root, partsToReEnable);
+            }
+        }
+
+        minigame.attachmentData = barrelToRemove;
+        minigame.targetSocket = socket;
+        minigame.weaponData = weapon;
+        minigame.minigameCamera = previewCamera;
+
+        minigame.OnMinigameComplete += OnMinigameCompleted;
+        minigame.OnMinigameCancelled += OnMinigameCancelled;
+
+        currentMinigame = minigame;
+        minigame.StartMinigame();
+
+        Debug.Log($"Started barrel removal minigame");
+    }
+
+    /// <summary>
+    /// Start a scope removal minigame (unscrew and remove)
+    /// </summary>
+    public void StartScopeRemovalMinigame(
+        AttachmentData scopeToRemove,
+        WeaponData weapon,
+        Transform socket,
+        Action<AttachmentData> onComplete)
+    {
+        Debug.Log($"StartScopeRemovalMinigame: {scopeToRemove.name}");
+
+        if (currentMinigame != null)
+        {
+            Destroy(currentMinigame.gameObject);
+        }
+
+        onMinigameCompleteCallback = onComplete;
+
+        GameObject scopeInScene = FindAttachmentInScene(socket, scopeToRemove);
+
+        if (scopeInScene == null)
+        {
+            Debug.LogWarning("Could not find scope in scene - completing without minigame");
+
+            // Still re-enable iron sights even if minigame is skipped
+            if (weapon != null)
+            {
+                var partsToReEnable = weapon.GetPartsToDisableWithSight();
+                if (partsToReEnable != null && partsToReEnable.Count > 0)
+                {
+                    ReEnableWeaponParts(socket.root, partsToReEnable);
+                }
+            }
+
+            onComplete?.Invoke(scopeToRemove);
+            return;
+        }
+
+        ScopeRemovalMinigame minigame = scopeInScene.AddComponent<ScopeRemovalMinigame>();
+
+        // Assign screw prefab
+        if (screwPrefab != null)
+        {
+            var screwPrefabField = typeof(ScopeRemovalMinigame).GetField("screwPrefab",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            if (screwPrefabField != null)
+            {
+                screwPrefabField.SetValue(minigame, screwPrefab);
+            }
+        }
+
+        // Get the parts to re-enable when scope is removed (iron sights)
+        if (weapon != null)
+        {
+            var partsToReEnable = weapon.GetPartsToDisableWithSight();
+            if (partsToReEnable != null && partsToReEnable.Count > 0)
+            {
+                minigame.SetWeaponPartsToReEnable(socket.root, partsToReEnable);
+            }
+        }
+
+        minigame.attachmentData = scopeToRemove;
+        minigame.targetSocket = socket;
+        minigame.weaponData = weapon;
+        minigame.minigameCamera = previewCamera;
+
+        minigame.OnMinigameComplete += OnMinigameCompleted;
+        minigame.OnMinigameCancelled += OnMinigameCancelled;
+
+        currentMinigame = minigame;
+        minigame.StartMinigame();
+
+        Debug.Log($"Started scope removal minigame");
+    }
+
+    /// <summary>
+    /// Start an underbarrel removal minigame (unscrew and remove)
+    /// </summary>
+    public void StartUnderbarrelRemovalMinigame(
+        AttachmentData underbarrelToRemove,
+        WeaponData weapon,
+        Transform socket,
+        Action<AttachmentData> onComplete)
+    {
+        Debug.Log($"StartUnderbarrelRemovalMinigame: {underbarrelToRemove.name}");
+
+        if (currentMinigame != null)
+        {
+            Destroy(currentMinigame.gameObject);
+        }
+
+        onMinigameCompleteCallback = onComplete;
+
+        GameObject underbarrelInScene = FindAttachmentInScene(socket, underbarrelToRemove);
+
+        if (underbarrelInScene == null)
+        {
+            Debug.LogWarning("Could not find underbarrel in scene - completing without minigame");
+            onComplete?.Invoke(underbarrelToRemove);
+            return;
+        }
+
+        UnderbarrelRemovalMinigame minigame = underbarrelInScene.AddComponent<UnderbarrelRemovalMinigame>();
+
+        // Assign screw prefab
+        if (screwPrefab != null)
+        {
+            var screwPrefabField = typeof(UnderbarrelRemovalMinigame).GetField("screwPrefab",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            if (screwPrefabField != null)
+            {
+                screwPrefabField.SetValue(minigame, screwPrefab);
+            }
+        }
+
+        minigame.attachmentData = underbarrelToRemove;
+        minigame.targetSocket = socket;
+        minigame.weaponData = weapon;
+        minigame.minigameCamera = previewCamera;
+
+        minigame.OnMinigameComplete += OnMinigameCompleted;
+        minigame.OnMinigameCancelled += OnMinigameCancelled;
+
+        currentMinigame = minigame;
+        minigame.StartMinigame();
+
+        Debug.Log($"Started underbarrel removal minigame");
+    }
+
+    /// <summary>
+    /// Start a siderail removal minigame (slide off and remove)
+    /// </summary>
+    public void StartSiderailRemovalMinigame(
+        AttachmentData siderailToRemove,
+        WeaponData weapon,
+        Transform socket,
+        Action<AttachmentData> onComplete)
+    {
+        Debug.Log($"StartSiderailRemovalMinigame: {siderailToRemove.name}");
+
+        if (currentMinigame != null)
+        {
+            Destroy(currentMinigame.gameObject);
+        }
+
+        onMinigameCompleteCallback = onComplete;
+
+        GameObject siderailInScene = FindAttachmentInScene(socket, siderailToRemove);
+
+        if (siderailInScene == null)
+        {
+            Debug.LogWarning("Could not find siderail in scene - completing without minigame");
+            onComplete?.Invoke(siderailToRemove);
+            return;
+        }
+
+        SiderailRemovalMinigame minigame = siderailInScene.AddComponent<SiderailRemovalMinigame>();
+
+        minigame.attachmentData = siderailToRemove;
+        minigame.targetSocket = socket;
+        minigame.weaponData = weapon;
+        minigame.minigameCamera = previewCamera;
+
+        minigame.OnMinigameComplete += OnMinigameCompleted;
+        minigame.OnMinigameCancelled += OnMinigameCancelled;
+
+        currentMinigame = minigame;
+        minigame.StartMinigame();
+
+        Debug.Log($"Started siderail removal minigame");
+    }
+
+    /// <summary>
+    /// Start a magazine removal minigame (pull out and remove)
+    /// </summary>
+    public void StartMagazineRemovalMinigame(
+        AttachmentData magazineToRemove,
+        WeaponData weapon,
+        Transform socket,
+        Action<AttachmentData> onComplete)
+    {
+        Debug.Log($"StartMagazineRemovalMinigame: {magazineToRemove.name}");
+
+        if (currentMinigame != null)
+        {
+            Destroy(currentMinigame.gameObject);
+        }
+
+        onMinigameCompleteCallback = onComplete;
+
+        GameObject magazineInScene = FindAttachmentInScene(socket, magazineToRemove);
+
+        if (magazineInScene == null)
+        {
+            Debug.LogWarning("Could not find magazine in scene - completing without minigame");
+
+            // Still re-enable default magazine even if minigame is skipped
+            if (weapon != null)
+            {
+                var partsToReEnable = weapon.GetPartsToDisableWithMagazine();
+                if (partsToReEnable != null && partsToReEnable.Count > 0)
+                {
+                    ReEnableWeaponParts(socket.root, partsToReEnable);
+                }
+            }
+
+            onComplete?.Invoke(magazineToRemove);
+            return;
+        }
+
+        MagazineRemovalMinigame minigame = magazineInScene.AddComponent<MagazineRemovalMinigame>();
+
+        // Get the parts to re-enable when magazine is removed (default magazine)
+        if (weapon != null)
+        {
+            var partsToReEnable = weapon.GetPartsToDisableWithMagazine();
+            if (partsToReEnable != null && partsToReEnable.Count > 0)
+            {
+                minigame.SetWeaponPartsToReEnable(socket.root, partsToReEnable);
+            }
+        }
+
+        minigame.attachmentData = magazineToRemove;
+        minigame.targetSocket = socket;
+        minigame.weaponData = weapon;
+        minigame.minigameCamera = previewCamera;
+
+        minigame.OnMinigameComplete += OnMinigameCompleted;
+        minigame.OnMinigameCancelled += OnMinigameCancelled;
+
+        currentMinigame = minigame;
+        minigame.StartMinigame();
+
+        Debug.Log($"Started magazine removal minigame");
+    }
+
+    // ========== HELPER METHODS ==========
+
+    /// <summary>
+    /// Re-enable weapon parts by path (used when minigame is skipped)
+    /// </summary>
+    private void ReEnableWeaponParts(Transform weaponRoot, List<string> partPaths)
+    {
+        if (weaponRoot == null || partPaths == null || partPaths.Count == 0)
+            return;
+
+        Debug.Log($"Re-enabling {partPaths.Count} weapon part(s)");
+
+        foreach (var partPath in partPaths)
+        {
+            if (string.IsNullOrEmpty(partPath))
+                continue;
+
+            Transform partTransform = weaponRoot.Find(partPath);
+
+            if (partTransform == null)
+            {
+                partTransform = FindChildByNameRecursive(weaponRoot, partPath);
+            }
+
+            if (partTransform != null)
+            {
+                partTransform.gameObject.SetActive(true);
+                Debug.Log($"  Re-enabled: {partPath}");
+            }
+            else
+            {
+                Debug.LogWarning($"  Could not find part to re-enable: {partPath}");
+            }
+        }
+    }
+
+    private GameObject FindAttachmentInScene(Transform socket, AttachmentData attachment)
+    {
+        if (socket == null) return null;
+
+        string expectedName = $"ATT_{attachment.id}";
+
+        foreach (Transform child in socket)
+        {
+            if (child.name == expectedName || child.name.Contains(attachment.prefab.name))
+            {
+                return child.gameObject;
+            }
+        }
+
+        Debug.LogWarning($"Could not find attachment with name '{expectedName}' in socket");
+        return null;
+    }
+
+    // ========== ORIGINAL METHODS (UNCHANGED) ==========
 
     public void StartMinigame(AttachmentData attachment, WeaponData weapon, Transform socket, Action<AttachmentData> onComplete)
     {
@@ -84,9 +447,6 @@ public class AttachmentMinigameManager : MonoBehaviour
         minigame.StartMinigame();
     }
 
-    /// <summary>
-    /// Start a barrel replacement minigame (unscrew old, screw in new)
-    /// </summary>
     public void StartBarrelReplacementMinigame(
         AttachmentData oldBarrel,
         AttachmentData newBarrel,
@@ -103,10 +463,8 @@ public class AttachmentMinigameManager : MonoBehaviour
 
         onMinigameCompleteCallback = onComplete;
 
-        // Find and HIDE the default barrel parts IMMEDIATELY before starting the minigame
         HideDefaultBarrelParts(socket.root, weapon);
 
-        // Spawn the NEW barrel attachment prefab
         GameObject newBarrelObj = Instantiate(newBarrel.prefab, minigameParent);
 
         if (newBarrelObj.GetComponent<Collider>() == null)
@@ -116,14 +474,12 @@ public class AttachmentMinigameManager : MonoBehaviour
 
         SilencerMinigame minigame = newBarrelObj.AddComponent<SilencerMinigame>();
 
-        // Find the old barrel GameObject in the scene to remove it
         GameObject oldBarrelInScene = FindOldBarrelInScene(socket, oldBarrel);
 
         if (oldBarrelInScene != null)
         {
             Debug.Log($"Found old barrel in scene: {oldBarrelInScene.name}");
 
-            // Create a temporary list with just the old barrel's name
             var partsToRemove = new System.Collections.Generic.List<string> { oldBarrelInScene.name };
 
             minigame.SetWeaponPartsToDisable(socket.root, partsToRemove);
@@ -147,9 +503,6 @@ public class AttachmentMinigameManager : MonoBehaviour
         Debug.Log($"Started barrel replacement minigame");
     }
 
-    /// <summary>
-    /// Hide the default barrel parts during barrel replacement
-    /// </summary>
     private void HideDefaultBarrelParts(Transform weaponRoot, WeaponData weaponData)
     {
         if (weaponRoot == null || weaponData == null) return;
@@ -188,9 +541,6 @@ public class AttachmentMinigameManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Recursive helper to find child transforms
-    /// </summary>
     private Transform FindChildByNameRecursive(Transform parent, string name)
     {
         foreach (Transform child in parent)
@@ -225,9 +575,6 @@ public class AttachmentMinigameManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Start a scope replacement minigame (unscrew old, screw in new)
-    /// </summary>
     public void StartScopeReplacementMinigame(
         AttachmentData oldScope,
         AttachmentData newScope,
@@ -253,7 +600,6 @@ public class AttachmentMinigameManager : MonoBehaviour
 
         ScopeMinigame minigame = newScopeObj.AddComponent<ScopeMinigame>();
 
-        // Assign screw prefab
         if (screwPrefab != null)
         {
             var screwPrefabField = typeof(ScopeMinigame).GetField("screwPrefab",
@@ -265,7 +611,6 @@ public class AttachmentMinigameManager : MonoBehaviour
             }
         }
 
-        // Find old scope in scene
         GameObject oldScopeInScene = FindOldScopeInScene(socket, oldScope);
 
         if (oldScopeInScene != null)
@@ -276,7 +621,6 @@ public class AttachmentMinigameManager : MonoBehaviour
             minigame.SetOldScopeParts(socket.root, partsToRemove, oldScope);
         }
 
-        // Set weapon parts to disable (iron sights)
         if (weapon != null)
         {
             var partsToDisable = weapon.GetPartsToDisableWithSight();
@@ -316,9 +660,6 @@ public class AttachmentMinigameManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Start an underbarrel replacement minigame (unscrew old, screw in new)
-    /// </summary>
     public void StartUnderbarrelReplacementMinigame(
         AttachmentData oldUnderbarrel,
         AttachmentData newUnderbarrel,
@@ -335,7 +676,6 @@ public class AttachmentMinigameManager : MonoBehaviour
 
         onMinigameCompleteCallback = onComplete;
 
-        // Spawn the NEW underbarrel attachment prefab
         GameObject newUnderbarrelObj = Instantiate(newUnderbarrel.prefab, minigameParent);
 
         if (newUnderbarrelObj.GetComponent<Collider>() == null)
@@ -345,7 +685,6 @@ public class AttachmentMinigameManager : MonoBehaviour
 
         UnderbarrelMinigame minigame = newUnderbarrelObj.AddComponent<UnderbarrelMinigame>();
 
-        // Assign screw prefab
         if (screwPrefab != null)
         {
             var screwPrefabField = typeof(UnderbarrelMinigame).GetField("screwPrefab",
@@ -358,17 +697,14 @@ public class AttachmentMinigameManager : MonoBehaviour
             }
         }
 
-        // Find the old underbarrel GameObject in the scene to remove it
         GameObject oldUnderbarrelInScene = FindOldUnderbarrelInScene(socket, oldUnderbarrel);
 
         if (oldUnderbarrelInScene != null)
         {
             Debug.Log($"Found old underbarrel in scene: {oldUnderbarrelInScene.name}");
 
-            // Create a list with just the old underbarrel's name
             var partsToRemove = new System.Collections.Generic.List<string> { oldUnderbarrelInScene.name };
 
-            // IMPORTANT: Pass the OLD attachment data so it uses the correct screw positions
             minigame.SetOldUnderbarrelParts(socket.root, partsToRemove, oldUnderbarrel);
         }
         else
@@ -408,9 +744,6 @@ public class AttachmentMinigameManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Start a siderail replacement minigame (slide old off, slide new on)
-    /// </summary>
     public void StartSiderailReplacementMinigame(
         AttachmentData oldSiderail,
         AttachmentData newSiderail,
@@ -427,7 +760,6 @@ public class AttachmentMinigameManager : MonoBehaviour
 
         onMinigameCompleteCallback = onComplete;
 
-        // Spawn the NEW siderail attachment prefab
         GameObject newSiderailObj = Instantiate(newSiderail.prefab, minigameParent);
 
         if (newSiderailObj.GetComponent<Collider>() == null)
@@ -437,14 +769,12 @@ public class AttachmentMinigameManager : MonoBehaviour
 
         SiderailMinigame minigame = newSiderailObj.AddComponent<SiderailMinigame>();
 
-        // Find the old siderail GameObject in the scene to remove it
         GameObject oldSiderailInScene = FindOldSiderailInScene(socket, oldSiderail);
 
         if (oldSiderailInScene != null)
         {
             Debug.Log($"Found old siderail in scene: {oldSiderailInScene.name}");
 
-            // Create a list with just the old siderail's name
             var partsToRemove = new System.Collections.Generic.List<string> { oldSiderailInScene.name };
 
             minigame.SetOldSiderailParts(socket.root, partsToRemove);
@@ -566,10 +896,6 @@ public class AttachmentMinigameManager : MonoBehaviour
     private SiderailMinigame SetupSiderailMinigame(GameObject attachmentObj)
     {
         SiderailMinigame siderailMinigame = attachmentObj.AddComponent<SiderailMinigame>();
-
-        // Siderail minigame doesn't need any special setup for initial attachment
-        // The slide mechanics are handled internally
-
         return siderailMinigame;
     }
 
@@ -606,12 +932,10 @@ public class AttachmentMinigameManager : MonoBehaviour
     {
         Debug.Log("Minigame cancelled - cleaning up all minigame objects");
 
-        // UPDATED: Clean up ALL children in the minigame parent
         if (minigameParent != null)
         {
             Debug.Log($"Destroying all children of minigameParent ({minigameParent.childCount} children)");
 
-            // Create a list to avoid modifying collection while iterating
             var childrenToDestroy = new System.Collections.Generic.List<GameObject>();
 
             foreach (Transform child in minigameParent)
@@ -620,7 +944,6 @@ public class AttachmentMinigameManager : MonoBehaviour
                 Debug.Log($"Marking for destruction: {child.gameObject.name}");
             }
 
-            // Destroy all children
             foreach (var child in childrenToDestroy)
             {
                 Destroy(child);
@@ -642,19 +965,14 @@ public class AttachmentMinigameManager : MonoBehaviour
         {
             Debug.Log($"CancelCurrentMinigame called - cancelling {currentMinigame.gameObject.name}");
 
-            // Store reference before clearing
             var minigameToCancel = currentMinigame;
 
-            // Clear our reference first
             currentMinigame = null;
             onMinigameCompleteCallback = null;
 
-            // Now call CancelMinigame on the stored reference
-            // This will trigger cleanup (camera reset) and destroy the GameObject
             minigameToCancel.CancelMinigame();
         }
 
-        // ADDED: Also clean up ALL children in minigame parent as a safety measure
         if (minigameParent != null)
         {
             Debug.Log($"CancelCurrentMinigame - cleaning up minigameParent ({minigameParent.childCount} children)");
