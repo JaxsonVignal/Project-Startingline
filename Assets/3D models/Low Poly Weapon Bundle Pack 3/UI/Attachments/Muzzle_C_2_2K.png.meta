@@ -67,7 +67,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,8 +80,21 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -95,21 +108,304 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_0
+      rect:
+        serializedVersion: 2
+        x: 423
+        y: 1234
+        width: 233
+        height: 135
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7facb6e7fa8556047ae09497bc486a2b
+      internalID: -1959172836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_1
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 1197
+        width: 384
+        height: 162
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d3c23bb6c9e09904d8544cbbc797d104
+      internalID: 644059808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_2
+      rect:
+        serializedVersion: 2
+        x: 1691
+        y: 1241
+        width: 521
+        height: 122
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ac65a4b40f3b6640a8f0c3f63e4b07a
+      internalID: -1710634566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_3
+      rect:
+        serializedVersion: 2
+        x: 397
+        y: 966
+        width: 382
+        height: 113
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cdad188f4f107f449ba23550404fa1ed
+      internalID: 1037055689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_4
+      rect:
+        serializedVersion: 2
+        x: 1032
+        y: 958
+        width: 430
+        height: 129
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3fc8c761e9fbaa34ab50b85d574aa24d
+      internalID: -858481994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_5
+      rect:
+        serializedVersion: 2
+        x: 1863
+        y: 968
+        width: 344
+        height: 109
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7e137a8a5e9828141a6614920333e60a
+      internalID: -463658741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_6
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 654
+        width: 292
+        height: 115
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7bbeb751b1a350a4e866425e03adb14b
+      internalID: -911038282
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_7
+      rect:
+        serializedVersion: 2
+        x: 942
+        y: 648
+        width: 155
+        height: 129
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e81b6543ea12e74990b9444073b2f57
+      internalID: -2127518581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_8
+      rect:
+        serializedVersion: 2
+        x: 1373
+        y: 653
+        width: 274
+        height: 119
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d98d460559ce8014991a70ae29ae9c36
+      internalID: 536615731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_9
+      rect:
+        serializedVersion: 2
+        x: 1929
+        y: 647
+        width: 299
+        height: 131
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b1932ed5e13974e46a2315983874fa50
+      internalID: -837366292
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_10
+      rect:
+        serializedVersion: 2
+        x: 411
+        y: 320
+        width: 736
+        height: 164
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5a6e8f4f84ab87841914336f0e5cbbaa
+      internalID: -647415468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_11
+      rect:
+        serializedVersion: 2
+        x: 1418
+        y: 318
+        width: 811
+        height: 168
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 20a6271f4daedb949963e7c3dafd87c6
+      internalID: 2028128526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Muzzle_C_2_2K_12
+      rect:
+        serializedVersion: 2
+        x: 1418
+        y: 39
+        width: 811
+        height: 168
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bb05baf0433f92d4ba2e23dbb050f35a
+      internalID: -611836897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
-    customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: f4978b091667f4a49a23240d8c1a9674
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Muzzle_C_2_2K_0: -1959172836
+      Muzzle_C_2_2K_1: 644059808
+      Muzzle_C_2_2K_10: -647415468
+      Muzzle_C_2_2K_11: 2028128526
+      Muzzle_C_2_2K_12: -611836897
+      Muzzle_C_2_2K_2: -1710634566
+      Muzzle_C_2_2K_3: 1037055689
+      Muzzle_C_2_2K_4: -858481994
+      Muzzle_C_2_2K_5: -463658741
+      Muzzle_C_2_2K_6: -911038282
+      Muzzle_C_2_2K_7: -2127518581
+      Muzzle_C_2_2K_8: 536615731
+      Muzzle_C_2_2K_9: -837366292
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

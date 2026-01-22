@@ -67,7 +67,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,8 +80,21 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -95,21 +108,194 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Laser&Light_A_2_2K_0
+      rect:
+        serializedVersion: 2
+        x: 93
+        y: 1031
+        width: 543
+        height: 292
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0376955c6ee9fc54c8fc8672ed1a2fc1
+      internalID: -190799308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Laser&Light_A_2_2K_1
+      rect:
+        serializedVersion: 2
+        x: 722
+        y: 1031
+        width: 564
+        height: 315
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 877e11b29ec4bcd4cabf75bc246e3189
+      internalID: -1176559329
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Laser&Light_A_2_2K_2
+      rect:
+        serializedVersion: 2
+        x: 1382
+        y: 1013
+        width: 436
+        height: 335
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9c510a545ab41cc4999e81e3212f814c
+      internalID: -736379609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Laser&Light_A_2_2K_3
+      rect:
+        serializedVersion: 2
+        x: 1947
+        y: 1023
+        width: 537
+        height: 325
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1ce9bb280b6e31445934fbf5d87d693e
+      internalID: 1097858001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Laser&Light_A_2_2K_4
+      rect:
+        serializedVersion: 2
+        x: 317
+        y: 591
+        width: 805
+        height: 212
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6d20ff78f0bfb7d4f87c79775246223d
+      internalID: -356585649
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Laser&Light_A_2_2K_5
+      rect:
+        serializedVersion: 2
+        x: 1568
+        y: 607
+        width: 591
+        height: 311
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c9990c5c7be26aa46806108f071ab391
+      internalID: 2116513589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Laser&Light_A_2_2K_6
+      rect:
+        serializedVersion: 2
+        x: 557
+        y: 217
+        width: 265
+        height: 164
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b2ecee8462e4d3e49b685db500e72a52
+      internalID: 308510300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Laser&Light_A_2_2K_7
+      rect:
+        serializedVersion: 2
+        x: 1557
+        y: 163
+        width: 656
+        height: 241
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: adbd290707b80604f96d092defceab60
+      internalID: 949830495
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
-    customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 6795ac6d5dce3934e8951211277c1172
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Laser&Light_A_2_2K_0: -190799308
+      Laser&Light_A_2_2K_1: -1176559329
+      Laser&Light_A_2_2K_2: -736379609
+      Laser&Light_A_2_2K_3: 1097858001
+      Laser&Light_A_2_2K_4: -356585649
+      Laser&Light_A_2_2K_5: 2116513589
+      Laser&Light_A_2_2K_6: 308510300
+      Laser&Light_A_2_2K_7: 949830495
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

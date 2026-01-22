@@ -67,7 +67,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,8 +80,21 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -95,21 +108,156 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: BarrelGuard_Chip_2_2K_0
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 1038
+        width: 635
+        height: 325
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ee8b8491fbc81e429341d89eca55119
+      internalID: -37737787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BarrelGuard_Chip_2_2K_1
+      rect:
+        serializedVersion: 2
+        x: 1508
+        y: 1038
+        width: 635
+        height: 326
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e69dfd9956543dd49b167a25ef45cb1a
+      internalID: 393346408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BarrelGuard_Chip_2_2K_4
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 563
+        width: 635
+        height: 339
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b18dfecb9dc454d44aa95c93d380f90c
+      internalID: -422683937
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BarrelGuard_Chip_2_2K_5
+      rect:
+        serializedVersion: 2
+        x: 1508
+        y: 564
+        width: 635
+        height: 338
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ed520845084c9d5418613e354ba677ff
+      internalID: 55133559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BarrelGuard_Chip_2_2K_8
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 111
+        width: 635
+        height: 328
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4137f630ed2ff1349a6eee53dbc8a0ea
+      internalID: -1874326206
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BarrelGuard_Chip_2_2K_9
+      rect:
+        serializedVersion: 2
+        x: 1508
+        y: 111
+        width: 635
+        height: 328
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64b17169dd8726c4fb85d0a5805ba33f
+      internalID: 1154923104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
-    customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 87c4c6edc67b5564fbaba67c7e811c3e
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      BarrelGuard_Chip_2_2K_0: -37737787
+      BarrelGuard_Chip_2_2K_1: 393346408
+      BarrelGuard_Chip_2_2K_10: 1691947080
+      BarrelGuard_Chip_2_2K_11: -165519239
+      BarrelGuard_Chip_2_2K_2: 1189617114
+      BarrelGuard_Chip_2_2K_3: -240376449
+      BarrelGuard_Chip_2_2K_4: -422683937
+      BarrelGuard_Chip_2_2K_5: 55133559
+      BarrelGuard_Chip_2_2K_6: 533640343
+      BarrelGuard_Chip_2_2K_7: -1384067107
+      BarrelGuard_Chip_2_2K_8: -1874326206
+      BarrelGuard_Chip_2_2K_9: 1154923104
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

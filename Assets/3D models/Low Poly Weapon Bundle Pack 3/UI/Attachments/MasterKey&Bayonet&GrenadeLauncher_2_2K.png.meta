@@ -67,7 +67,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,8 +80,21 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -95,21 +108,150 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: MasterKey&Bayonet&GrenadeLauncher_2_2K_0
+      rect:
+        serializedVersion: 2
+        x: 124
+        y: 1083
+        width: 1279
+        height: 249
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6f91ad4c5cc8ae0478f24fdfbc82d384
+      internalID: -53527853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MasterKey&Bayonet&GrenadeLauncher_2_2K_1
+      rect:
+        serializedVersion: 2
+        x: 1556
+        y: 1159
+        width: 803
+        height: 228
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb02741632d333b47ad781212d1cfbd6
+      internalID: -1076273831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MasterKey&Bayonet&GrenadeLauncher_2_2K_2
+      rect:
+        serializedVersion: 2
+        x: 1583
+        y: 858
+        width: 810
+        height: 223
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ce2cddcba113d544b96efd0ec5d5cae4
+      internalID: 101866349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MasterKey&Bayonet&GrenadeLauncher_2_2K_3
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 593
+        width: 955
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4e7097351eccad6408607cd47c94735d
+      internalID: -1736297094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MasterKey&Bayonet&GrenadeLauncher_2_2K_4
+      rect:
+        serializedVersion: 2
+        x: 1246
+        y: 88
+        width: 1291
+        height: 646
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de80b0fa7a67acd4a81ab08a17c66bef
+      internalID: -469284259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MasterKey&Bayonet&GrenadeLauncher_2_2K_5
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 123
+        width: 936
+        height: 289
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0ecca1c73bd9cc049b680f3c844a206d
+      internalID: 905632638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
-    customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 30fd9b1edcb2991409cf7995feededb4
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      MasterKey&Bayonet&GrenadeLauncher_2_2K_0: -53527853
+      MasterKey&Bayonet&GrenadeLauncher_2_2K_1: -1076273831
+      MasterKey&Bayonet&GrenadeLauncher_2_2K_2: 101866349
+      MasterKey&Bayonet&GrenadeLauncher_2_2K_3: -1736297094
+      MasterKey&Bayonet&GrenadeLauncher_2_2K_4: -469284259
+      MasterKey&Bayonet&GrenadeLauncher_2_2K_5: 905632638
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
