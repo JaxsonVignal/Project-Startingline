@@ -12,14 +12,17 @@ public class WeaponBuilderController : MonoBehaviour
     [SerializeField] private WeaponBuilderUI builderUI;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private Camera previewCamera;
-    [SerializeField] private GameObject mainUIPanel; // <-- Added
+    [SerializeField] private GameObject mainUIPanel;
     [SerializeField] private HotbarDisplay playerHotbar;
+    [SerializeField] private AttachmentMinigameManager minigameManager;
 
     [Header("Settings")]
     [SerializeField] private bool pauseGameWhenOpen = true;
     [SerializeField] private KeyCode exitKey = KeyCode.Escape;
 
     private bool isBuilderOpen = false;
+    private Vector3 originalPreviewCameraPosition; // Store original position
+    private Quaternion originalPreviewCameraRotation; // Store original rotation
 
     private void Start()
     {
@@ -65,15 +68,20 @@ public class WeaponBuilderController : MonoBehaviour
 
         // Enable preview camera if it exists
         if (previewCamera != null)
+        {
+            // Store the original position and rotation
+            originalPreviewCameraPosition = previewCamera.transform.position;
+            originalPreviewCameraRotation = previewCamera.transform.rotation;
             previewCamera.enabled = true;
+        }
 
         // Disable main camera if needed
         if (mainCamera != null && previewCamera != null)
             mainCamera.enabled = false;
 
         // Pause game
-       // if (pauseGameWhenOpen)
-            //Time.timeScale = 0f;
+        // if (pauseGameWhenOpen)
+        //     Time.timeScale = 0f;
 
         // Show cursor
         Cursor.lockState = CursorLockMode.None;
@@ -85,6 +93,34 @@ public class WeaponBuilderController : MonoBehaviour
     public void CloseBuilder()
     {
         if (!isBuilderOpen) return;
+
+        // ALWAYS reset the preview camera position first, before anything else
+        if (previewCamera != null)
+        {
+            previewCamera.transform.position = originalPreviewCameraPosition;
+            previewCamera.transform.rotation = originalPreviewCameraRotation;
+            Debug.Log($"Reset preview camera to original position: {originalPreviewCameraPosition}");
+        }
+
+        // Check if minigame is active
+        bool hadActiveMinigame = minigameManager != null && minigameManager.IsMinigameActive();
+
+        if (hadActiveMinigame)
+        {
+            Debug.Log("Closing builder - cancelling active minigame");
+            minigameManager.CancelCurrentMinigame();
+            // DON'T call CleanupPreviewContainer - let the minigame cleanup handle everything
+        }
+        else
+        {
+            // No active minigame - safe to clean up preview
+            if (builderUI != null)
+            {
+                Debug.Log("Cleaning up preview before closing builder (no active minigame)");
+                builderUI.CleanupPreviewContainer();
+            }
+        }
+
         isBuilderOpen = false;
 
         // Hide builder UI
@@ -108,8 +144,8 @@ public class WeaponBuilderController : MonoBehaviour
             mainUIPanel.SetActive(true);
 
         // Unpause game
-       // if (pauseGameWhenOpen)
-            //Time.timeScale = 1f;
+        // if (pauseGameWhenOpen)
+        //     Time.timeScale = 1f;
 
         // Hide cursor (adjust based on your game's needs)
         Cursor.lockState = CursorLockMode.Locked;

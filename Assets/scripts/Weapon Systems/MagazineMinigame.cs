@@ -740,7 +740,7 @@ public class MagazineMinigame : AttachmentMinigameBase
         base.CompleteMinigame();
     }
 
-    protected override void CancelMinigame()
+    public override void CancelMinigame()
     {
         // Reset old magazine parts to original positions if minigame was cancelled
         if (oldMagazineParts != null && oldMagazineParts.Count > 0)

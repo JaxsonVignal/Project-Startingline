@@ -846,7 +846,7 @@ public class UnderbarrelMinigame : AttachmentMinigameBase
         StartCoroutine(CompleteAfterZoomOut());
     }
 
-    protected override void CancelMinigame()
+    public override void CancelMinigame()
     {
         if (mainCamera != null)
         {

@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
   m_Name: Red Dot A
   m_EditorClassIdentifier: 
-  ID: 9
-  Name: Red Dot A
+  ID: -1
+  Name: Red Dot C
   Description: 
   Icon: {fileID: 0}
   maxStackSize: 5
-  id: 9
+  id: Red Dot C
   type: 0
-  prefab: {fileID: 3619873539459473678, guid: bb4c74c96ad0b9f46b35a34868d03522, type: 3}
+  prefab: {fileID: 953959196000067493, guid: 3abd79578c9d5bf4da9248080248f560, type: 3}
   icon: {fileID: 0}
   description: 
   Value: 0
