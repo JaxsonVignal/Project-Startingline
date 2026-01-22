@@ -1,0 +1,45 @@
+- Universal Rendering Pipeline
+
+- 13 game-ready Simple Trees assets [*fbx / 1 texture atlas and 1 bark tileable textures (*tga)]
+
+----------------
+
+Number of meshes - 13
+Minimum polygon count - 1216
+Maximum polygon count - 23500
+
+Simple Trees Assets:
+
+- Small Trees (2 variations) 1779 - 2120 tris
+- Medium Trees (3 variations) 4238 - 6997 tris
+- Big Trees (4 variations) 7090 - 23500 tris
+- Bushes (4 variations) 1216 - 3424 tris
+
+Textures:
+- Bark Tileable Textures - 2048x4096
+- Leaves Atlas Textures - 4096x4096
+
+Number of textures - 10
+- BaseColorOpacity
+- MetallicSmoothness
+- AO
+- Normal
+- Tint Mask
+- Translucency Mask
+
+UV mapping: Yes
+- channel 1: overlapping
+- channel 2: non-overlapping (for baking lightmaps)
+
+LODs: (Yes, LOD0 - LOD1 - LOD2 - LOD3)
+
+- Combine and mix it to get more interesting meshes.
+- The wind is made by vertex painting in the Foliage shader. - Change Wind settings at Material Instance.
+- Use BaseColor Tint for different colors.
+- All plants have SSS masks (Translucency map)
+- All plants have lightmaps.
+
+----------------
+
+Thank you for purchasing this pack!
+If you have any questions please write me on e-mail - letsmakecoolart@gmail.com
