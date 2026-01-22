@@ -144,18 +144,19 @@ public class HotbarDisplay : StaticInventoryDisplay
             ads.adsPosition = currentWeapon.transform.Find("ADSPosition");
             ads.scopeAdsPosition = currentWeapon.transform.Find("ScopeAdsPosition");
 
+            // SET WEAPON DATA FIRST - before setting attachment system
+            Debug.Log($"[HotbarDisplay] About to call SetWeaponData with weapon: {weapon.weaponId}");
+            ads.SetWeaponData(weapon);
+            Debug.Log($"[HotbarDisplay] SetWeaponData called successfully");
+
             var attachSys = ApplyStoredAttachments(currentWeapon, slotID, weapon);
 
             if (attachSys != null)
             {
                 PlayerShooting.Instance.SetAttachmentSystem(attachSys);
-                ads.SetAttachmentSystem(attachSys);
+                ads.SetAttachmentSystem(attachSys); // Now this won't error
                 Debug.Log($"Attachment system set on PlayerShooting - modifiers now active");
             }
-
-            Debug.Log($"[HotbarDisplay] About to call SetWeaponData with weapon: {weapon.weaponId}");
-            ads.SetWeaponData(weapon);
-            Debug.Log($"[HotbarDisplay] SetWeaponData called successfully");
         }
     }
 

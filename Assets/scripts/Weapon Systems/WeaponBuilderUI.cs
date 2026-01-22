@@ -813,46 +813,183 @@ public class WeaponBuilderUI : MonoBehaviour
 
         var attachmentEntry = previewInstance.attachments.Find(e => e.type == type);
 
-        if (attachmentEntry != null)
+        if (attachmentEntry == null)
         {
-            bool wasOriginal = originalAttachmentIds.Contains(attachmentEntry.attachmentId);
-
-            if (wasOriginal)
-            {
-                if (attachmentLookup.TryGetValue(attachmentEntry.attachmentId, out var att))
-                {
-                    Debug.Log($"Removing PRE-EXISTING attachment: {att.name} - adding back to inventory");
-
-                    if (playerInventory.PrimaryInventorySystem.AddToInventory(att, 1))
-                    {
-                        Debug.Log($"Successfully added {att.name} back to inventory");
-                        originalAttachmentIds.Remove(attachmentEntry.attachmentId);
-                    }
-                    else
-                    {
-                        Debug.LogError($"Failed to add {att.name} back to inventory - inventory full?");
-                    }
-                }
-            }
-            else
-            {
-                Debug.Log($"Removing NEWLY ADDED attachment: {attachmentEntry.attachmentId} - already in inventory");
-            }
-
-            // Special handling for barrel attachments - need to re-enable default barrel
-            if (type == AttachmentType.Barrel)
-            {
-                Debug.Log("Re-enabling default barrel parts after removing barrel attachment");
-                ReEnableDefaultBarrelParts();
-            }
+            Debug.LogWarning($"No attachment of type {type} found to remove!");
+            return;
         }
 
+        // Get the attachment data
+        if (!attachmentLookup.TryGetValue(attachmentEntry.attachmentId, out var attachmentData))
+        {
+            Debug.LogError($"Could not find attachment data for ID: {attachmentEntry.attachmentId}");
+            return;
+        }
+
+        // Check if this attachment type requires a removal minigame
+        bool requiresRemovalMinigame = RequiresMinigame(attachmentData);
+
+        if (requiresRemovalMinigame)
+        {
+            Debug.Log($"Starting removal minigame for {attachmentData.Name}");
+            StartRemovalMinigame(attachmentData, attachmentEntry);
+        }
+        else
+        {
+            Debug.Log($"Removing {attachmentData.Name} directly (no minigame)");
+            RemoveAttachmentDirectly(type, attachmentEntry);
+        }
+    }
+
+    /// <summary>
+    /// Start the removal minigame for an attachment
+    /// </summary>
+    void StartRemovalMinigame(AttachmentData att, WeaponAttachmentEntry entry)
+    {
+        Debug.Log($"StartRemovalMinigame called for {att.Name} (Type: {att.type})");
+
+        if (minigameManager == null)
+        {
+            Debug.LogError("MinigameManager not assigned! Removing attachment directly.");
+            RemoveAttachmentDirectly(att.type, entry);
+            return;
+        }
+
+        Transform socket = GetSocketForAttachmentType(att.type);
+
+        if (socket == null)
+        {
+            Debug.LogError($"No socket found for {att.type}! Removing directly.");
+            RemoveAttachmentDirectly(att.type, entry);
+            return;
+        }
+
+        // Disable finalize button and attachment buttons while minigame is active
+        if (finalizeButton != null)
+            finalizeButton.interactable = false;
+
+        DisableAllAttachmentButtons();
+
+        // Call the appropriate removal minigame based on attachment type
+        switch (att.type)
+        {
+            case AttachmentType.Barrel:
+                Debug.Log("Starting barrel removal minigame");
+                minigameManager.StartBarrelRemovalMinigame(
+                    att,
+                    selectedBase,
+                    socket,
+                    (removedAttachment) => OnRemovalMinigameComplete(att.type, entry)
+                );
+                break;
+
+            case AttachmentType.Sight:
+                Debug.Log("Starting scope removal minigame");
+                minigameManager.StartScopeRemovalMinigame(
+                    att,
+                    selectedBase,
+                    socket,
+                    (removedAttachment) => OnRemovalMinigameComplete(att.type, entry)
+                );
+                break;
+
+            case AttachmentType.Underbarrel:
+                Debug.Log("Starting underbarrel removal minigame");
+                minigameManager.StartUnderbarrelRemovalMinigame(
+                    att,
+                    selectedBase,
+                    socket,
+                    (removedAttachment) => OnRemovalMinigameComplete(att.type, entry)
+                );
+                break;
+
+            case AttachmentType.SideRail:
+                Debug.Log("Starting siderail removal minigame");
+                minigameManager.StartSiderailRemovalMinigame(
+                    att,
+                    selectedBase,
+                    socket,
+                    (removedAttachment) => OnRemovalMinigameComplete(att.type, entry)
+                );
+                break;
+
+            case AttachmentType.Magazine:
+                Debug.Log("Starting magazine removal minigame");
+                minigameManager.StartMagazineRemovalMinigame(
+                    att,
+                    selectedBase,
+                    socket,
+                    (removedAttachment) => OnRemovalMinigameComplete(att.type, entry)
+                );
+                break;
+
+            default:
+                Debug.LogWarning($"No removal minigame for attachment type: {att.type}");
+                RemoveAttachmentDirectly(att.type, entry);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Called when removal minigame completes successfully
+    /// </summary>
+    void OnRemovalMinigameComplete(AttachmentType type, WeaponAttachmentEntry entry)
+    {
+        Debug.Log($"Removal minigame complete for {type}!");
+
+        // The minigame has already destroyed the attachment GameObject
+        // and re-enabled default weapon parts (if applicable)
+
+        // Now we just need to update our data structures and UI
+        RemoveAttachmentDirectly(type, entry);
+
+        // Re-enable finalize button and attachment buttons
+        if (finalizeButton != null)
+            finalizeButton.interactable = true;
+
+        PopulateAttachmentButtons();
+    }
+
+    /// <summary>
+    /// Remove attachment directly without minigame (or after minigame completes)
+    /// </summary>
+    void RemoveAttachmentDirectly(AttachmentType type, WeaponAttachmentEntry entry)
+    {
+        bool wasOriginal = originalAttachmentIds.Contains(entry.attachmentId);
+
+        if (wasOriginal)
+        {
+            if (attachmentLookup.TryGetValue(entry.attachmentId, out var att))
+            {
+                Debug.Log($"Removing PRE-EXISTING attachment: {att.name} - adding back to inventory");
+
+                if (playerInventory.PrimaryInventorySystem.AddToInventory(att, 1))
+                {
+                    Debug.Log($"Successfully added {att.name} back to inventory");
+                    originalAttachmentIds.Remove(entry.attachmentId);
+                }
+                else
+                {
+                    Debug.LogError($"Failed to add {att.name} back to inventory - inventory full?");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log($"Removing NEWLY ADDED attachment: {entry.attachmentId} - already in inventory");
+        }
+
+        // Remove from preview instance
         previewInstance.attachments.RemoveAll(e => e.type == type);
+
+        // Unequip from runtime system
         previewRuntime.attachmentSystem.UnequipType(type);
 
+        // Update UI
         UpdateSelectedAttachmentsUI();
         PopulateAttachmentButtons();
     }
+
 
     /// <summary>
     /// Re-enable the default barrel parts when a barrel attachment is removed
