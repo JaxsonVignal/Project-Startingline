@@ -15,14 +15,14 @@ MonoBehaviour:
   ID: 6
   Name: 3x Scope
   Description: 
-  Icon: {fileID: 0}
+  Icon: {fileID: -257552787, guid: 91b7538bf4fd02f478d6f1f4888479e4, type: 3}
   maxStackSize: 5
   id: 3x scope
   type: 0
   prefab: {fileID: 2311429928450280576, guid: 83fb3c828bf234d46a596a1847c5fb00, type: 3}
-  icon: {fileID: 0}
+  icon: {fileID: -257552787, guid: 91b7538bf4fd02f478d6f1f4888479e4, type: 3}
   description: 
-  Value: 0
+  Value: 1000
   localPosition: {x: 0, y: 0, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
