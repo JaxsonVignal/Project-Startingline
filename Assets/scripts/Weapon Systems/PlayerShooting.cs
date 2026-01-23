@@ -96,9 +96,10 @@ public class PlayerShooting : MonoBehaviour
 
     private void ReportGunshot()
     {
-        if (GunshotDetectionSystem.Instance != null && firePoint != null)
+        if (firePoint != null)
         {
-            GunshotDetectionSystem.Instance.ReportGunshotToAllNPCs(firePoint.position);
+            // Use the NPCManager's static method instead of GunshotDetectionSystem
+            NPCManager.NotifyGunshotFired(firePoint.position);
         }
     }
 

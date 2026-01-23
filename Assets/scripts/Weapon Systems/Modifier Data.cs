@@ -279,5 +279,33 @@ public class ModifierData
     [Tooltip("Show debug visualization (rotation axis)")]
     public bool showDisorientationDebug = false;
 
+    [Header("Stun Modifier")]
+    [Tooltip("Bullets stun targets, stopping all movement and actions")]
+    public bool stunRounds = false;
+
+    [Tooltip("Duration of stun effect in seconds")]
+    [Range(0.5f, 10f)]
+    public float stunDuration = 3f;
+
+    [Tooltip("Stop animation during stun (freezes them in current animation)")]
+    public bool stunFreezeAnimation = true;
+
+    [Tooltip("Stop AI behavior during stun (disables enemy AI scripts)")]
+    public bool stunDisableAI = true;
+
+    [Header("Stun Visual Effects")]
+    [Tooltip("Tint color applied to stunned targets (yellow/white = dazed)")]
+    public Color stunTintColor = new Color(1f, 1f, 0.5f, 1f); // Yellow-ish
+
+    [Tooltip("Strength of the stun tint (0 = no tint, 1 = full tint)")]
+    [Range(0f, 1f)]
+    public float stunTintStrength = 0.3f;
+
+    [Tooltip("Stun effect prefab (stars, swirls around head)")]
+    public GameObject stunEffectPrefab;
+
+    [Tooltip("Show stun debug visualization")]
+    public bool showStunDebug = false;
+
     // ADD MORE MODIFIERS HERE IN THE FUTURE
 }

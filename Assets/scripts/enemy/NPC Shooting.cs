@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[RequireComponent(typeof(GuardManager))]
-public class GuardShooting : MonoBehaviour
+[RequireComponent(typeof(NPCManager))]
+public class NPCShooting : MonoBehaviour
 {
     [Header("Shooting Settings")]
     public GameObject bulletPrefab;
@@ -15,30 +15,38 @@ public class GuardShooting : MonoBehaviour
     public AudioSource shootSound;
     public ParticleSystem muzzleFlash;
 
-    private GuardManager guard;
+    private NPCManager npcManager;
     private float fireCooldown;
 
     private void Start()
     {
-        guard = GetComponent<GuardManager>();
+        npcManager = GetComponent<NPCManager>();
+
         if (firePoint == null)
             Debug.LogWarning($"{name} has no firePoint assigned for shooting.");
+
+        if (!npcManager.enableCombat)
+            Debug.LogWarning($"{name} has NPCShooting but enableCombat is false on NPCManager!");
     }
 
     private void Update()
     {
-        if (guard.currentState == GuardManager.GuardState.Attack)
+        // Don't shoot if stunned
+        if (npcManager.currentState == NPCManager.NPCState.Stunned)
+            return;
+
+        if (npcManager.currentState == NPCManager.NPCState.Attack)
             TryShootAtPlayer();
     }
 
     private void TryShootAtPlayer()
     {
-        if (!guard.player) return;
+        if (!npcManager.player) return;
 
         fireCooldown -= Time.deltaTime;
         if (fireCooldown > 0f) return;
 
-        Vector3 targetPos = guard.player.position + Vector3.up * 1.5f; // aim near chest/head
+        Vector3 targetPos = npcManager.player.position + Vector3.up * 1.5f; // aim near chest/head
         Vector3 direction = (targetPos - firePoint.position).normalized;
 
         // Apply random aim offset
@@ -48,7 +56,7 @@ public class GuardShooting : MonoBehaviour
         direction.Normalize();
 
         // Check distance
-        if (Vector3.Distance(firePoint.position, guard.player.position) > maxFireDistance)
+        if (Vector3.Distance(firePoint.position, npcManager.player.position) > maxFireDistance)
             return;
 
         // Fire projectile
