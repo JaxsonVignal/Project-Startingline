@@ -270,21 +270,35 @@ public class NPCManager : MonoBehaviour
     // NEW: Handle day changes
     private void HandleDayChanged(DayNightCycleManager.DayOfWeek newDay)
     {
+        DayNightCycleManager.DayOfWeek previousDay = currentDayOfWeek;
         currentDayOfWeek = newDay;
-        Debug.Log($"{npcName}: Day changed to {newDay}");
+        Debug.Log($"{npcName}: Day changed from {previousDay} to {newDay}");
 
         // If NPC was asleep, wake them up and spawn at first location of new day
         if (isAsleep)
         {
             WakeUpAndSpawnAtFirstLocation();
+            return; // Don't process further, wake-up handles everything
         }
 
-        // Force re-evaluation of schedule
+        // Day changed while NPC was awake - spawn at first location for new day
+        Transform spawnLocation = GetFirstScheduledLocation();
+        if (spawnLocation != null)
+        {
+            transform.position = spawnLocation.position;
+            transform.rotation = spawnLocation.rotation;
+            Debug.Log($"{npcName} day changed while awake, teleported to first location: {spawnLocation.name}");
+        }
+
+        // Determine and set state for current time (don't trigger walking transition)
         if (DayNightCycleManager.Instance != null)
         {
             float currentTime = DayNightCycleManager.Instance.currentTimeOfDay;
             NPCState newState = DetermineState(currentTime);
-            SwitchState(newState);
+
+            // Set state directly without walking transition
+            currentState = newState;
+            Debug.Log($"{npcName} set to {newState} state for new day");
         }
     }
 
