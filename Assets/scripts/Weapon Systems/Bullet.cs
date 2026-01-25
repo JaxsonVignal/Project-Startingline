@@ -35,7 +35,6 @@ public class Bullet : MonoBehaviour
 
             // Check if this bullet should ricochet before destroying
             shouldDestroy = bulletModifier.ShouldDestroyOnHit(collision);
-
             bulletModifier.OnBulletHit(collision);
         }
         else
@@ -43,8 +42,11 @@ public class Bullet : MonoBehaviour
             Debug.LogWarning("[Bullet] BulletModifier component NOT FOUND!");
         }
 
-        // Only apply damage if hitting an enemy (not on ricochet surfaces)
-        if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+        // Only apply damage if hitting a valid target (Enemies OR NPCs, not on ricochet surfaces)
+        int enemyLayer = LayerMask.NameToLayer("Enemies");
+        int npcLayer = LayerMask.NameToLayer("NPCs");
+
+        if (collision.collider.gameObject.layer == enemyLayer || collision.collider.gameObject.layer == npcLayer)
         {
             EnemyHealth health = collision.collider.GetComponent<EnemyHealth>();
             if (health != null && weaponData != null)
