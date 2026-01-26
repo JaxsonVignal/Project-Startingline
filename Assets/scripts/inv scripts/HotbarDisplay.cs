@@ -1,18 +1,22 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class HotbarDisplay : StaticInventoryDisplay
 {
-    private int _maxIndexSize = 9;
-    private int _currentIndex = 0;
+    private int _maxIndexSize;
+    private int _currentIndex;
 
     private GameInput _gameInput;
 
     [SerializeField] private Transform weaponHolder;
     [SerializeField] private Database itemDatabase;
-    private GameObject currentWeapon;
 
-    private bool isAiming = false;
+    private GameObject currentWeapon;
+    private bool isAiming;
+
+    // --------------------------------------------------
+    // UNITY LIFECYCLE (NO OVERRIDES)
+    // --------------------------------------------------
 
     private void Awake()
     {
@@ -25,14 +29,13 @@ public class HotbarDisplay : StaticInventoryDisplay
         _maxIndexSize = slots.Length - 1;
     }
 
-
     private void OnEnable()
     {
         _gameInput.Enable();
 
         _gameInput.Player.useItem.performed += StartFiring;
         _gameInput.Player.useItem.canceled += StopFiring;
-        _gameInput.Player.Reload.performed += _ => PlayerShooting.Instance.Reload();
+        _gameInput.Player.Reload.performed += Reload;
 
         _gameInput.Player.Hotbar1.performed += _ => SetIndex(0);
         _gameInput.Player.Hotbar2.performed += _ => SetIndex(1);
@@ -52,13 +55,6 @@ public class HotbarDisplay : StaticInventoryDisplay
     private void OnDisable()
     {
         _gameInput.Disable();
-
-        _gameInput.Player.useItem.performed -= StartFiring;
-        _gameInput.Player.useItem.canceled -= StopFiring;
-        _gameInput.Player.Reload.performed -= _ => PlayerShooting.Instance.Reload();
-
-        _gameInput.Player.Aim.performed -= _ => isAiming = true;
-        _gameInput.Player.Aim.canceled -= _ => isAiming = false;
     }
 
     private void Update()
@@ -69,39 +65,42 @@ public class HotbarDisplay : StaticInventoryDisplay
     }
 
     // --------------------------------------------------
-    // HOTBAR LOGIC
+    // HOTBAR
     // --------------------------------------------------
 
     private void SetIndex(int newIndex)
     {
-        if (isAiming)
-            return;
-
-        if (newIndex == _currentIndex)
+        if (isAiming || newIndex == _currentIndex)
             return;
 
         _currentIndex = Mathf.Clamp(newIndex, 0, _maxIndexSize);
-
         ApplyHighlight();
 
         var slot = slots[_currentIndex].AssignedInventorySlot;
-        if (slot.ItemData is WeaponData weapon)
+        if (slot?.ItemData is WeaponData weapon)
             EquipWeapon(weapon, slot.UniqueSlotID);
         else
             UnequipWeapon();
     }
 
-
     private void ChangeIndex(int direction)
     {
-        if (isAiming)
-            return;
-
         int newIndex = _currentIndex + direction;
         if (newIndex > _maxIndexSize) newIndex = 0;
         if (newIndex < 0) newIndex = _maxIndexSize;
-
         SetIndex(newIndex);
+    }
+
+    // ✅ LEGAL OVERRIDE
+    protected override void AfterSlotsAssigned()
+    {
+        ApplyHighlight();
+    }
+
+    private void ApplyHighlight()
+    {
+        for (int i = 0; i < slots.Length; i++)
+            slots[i].SetHighlight(i == _currentIndex);
     }
 
     // --------------------------------------------------
@@ -120,7 +119,9 @@ public class HotbarDisplay : StaticInventoryDisplay
         currentWeapon.transform.localPosition = Vector3.zero;
         currentWeapon.transform.localRotation = Quaternion.identity;
 
-        PlayerShooting.Instance.firePoint = currentWeapon.transform.Find("FirePoint");
+        PlayerShooting.Instance.firePoint =
+            currentWeapon.transform.Find("FirePoint");
+
         PlayerShooting.Instance.EquipWeapon(weapon, slotID);
 
         var ads = currentWeapon.AddComponent<ADS>();
@@ -130,20 +131,23 @@ public class HotbarDisplay : StaticInventoryDisplay
         ads.adsPosition = currentWeapon.transform.Find("ADSPosition");
         ads.scopeAdsPosition = currentWeapon.transform.Find("ScopeAdsPosition");
 
+        ads.SetWeaponData(weapon);
+
         var attachSys = ApplyStoredAttachments(currentWeapon, slotID, weapon);
         if (attachSys != null)
         {
             PlayerShooting.Instance.SetAttachmentSystem(attachSys);
             ads.SetAttachmentSystem(attachSys);
         }
-
-        ads.SetWeaponData(weapon);
     }
 
-    private WeaponAttachmentSystem ApplyStoredAttachments(GameObject weaponObject, string slotID, WeaponData weaponData)
+    private WeaponAttachmentSystem ApplyStoredAttachments(
+        GameObject weaponObject,
+        string slotID,
+        WeaponData weaponData)
     {
-        WeaponInstance storedInstance = WeaponInstanceStorage.GetInstance(slotID);
-        if (storedInstance == null || storedInstance.attachments.Count == 0)
+        WeaponInstance stored = WeaponInstanceStorage.GetInstance(slotID);
+        if (stored == null || stored.attachments.Count == 0)
             return null;
 
         if (itemDatabase == null)
@@ -153,7 +157,7 @@ public class HotbarDisplay : StaticInventoryDisplay
                       weaponObject.AddComponent<WeaponRuntime>();
 
         runtime.InitFromInstance(
-            storedInstance,
+            stored,
             weaponData,
             itemDatabase.GetAttachmentLookup()
         );
@@ -164,11 +168,9 @@ public class HotbarDisplay : StaticInventoryDisplay
     public void UnequipWeapon()
     {
         if (currentWeapon != null)
-        {
             Destroy(currentWeapon);
-            currentWeapon = null;
-        }
 
+        currentWeapon = null;
         PlayerShooting.Instance.EquipWeapon(null, null);
     }
 
@@ -182,26 +184,6 @@ public class HotbarDisplay : StaticInventoryDisplay
     private void StopFiring(InputAction.CallbackContext _) =>
         PlayerShooting.Instance.StopFiring();
 
-    private void RefreshHighlight()
-    {
-        for (int i = 0; i < slots.Length; i++)
-        {
-            slots[i].SetHighlight(i == _currentIndex);
-        }
-    }
-
-    protected override void AfterSlotsAssigned()
-    {
-        ApplyHighlight();
-    }
-
-
-    private void ApplyHighlight()
-    {
-        for (int i = 0; i < slots.Length; i++)
-        {
-            slots[i].SetHighlight(i == _currentIndex);
-        }
-    }
-
+    private void Reload(InputAction.CallbackContext _) =>
+        PlayerShooting.Instance.Reload();
 }
