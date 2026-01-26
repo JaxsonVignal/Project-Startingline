@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
+  m_Name: Elite Tower Grip
+  m_EditorClassIdentifier: 
+  ID: 46
+  Name: Elite Tower Grip
+  Description: 
+  Icon: {fileID: -1003070470, guid: c9d2c457e4fcc2a4d93f7c750a5b5cd5, type: 3}
+  maxStackSize: 5
+  id: Elite Tower Grip
+  type: 2
+  prefab: {fileID: 6085999148158256162, guid: e19f32912e16b1b4db16aa4a115a0655, type: 3}
+  icon: {fileID: -1003070470, guid: c9d2c457e4fcc2a4d93f7c750a5b5cd5, type: 3}
+  description: 
+  Value: 1000
+  localPosition: {x: 0, y: 0, z: 0}
+  localEuler: {x: 0, y: 0, z: 0}
+  localScale: {x: 1, y: 1, z: 1}
+  damageBonus: 0
+  fireRateMultiplier: 1
+  reloadTimeMultiplier: 1
+  spreadMultiplier: 1
+  recoilMultiplier: 0.3
+  magazineBonus: 0
+  scopeFOVOverride: 0
+  scopeReticle: {fileID: 0}
+  reticleScale: 1
+  reticleColor: {r: 1, g: 0, b: 0, a: 1}
+  frontScrewLocalPos: {x: -0.05, y: 0.05, z: -0.05}
+  backScrewLocalPos: {x: 0.05, y: 0.05, z: -0.05}
+  screwRadius: 0.015
+  grenadeLauncherData: {fileID: 0}
+  underbarrelShotgunData: {fileID: 0}
+  flashlightData: {fileID: 0}
+  modifierData:
+    antiGravityRounds: 0
+    antiGravityForce: 10
+    antiGravityDuration: 5
+    disableGravity: 1
+    initialUpwardImpulse: 5
+    bobbingAmount: 0.2
+    bobbingSpeed: 2
+    cryoRounds: 0
+    cryoDuration: 5
+    freezeAnimation: 1
+    freezeTintColor: {r: 0.5, g: 0.8, b: 1, a: 1}
+    freezeTintStrength: 0.5
+    iceEffectPrefab: {fileID: 0}
+    explosiveRounds: 0
+    explosionRadius: 5
+    explosionDamageMultiplier: 1.5
+    applyExplosionKnockback: 1
+    explosionKnockbackForce: 20
+    explosionKnockbackDuration: 1
+    explosionEffectPrefab: {fileID: 0}
+    showExplosionRadius: 0
+    tracerRounds: 0
+    tracerColor: {r: 1, g: 0.3, b: 0, a: 1}
+    tracerIntensity: 1.5
+    tracerLightRange: 5
+    addEmission: 1
+    emissionIntensity: 2
+    trailEffectPrefab: {fileID: 0}
+    trailDuration: 0.3
+    ricochetRounds: 0
+    maxBounces: 1
+    bounceSpeedMultiplier: 0.9
+    bounceDamageMultiplier: 0.8
+    ricochetSparkPrefab: {fileID: 0}
+    ricochetSound: {fileID: 0}
+    showRicochetDebug: 0
+    phaseRounds: 0
+    makeTransparent: 1
+    phaseTransparency: 0.4
+    phaseGlowColor: {r: 0.5, g: 0.8, b: 1, a: 1}
+    phaseEffectPrefab: {fileID: 0}
+    showPhaseDebug: 0
+    gravityWellRounds: 0
+    gravityWellRadius: 15
+    gravityWellDuration: 5
+    gravityWellStrength: 5
+    gravityWellDamagePerSecond: 0
+    gravityWellEffectPrefab: {fileID: 0}
+    showGravityWellDebug: 0
+    teleportRounds: 0
+    teleportMinDistance: 5
+    teleportMaxDistance: 15
+    teleportMaxAttempts: 20
+    teleportCheckRadius: 1
+    teleportDepartureEffectPrefab: {fileID: 0}
+    teleportArrivalEffectPrefab: {fileID: 0}
+    showTeleportDebug: 0
+    incendiaryRounds: 0
+    incendiaryDuration: 5
+    incendiaryDamagePerSecond: 10
+    incendiaryTickInterval: 0.5
+    incendiarySpreadEnabled: 0
+    incendiarySpreadRadius: 5
+    incendiarySpreadChance: 0.3
+    incendiaryFireEffectPrefab: {fileID: 0}
+    incendiaryTintColor: {r: 1, g: 0.4, b: 0, a: 1}
+    incendiaryTintStrength: 0.3
+    incendiaryAddEmission: 1
+    incendiaryEmissionIntensity: 2
+    disorientationRounds: 0
+    disorientationDuration: 3
+    disorientationSpinSpeed: 720
+    disorientationEffectPrefab: {fileID: 0}
+    showDisorientationDebug: 0
+    stunRounds: 0
+    stunDuration: 3
+    stunFreezeAnimation: 1
+    stunDisableAI: 1
+    stunTintColor: {r: 1, g: 1, b: 0.5, a: 1}
+    stunTintStrength: 0.3
+    stunEffectPrefab: {fileID: 0}
+    showStunDebug: 0

@@ -97,7 +97,7 @@ MonoBehaviour:
     positionOffset: {x: -0.451, y: 0.093, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: 90e8387b0737ef442951c93cff619a23, type: 2}
-    positionOffset: {x: -0.451, y: 5, z: 0}
+    positionOffset: {x: -0.451, y: 0.1, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
   - scope: {fileID: 11400000, guid: 1ccf5cd6f0b944f49ae61cbd13ef33e2, type: 2}
     positionOffset: {x: -0.4509, y: 0.084, z: -0.1}
