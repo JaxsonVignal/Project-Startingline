@@ -67,7 +67,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,8 +80,21 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -95,21 +108,244 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_0
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 1048
+        width: 593
+        height: 288
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b4af3ce0e07b174594ea81d6db686cc
+      internalID: -1467863715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_1
+      rect:
+        serializedVersion: 2
+        x: 913
+        y: 1050
+        width: 593
+        height: 286
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b3b1fce28b18584478e3b620a703f994
+      internalID: 105604118
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_2
+      rect:
+        serializedVersion: 2
+        x: 1823
+        y: 1177
+        width: 516
+        height: 147
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d2fe21ab80ebb0a4388792344b222378
+      internalID: 1608310466
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_5
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 576
+        width: 593
+        height: 288
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3a05f7779f24e8b4987ac42267eb2377
+      internalID: 450851349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_6
+      rect:
+        serializedVersion: 2
+        x: 913
+        y: 579
+        width: 593
+        height: 285
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0851bd4705e8704296bd4cd183b6b66
+      internalID: 560340662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_7
+      rect:
+        serializedVersion: 2
+        x: 1646
+        y: 823
+        width: 806
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b00ac2bc3b85d1449a969d37c0c9299
+      internalID: -1288965576
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_10
+      rect:
+        serializedVersion: 2
+        x: 1871
+        y: 464
+        width: 302
+        height: 212
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e6c47ad8578ae8943997594e84a06131
+      internalID: -478027060
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_11
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 109
+        width: 593
+        height: 263
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2d59fa497947b8b41b38c73a6da63250
+      internalID: 759625694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_12
+      rect:
+        serializedVersion: 2
+        x: 913
+        y: 108
+        width: 593
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: beb7190b363a8874cbc8995b02023b56
+      internalID: 1675235200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rail&Riser_2_2K_13
+      rect:
+        serializedVersion: 2
+        x: 1662
+        y: 118
+        width: 805
+        height: 215
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 23321a322ddf2da4e932a020c1236ed6
+      internalID: 159447218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
-    customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 060d37429528f324d95d0ebd14108764
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Rail&Riser_2_2K_0: -1467863715
+      Rail&Riser_2_2K_1: 105604118
+      Rail&Riser_2_2K_10: -478027060
+      Rail&Riser_2_2K_11: 759625694
+      Rail&Riser_2_2K_12: 1675235200
+      Rail&Riser_2_2K_13: 159447218
+      Rail&Riser_2_2K_14: -1611368918
+      Rail&Riser_2_2K_15: -569031675
+      Rail&Riser_2_2K_2: 1608310466
+      Rail&Riser_2_2K_3: 1171228327
+      Rail&Riser_2_2K_4: -2081410615
+      Rail&Riser_2_2K_5: 450851349
+      Rail&Riser_2_2K_6: 560340662
+      Rail&Riser_2_2K_7: -1288965576
+      Rail&Riser_2_2K_8: -838818954
+      Rail&Riser_2_2K_9: 667889534
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
