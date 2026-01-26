@@ -67,7 +67,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,8 +80,21 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -95,21 +108,282 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Launcher_2_2K_0
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 1076
+        width: 1419
+        height: 281
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f854e87a012ffcd42aee15a3b09e21fd
+      internalID: -1145497318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_1
+      rect:
+        serializedVersion: 2
+        x: 1612
+        y: 1211
+        width: 76
+        height: 77
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: acf670a6f95e5d945bf570f2d520fc4b
+      internalID: -525458239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_2
+      rect:
+        serializedVersion: 2
+        x: 1803
+        y: 1209
+        width: 106
+        height: 123
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3bdf38e289f73644dafa510797fee26c
+      internalID: -303562897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_3
+      rect:
+        serializedVersion: 2
+        x: 2012
+        y: 1208
+        width: 77
+        height: 146
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dd30e924dd77a154e97a8e4093f9972f
+      internalID: 1786795835
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_4
+      rect:
+        serializedVersion: 2
+        x: 2213
+        y: 1202
+        width: 79
+        height: 180
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f08f98862ee424b4b91f71085afcf765
+      internalID: -156684005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_5
+      rect:
+        serializedVersion: 2
+        x: 2413
+        y: 1201
+        width: 76
+        height: 180
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 79811dde08559a34e8679b29b31585fd
+      internalID: -1841225066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_6
+      rect:
+        serializedVersion: 2
+        x: 1638
+        y: 1018
+        width: 240
+        height: 61
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 117d8febd77242c4bab790dc3a93b755
+      internalID: 396286124
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_7
+      rect:
+        serializedVersion: 2
+        x: 2176
+        y: 957
+        width: 140
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ea398aadf6a1363478188255223cc822
+      internalID: -122799144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_8
+      rect:
+        serializedVersion: 2
+        x: 184
+        y: 598
+        width: 1032
+        height: 268
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a35f8b76e8bcddc48a4da54eb0680065
+      internalID: -211574625
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_9
+      rect:
+        serializedVersion: 2
+        x: 1649
+        y: 488
+        width: 755
+        height: 350
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 70c08ed350556964eb14c0e8a49d838e
+      internalID: -217657390
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_10
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 98
+        width: 416
+        height: 344
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 218e59b138c6026488b196963abce7cf
+      internalID: 688405914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Launcher_2_2K_11
+      rect:
+        serializedVersion: 2
+        x: 1031
+        y: 97
+        width: 1451
+        height: 286
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f622c56b4853244daf79d53930f4224
+      internalID: -1353716013
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
-    customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: eed9d634f837a2e4eb29c9ce453e06b3
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Launcher_2_2K_0: -1145497318
+      Launcher_2_2K_1: -525458239
+      Launcher_2_2K_10: 688405914
+      Launcher_2_2K_11: -1353716013
+      Launcher_2_2K_2: -303562897
+      Launcher_2_2K_3: 1786795835
+      Launcher_2_2K_4: -156684005
+      Launcher_2_2K_5: -1841225066
+      Launcher_2_2K_6: 396286124
+      Launcher_2_2K_7: -122799144
+      Launcher_2_2K_8: -211574625
+      Launcher_2_2K_9: -217657390
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

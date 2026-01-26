@@ -5,6 +5,7 @@ using UnityEngine;
 /// <summary>
 /// Attach this component to bullets to enable modifier effects
 /// The bullet will handle all modifier logic itself
+/// NOW AFFECTS BOTH "Enemies" AND "NPCs" LAYERS!
 /// </summary>
 public class BulletModifier : MonoBehaviour
 {
@@ -14,6 +15,13 @@ public class BulletModifier : MonoBehaviour
     // Ricochet tracking
     private int bouncesRemaining = 0;
     private float currentDamageMultiplier = 1f;
+
+    // Helper method to check if an object is a valid target (Enemies OR NPCs layer)
+    private bool IsValidTarget(GameObject obj)
+    {
+        return obj.layer == LayerMask.NameToLayer("Enemies") ||
+               obj.layer == LayerMask.NameToLayer("NPCs");
+    }
 
     private void Start()
     {
@@ -76,6 +84,10 @@ public class BulletModifier : MonoBehaviour
             {
                 Debug.Log($"  - Disorientation enabled (Duration: {modifierData.disorientationDuration}s, Spin Speed: {modifierData.disorientationSpinSpeed}°/s)");
             }
+            if (modifierData.stunRounds)
+            {
+                Debug.Log($"  - Stun enabled (Duration: {modifierData.stunDuration}s, Freeze Anim: {modifierData.stunFreezeAnimation}, Disable AI: {modifierData.stunDisableAI})");
+            }
         }
     }
 
@@ -97,10 +109,10 @@ public class BulletModifier : MonoBehaviour
         // RICOCHET CHECK - If enabled and bounces remaining, bounce instead of applying effects
         if (modifierData.ricochetRounds && bouncesRemaining > 0)
         {
-            // Check if we hit an enemy - if so, don't ricochet, just apply effects
-            if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+            // Check if we hit a valid target (enemy or NPC) - if so, don't ricochet, just apply effects
+            if (IsValidTarget(collision.collider.gameObject))
             {
-                Debug.Log($"[BulletModifier] Hit enemy - applying effects without ricochet");
+                Debug.Log($"[BulletModifier] Hit target - applying effects without ricochet");
                 bouncesRemaining = 0; // Use up bounces
             }
             else
@@ -146,12 +158,18 @@ public class BulletModifier : MonoBehaviour
         {
             ApplyDisorientation(collision);
         }
+
+        // STUN EFFECT
+        if (modifierData.stunRounds)
+        {
+            ApplyStun(collision);
+        }
     }
 
     /// <summary>
     /// Apply anti-gravity effect to the hit target
     /// Now works WITHOUT Rigidbody - just moves the transform
-    /// Only affects objects on the "Enemies" layer
+    /// Affects objects on BOTH "Enemies" AND "NPCs" layers
     /// </summary>
     private void ApplyAntiGravity(Collision collision)
     {
@@ -159,10 +177,10 @@ public class BulletModifier : MonoBehaviour
 
         GameObject target = collision.collider.gameObject;
 
-        // Check if target is on the "Enemies" layer
-        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        // Check if target is on a valid layer (Enemies OR NPCs)
+        if (!IsValidTarget(target))
         {
-            Debug.Log($"[BulletModifier] Skipping anti-gravity on {target.name} - not on Enemies layer");
+            Debug.Log($"[BulletModifier] Skipping anti-gravity on {target.name} - not on Enemies or NPCs layer");
             return;
         }
 
@@ -203,7 +221,7 @@ public class BulletModifier : MonoBehaviour
     /// <summary>
     /// Apply cryo/freeze effect to the hit target
     /// Freezes target in place
-    /// Only affects objects on the "Enemies" layer
+    /// Affects objects on BOTH "Enemies" AND "NPCs" layers
     /// </summary>
     private void ApplyCryo(Collision collision)
     {
@@ -211,10 +229,10 @@ public class BulletModifier : MonoBehaviour
 
         GameObject target = collision.collider.gameObject;
 
-        // Check if target is on the "Enemies" layer
-        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        // Check if target is on a valid layer (Enemies OR NPCs)
+        if (!IsValidTarget(target))
         {
-            Debug.Log($"[BulletModifier] Skipping cryo on {target.name} - not on Enemies layer");
+            Debug.Log($"[BulletModifier] Skipping cryo on {target.name} - not on Enemies or NPCs layer");
             return;
         }
 
@@ -250,7 +268,7 @@ public class BulletModifier : MonoBehaviour
 
     /// <summary>
     /// Apply explosion effect at impact point
-    /// Damages all enemies in radius and applies physics force
+    /// Damages all enemies AND NPCs in radius and applies physics force
     /// </summary>
     private void ApplyExplosion(Collision collision)
     {
@@ -274,23 +292,23 @@ public class BulletModifier : MonoBehaviour
         // Find all colliders in explosion radius
         Collider[] hitColliders = Physics.OverlapSphere(explosionPos, modifierData.explosionRadius);
 
-        int enemiesHit = 0;
+        int targetsHit = 0;
 
         // Track which root transforms we've already processed (avoid duplicate effects)
         HashSet<Transform> processedRoots = new HashSet<Transform>();
 
         foreach (Collider hitCollider in hitColliders)
         {
-            // Only damage objects on Enemies layer
-            if (hitCollider.gameObject.layer != LayerMask.NameToLayer("Enemies"))
+            // Only damage objects on valid layers (Enemies OR NPCs)
+            if (!IsValidTarget(hitCollider.gameObject))
             {
                 continue;
             }
 
-            // Get root transform to avoid processing same enemy multiple times
+            // Get root transform to avoid processing same target multiple times
             Transform rootTransform = hitCollider.transform.root;
 
-            // Skip if we already processed this enemy
+            // Skip if we already processed this target
             if (processedRoots.Contains(rootTransform))
             {
                 continue;
@@ -302,12 +320,12 @@ public class BulletModifier : MonoBehaviour
             float damageMultiplier = 1f - (distance / modifierData.explosionRadius);
             float finalDamage = explosionDamage * damageMultiplier;
 
-            // Apply damage to enemy
+            // Apply damage
             EnemyHealth enemyHealth = hitCollider.GetComponent<EnemyHealth>();
             if (enemyHealth != null)
             {
                 enemyHealth.TakeDamage(finalDamage);
-                enemiesHit++;
+                targetsHit++;
                 Debug.Log($"[BulletModifier] Explosion hit {hitCollider.gameObject.name} for {finalDamage} damage (distance: {distance:F1})");
             }
 
@@ -327,7 +345,7 @@ public class BulletModifier : MonoBehaviour
                 // Use full knockback force (NOT reduced by distance - damage falloff is enough!)
                 float knockbackStrength = modifierData.explosionKnockbackForce;
 
-                // Get or add KnockbackHandler component on the ENEMY (not the bullet!)
+                // Get or add KnockbackHandler component on the target (not the bullet!)
                 KnockbackHandler knockbackHandler = rootTransform.GetComponent<KnockbackHandler>();
                 if (knockbackHandler == null)
                 {
@@ -476,9 +494,43 @@ public class BulletModifier : MonoBehaviour
                     );
                 }
             }
+
+            // APPLY STUN IF ENABLED!
+            if (modifierData.stunRounds)
+            {
+                Debug.Log($"[BulletModifier] Applying stun to explosion victim {rootTransform.name}");
+
+                StunEffect existingStun = rootTransform.GetComponent<StunEffect>();
+
+                if (existingStun != null)
+                {
+                    existingStun.RefreshEffect(
+                        modifierData.stunDuration,
+                        modifierData.stunFreezeAnimation,
+                        modifierData.stunDisableAI,
+                        modifierData.stunTintColor,
+                        modifierData.stunTintStrength,
+                        modifierData.stunEffectPrefab,
+                        modifierData.showStunDebug
+                    );
+                }
+                else
+                {
+                    StunEffect effect = rootTransform.gameObject.AddComponent<StunEffect>();
+                    effect.Initialize(
+                        modifierData.stunDuration,
+                        modifierData.stunFreezeAnimation,
+                        modifierData.stunDisableAI,
+                        modifierData.stunTintColor,
+                        modifierData.stunTintStrength,
+                        modifierData.stunEffectPrefab,
+                        modifierData.showStunDebug
+                    );
+                }
+            }
         }
 
-        Debug.Log($"[BulletModifier] Explosion hit {enemiesHit} enemies");
+        Debug.Log($"[BulletModifier] Explosion hit {targetsHit} targets");
 
         // Debug visualization
         if (modifierData.showExplosionRadius)
@@ -488,7 +540,7 @@ public class BulletModifier : MonoBehaviour
     }
 
     /// <summary>
-    /// Create gravity well at impact point that pulls enemies toward center
+    /// Create gravity well at impact point that pulls enemies AND NPCs toward center
     /// </summary>
     private void ApplyGravityWell(Collision collision)
     {
@@ -519,7 +571,7 @@ public class BulletModifier : MonoBehaviour
     }
 
     /// <summary>
-    /// Teleport enemy to random nearby location (with collision checks)
+    /// Teleport enemy OR NPC to random nearby location (with collision checks)
     /// </summary>
     private void ApplyTeleport(Collision collision)
     {
@@ -527,14 +579,14 @@ public class BulletModifier : MonoBehaviour
 
         GameObject target = collision.collider.gameObject;
 
-        // Check if target is on the "Enemies" layer
-        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        // Check if target is on a valid layer (Enemies OR NPCs)
+        if (!IsValidTarget(target))
         {
-            Debug.Log($"[BulletModifier] Skipping teleport on {target.name} - not on Enemies layer");
+            Debug.Log($"[BulletModifier] Skipping teleport on {target.name} - not on Enemies or NPCs layer");
             return;
         }
 
-        // Get root transform (whole enemy, not just a body part)
+        // Get root transform (whole target, not just a body part)
         Transform rootTransform = target.transform.root;
 
         // Use helper method
@@ -632,7 +684,7 @@ public class BulletModifier : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning($"[BulletModifier] Enemy {rootTransform.name} has no NavMeshAgent or not on NavMesh");
+                Debug.LogWarning($"[BulletModifier] Target {rootTransform.name} has no NavMeshAgent or not on NavMesh");
             }
         }
         else
@@ -679,19 +731,18 @@ public class BulletModifier : MonoBehaviour
 
         foreach (Collider col in colliders)
         {
-            // Ignore enemies (we want to check for walls/obstacles, not other enemies)
-            if (col.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+            // Ignore valid targets (we want to check for walls/obstacles, not other targets)
+            if (IsValidTarget(col.gameObject))
             {
                 continue;
             }
 
-            // If we hit something that's not an enemy, position is invalid
+            // If we hit something that's not a valid target, position is invalid
             Debug.Log($"[BulletModifier] Position {position} invalid - colliding with {col.gameObject.name} on layer {LayerMask.LayerToName(col.gameObject.layer)}");
             return false;
         }
 
         // Position is valid - no obstacles detected
-        // (No ground check = enemies can teleport into air and fall! Much funnier!)
         Debug.Log($"[BulletModifier] Position {position} is valid - clear of obstacles");
         return true;
     }
@@ -699,7 +750,7 @@ public class BulletModifier : MonoBehaviour
     /// <summary>
     /// Apply incendiary/fire effect to the hit target
     /// Burns target over time dealing damage
-    /// Only affects objects on the "Enemies" layer
+    /// Affects objects on BOTH "Enemies" AND "NPCs" layers
     /// </summary>
     private void ApplyIncendiary(Collision collision)
     {
@@ -707,10 +758,10 @@ public class BulletModifier : MonoBehaviour
 
         GameObject target = collision.collider.gameObject;
 
-        // Check if target is on the "Enemies" layer
-        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        // Check if target is on a valid layer (Enemies OR NPCs)
+        if (!IsValidTarget(target))
         {
-            Debug.Log($"[BulletModifier] Skipping incendiary on {target.name} - not on Enemies layer");
+            Debug.Log($"[BulletModifier] Skipping incendiary on {target.name} - not on Enemies or NPCs layer");
             return;
         }
 
@@ -764,7 +815,7 @@ public class BulletModifier : MonoBehaviour
     /// <summary>
     /// Apply disorientation effect to the hit target
     /// Makes target spin rapidly (360s) like a spinbot while maintaining normal movement
-    /// Only affects objects on the "Enemies" layer
+    /// Affects objects on BOTH "Enemies" AND "NPCs" layers
     /// </summary>
     private void ApplyDisorientation(Collision collision)
     {
@@ -772,10 +823,10 @@ public class BulletModifier : MonoBehaviour
 
         GameObject target = collision.collider.gameObject;
 
-        // Check if target is on the "Enemies" layer
-        if (target.layer != LayerMask.NameToLayer("Enemies"))
+        // Check if target is on a valid layer (Enemies OR NPCs)
+        if (!IsValidTarget(target))
         {
-            Debug.Log($"[BulletModifier] Skipping disorientation on {target.name} - not on Enemies layer");
+            Debug.Log($"[BulletModifier] Skipping disorientation on {target.name} - not on Enemies or NPCs layer");
             return;
         }
 
@@ -809,6 +860,63 @@ public class BulletModifier : MonoBehaviour
                 modifierData.showDisorientationDebug
             );
             Debug.Log($"[BulletModifier] Added new disorientation effect");
+        }
+    }
+
+    /// <summary>
+    /// Apply stun effect to the hit target
+    /// Stops all movement, animation, and AI behavior
+    /// Affects objects on BOTH "Enemies" AND "NPCs" layers
+    /// </summary>
+    private void ApplyStun(Collision collision)
+    {
+        if (collision.collider == null) return;
+
+        GameObject target = collision.collider.gameObject;
+
+        // Check if target is on a valid layer (Enemies OR NPCs)
+        if (!IsValidTarget(target))
+        {
+            Debug.Log($"[BulletModifier] Skipping stun on {target.name} - not on Enemies or NPCs layer");
+            return;
+        }
+
+        // Get root transform
+        Transform rootTransform = target.transform.root;
+
+        Debug.Log($"[BulletModifier] Applying stun effect to {rootTransform.name}");
+
+        // Check if target already has a stun effect component
+        StunEffect existingEffect = rootTransform.GetComponent<StunEffect>();
+
+        if (existingEffect != null)
+        {
+            // Refresh the existing effect
+            existingEffect.RefreshEffect(
+                modifierData.stunDuration,
+                modifierData.stunFreezeAnimation,
+                modifierData.stunDisableAI,
+                modifierData.stunTintColor,
+                modifierData.stunTintStrength,
+                modifierData.stunEffectPrefab,
+                modifierData.showStunDebug
+            );
+            Debug.Log($"[BulletModifier] Refreshed existing stun effect");
+        }
+        else
+        {
+            // Add new stun effect component to the target
+            StunEffect effect = rootTransform.gameObject.AddComponent<StunEffect>();
+            effect.Initialize(
+                modifierData.stunDuration,
+                modifierData.stunFreezeAnimation,
+                modifierData.stunDisableAI,
+                modifierData.stunTintColor,
+                modifierData.stunTintStrength,
+                modifierData.stunEffectPrefab,
+                modifierData.showStunDebug
+            );
+            Debug.Log($"[BulletModifier] Added new stun effect");
         }
     }
 
@@ -921,7 +1029,7 @@ public class BulletModifier : MonoBehaviour
     }
 
     /// <summary>
-    /// Setup collision to only hit enemies
+    /// Setup collision to only hit valid targets (Enemies AND NPCs)
     /// Called in Start after Initialize
     /// </summary>
     private void SetupPhaseCollision()
@@ -934,20 +1042,21 @@ public class BulletModifier : MonoBehaviour
             return;
         }
 
-        // Ignore collisions with everything except Enemies layer
+        // Get layer indices
         int enemyLayer = LayerMask.NameToLayer("Enemies");
+        int npcLayer = LayerMask.NameToLayer("NPCs");
 
         // Iterate through all layers (0-31)
         for (int i = 0; i < 32; i++)
         {
-            // Ignore collision with all layers except Enemies
-            if (i != enemyLayer)
+            // Ignore collision with all layers except Enemies and NPCs
+            if (i != enemyLayer && i != npcLayer)
             {
                 Physics.IgnoreLayerCollision(gameObject.layer, i, true);
             }
         }
 
-        Debug.Log($"[BulletModifier] Phase collision setup - bullet will only collide with Enemies layer");
+        Debug.Log($"[BulletModifier] Phase collision setup - bullet will only collide with Enemies and NPCs layers");
 
         // Debug visualization
         if (modifierData.showPhaseDebug)
@@ -1053,10 +1162,10 @@ public class BulletModifier : MonoBehaviour
         // If ricochet is enabled and we have bounces remaining
         if (modifierData != null && modifierData.ricochetRounds && bouncesRemaining > 0)
         {
-            // Check if we hit an enemy - if so, destroy (don't ricochet off enemies)
-            if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+            // Check if we hit a valid target - if so, destroy (don't ricochet off targets)
+            if (IsValidTarget(collision.collider.gameObject))
             {
-                return true; // Destroy on enemy hit
+                return true; // Destroy on target hit
             }
 
             // Hit a surface - don't destroy, we're going to ricochet
@@ -1598,7 +1707,7 @@ public class CryoEffect : MonoBehaviour
 }
 
 /// <summary>
-/// Component that creates a gravity well that pulls enemies toward a point
+/// Component that creates a gravity well that pulls enemies AND NPCs toward a point
 /// Does NOT require Rigidbody - uses transform-based movement
 /// </summary>
 public class GravityWellEffect : MonoBehaviour
@@ -1612,7 +1721,7 @@ public class GravityWellEffect : MonoBehaviour
 
     private float timeRemaining;
     private GameObject visualEffect;
-    private List<Transform> affectedEnemies = new List<Transform>();
+    private List<Transform> affectedTargets = new List<Transform>();
 
     public void Initialize(Vector3 center, float wellRadius, float wellDuration, float pullStrength, float dps, GameObject effectPrefab, bool debug)
     {
@@ -1645,20 +1754,20 @@ public class GravityWellEffect : MonoBehaviour
             return;
         }
 
-        // Find all enemies in radius
-        Collider[] enemies = Physics.OverlapSphere(wellCenter, radius, LayerMask.GetMask("Enemies"));
+        // Find all valid targets in radius (Enemies AND NPCs)
+        Collider[] targets = Physics.OverlapSphere(wellCenter, radius, LayerMask.GetMask("Enemies", "NPCs"));
 
-        affectedEnemies.Clear();
+        affectedTargets.Clear();
 
         // Track which root transforms we've already processed
         HashSet<Transform> processedRoots = new HashSet<Transform>();
 
-        foreach (Collider enemy in enemies)
+        foreach (Collider target in targets)
         {
-            if (enemy == null) continue;
+            if (target == null) continue;
 
             // Get the root transform (top-level parent)
-            Transform rootTransform = enemy.transform.root;
+            Transform rootTransform = target.transform.root;
 
             // Skip if we've already processed this root
             if (processedRoots.Contains(rootTransform))
@@ -1667,7 +1776,7 @@ public class GravityWellEffect : MonoBehaviour
             }
 
             processedRoots.Add(rootTransform);
-            affectedEnemies.Add(rootTransform);
+            affectedTargets.Add(rootTransform);
 
             // Calculate pull direction and distance (use root position)
             Vector3 directionToCenter = (wellCenter - rootTransform.position).normalized;
@@ -1677,13 +1786,13 @@ public class GravityWellEffect : MonoBehaviour
             float distanceMultiplier = 1f - (distanceToCenter / radius);
             float pullForce = strength * distanceMultiplier * Time.deltaTime;
 
-            // Pull ONLY the root transform (this moves the entire enemy hierarchy)
+            // Pull ONLY the root transform (this moves the entire target hierarchy)
             rootTransform.position += directionToCenter * pullForce;
 
             // Apply damage if enabled (get health from the collider we hit, not the root)
             if (damagePerSecond > 0f)
             {
-                EnemyHealth health = enemy.GetComponent<EnemyHealth>();
+                EnemyHealth health = target.GetComponent<EnemyHealth>();
                 if (health != null)
                 {
                     float damage = damagePerSecond * Time.deltaTime;
@@ -1775,7 +1884,7 @@ public class GravityWellEffect : MonoBehaviour
 /// <summary>
 /// Component that applies incendiary/fire effect to targets
 /// Burns them over time dealing damage per second
-/// Can spread to nearby enemies
+/// Can spread to nearby enemies AND NPCs
 /// </summary>
 public class IncendiaryEffect : MonoBehaviour
 {
@@ -1803,8 +1912,8 @@ public class IncendiaryEffect : MonoBehaviour
     private Dictionary<Renderer, Color[]> originalColors = new Dictionary<Renderer, Color[]>();
     private Dictionary<Renderer, Color[]> originalEmissionColors = new Dictionary<Renderer, Color[]>();
 
-    // Track which enemies we've already spread to (prevent infinite spread loops)
-    private static HashSet<Transform> globalBurningEnemies = new HashSet<Transform>();
+    // Track which targets we've already spread to (prevent infinite spread loops)
+    private static HashSet<Transform> globalBurningTargets = new HashSet<Transform>();
 
     public void Initialize(float burnDuration, float dps, float tickTime, bool enableSpread, float radius, float chance,
         GameObject fireEffect, Color tint, float tintAmount, bool emission, float emissionAmount)
@@ -1826,7 +1935,7 @@ public class IncendiaryEffect : MonoBehaviour
         emissionIntensity = emissionAmount;
 
         // Add to global burning list
-        globalBurningEnemies.Add(transform);
+        globalBurningTargets.Add(transform);
 
         // Apply visual effects
         ApplyFireVisuals(fireEffect);
@@ -2018,8 +2127,8 @@ public class IncendiaryEffect : MonoBehaviour
 
     private void TrySpreadFire()
     {
-        // Find nearby enemies
-        Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, spreadRadius, LayerMask.GetMask("Enemies"));
+        // Find nearby valid targets (Enemies AND NPCs)
+        Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, spreadRadius, LayerMask.GetMask("Enemies", "NPCs"));
 
         foreach (Collider col in nearbyColliders)
         {
@@ -2031,9 +2140,9 @@ public class IncendiaryEffect : MonoBehaviour
             if (rootTransform == transform) continue;
 
             // Skip if already burning
-            if (globalBurningEnemies.Contains(rootTransform)) continue;
+            if (globalBurningTargets.Contains(rootTransform)) continue;
 
-            // Check if enemy is already on fire
+            // Check if target is already on fire
             if (rootTransform.GetComponent<IncendiaryEffect>() != null) continue;
 
             // Random chance to spread
@@ -2064,7 +2173,7 @@ public class IncendiaryEffect : MonoBehaviour
         Debug.Log($"[IncendiaryEffect] Ended on {gameObject.name}");
 
         // Remove from global burning list
-        globalBurningEnemies.Remove(transform);
+        globalBurningTargets.Remove(transform);
 
         // Remove visuals
         RemoveFireVisuals();
@@ -2080,7 +2189,7 @@ public class IncendiaryEffect : MonoBehaviour
     private void OnDestroy()
     {
         // Clean up
-        globalBurningEnemies.Remove(transform);
+        globalBurningTargets.Remove(transform);
         RemoveFireVisuals();
 
         if (fireEffectInstance != null)
@@ -2145,7 +2254,7 @@ public class DisorientationEffect : MonoBehaviour
         }
 
         // SPIN THE ENTIRE TRANSFORM AROUND Y-AXIS (horizontal 360s)
-        // This spins the whole enemy (including model, NavMeshAgent, etc.) while they continue their normal behavior
+        // This spins the whole target (including model, NavMeshAgent, etc.) while they continue their normal behavior
         float rotationAmount = spinSpeed * Time.deltaTime;
         transform.Rotate(Vector3.up, rotationAmount, Space.World);
 
@@ -2176,6 +2285,356 @@ public class DisorientationEffect : MonoBehaviour
         if (visualEffectInstance != null)
         {
             Destroy(visualEffectInstance);
+        }
+    }
+}
+
+/// <summary>
+/// UPDATED StunEffect - now integrates with NPCManager
+/// Add this to replace the StunEffect class in BulletModifier.cs
+/// </summary>
+public class StunEffect : MonoBehaviour
+{
+    private float duration;
+    private float timeRemaining;
+    private bool freezeAnimation;
+    private bool disableAI;
+    private Color tintColor;
+    private float tintStrength;
+    private bool showDebug;
+
+    // Components to stun
+    private UnityEngine.AI.NavMeshAgent navAgent;
+    private bool hadNavAgent = false;
+    private bool wasNavAgentOnNavMesh = false;
+    private CharacterController characterController;
+    private bool hadCharacterController = false;
+    private Animator animator;
+    private bool hadAnimator = false;
+    private float originalAnimatorSpeed;
+
+    // NEW: NPCManager integration
+    private NPCManager npcManager;
+    private bool hasNPCManager = false;
+
+    // AI components (store references to re-enable later)
+    private MonoBehaviour[] aiScripts;
+    private bool[] aiScriptWasEnabled;
+
+    // Visual effects
+    private GameObject stunEffectInstance;
+    private Renderer[] renderers;
+    private Dictionary<Renderer, Color[]> originalColors = new Dictionary<Renderer, Color[]>();
+
+    public void Initialize(float stunDur, bool freezeAnim, bool disableAIBehavior, Color tint, float tintAmount, GameObject effectPrefab, bool debug)
+    {
+        duration = stunDur;
+        timeRemaining = duration;
+        freezeAnimation = freezeAnim;
+        disableAI = disableAIBehavior;
+        tintColor = tint;
+        tintStrength = tintAmount;
+        showDebug = debug;
+
+        // NEW: Check if target has NPCManager
+        npcManager = GetComponent<NPCManager>();
+        if (npcManager != null)
+        {
+            hasNPCManager = true;
+            npcManager.EnterStunnedState();
+            Debug.Log($"[StunEffect] Using NPCManager stun system on {gameObject.name}");
+        }
+        else
+        {
+            // Fallback to old system for non-NPCManager enemies
+            Debug.Log($"[StunEffect] No NPCManager found, using legacy stun system on {gameObject.name}");
+
+            // Disable movement components (legacy)
+            navAgent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+            if (navAgent != null)
+            {
+                hadNavAgent = true;
+                wasNavAgentOnNavMesh = navAgent.isOnNavMesh;
+                navAgent.isStopped = true;
+                navAgent.velocity = Vector3.zero;
+                Debug.Log($"[StunEffect] Stopped NavMeshAgent on {gameObject.name}");
+            }
+
+            characterController = GetComponent<CharacterController>();
+            if (characterController != null)
+            {
+                hadCharacterController = true;
+                characterController.enabled = false;
+                Debug.Log($"[StunEffect] Disabled CharacterController on {gameObject.name}");
+            }
+        }
+
+        // Freeze animation (works for both systems)
+        if (freezeAnimation)
+        {
+            animator = GetComponent<Animator>();
+            if (animator != null)
+            {
+                hadAnimator = true;
+                originalAnimatorSpeed = animator.speed;
+                animator.speed = 0f;
+                Debug.Log($"[StunEffect] Froze Animator on {gameObject.name}");
+            }
+        }
+
+        // Disable AI scripts if requested (legacy system only)
+        if (disableAI && !hasNPCManager)
+        {
+            DisableAIScripts();
+        }
+
+        // Apply visual tint
+        if (tintStrength > 0f)
+        {
+            ApplyStunTint();
+        }
+
+        // Spawn stun effect (stars, swirls around head)
+        if (effectPrefab != null)
+        {
+            Vector3 spawnPosition = transform.position + Vector3.up * 2f;
+
+            Transform headBone = transform.Find("Head");
+            if (headBone == null)
+                headBone = transform.Find("head");
+            if (headBone != null)
+                spawnPosition = headBone.position;
+
+            stunEffectInstance = Instantiate(effectPrefab, spawnPosition, Quaternion.identity, transform);
+            Debug.Log($"[StunEffect] Spawned stun effect on {gameObject.name} at {spawnPosition}");
+        }
+
+        Debug.Log($"[StunEffect] Started on {gameObject.name} for {duration}s");
+    }
+
+    public void RefreshEffect(float stunDur, bool freezeAnim, bool disableAIBehavior, Color tint, float tintAmount, GameObject effectPrefab, bool debug)
+    {
+        duration = stunDur;
+        timeRemaining = duration; // Reset timer
+        freezeAnimation = freezeAnim;
+        disableAI = disableAIBehavior;
+        tintColor = tint;
+        tintStrength = tintAmount;
+        showDebug = debug;
+
+        Debug.Log($"[StunEffect] Refreshed on {gameObject.name}");
+    }
+
+    private void DisableAIScripts()
+    {
+        List<MonoBehaviour> foundAIScripts = new List<MonoBehaviour>();
+        List<bool> foundAIScriptStates = new List<bool>();
+
+        MonoBehaviour[] allScripts = GetComponents<MonoBehaviour>();
+
+        foreach (MonoBehaviour script in allScripts)
+        {
+            if (script == null) continue;
+            if (script == this) continue;
+
+            string scriptName = script.GetType().Name.ToLower();
+            if (scriptName.Contains("ai") || scriptName.Contains("enemy") || scriptName.Contains("npc") ||
+                scriptName.Contains("controller") || scriptName.Contains("behavior"))
+            {
+                foundAIScripts.Add(script);
+                foundAIScriptStates.Add(script.enabled);
+
+                if (script.enabled)
+                {
+                    script.enabled = false;
+                    Debug.Log($"[StunEffect] Disabled AI script: {script.GetType().Name}");
+                }
+            }
+        }
+
+        aiScripts = foundAIScripts.ToArray();
+        aiScriptWasEnabled = foundAIScriptStates.ToArray();
+
+        if (aiScripts.Length > 0)
+        {
+            Debug.Log($"[StunEffect] Disabled {aiScripts.Length} AI scripts on {gameObject.name}");
+        }
+    }
+
+    private void ReEnableAIScripts()
+    {
+        if (aiScripts == null) return;
+
+        for (int i = 0; i < aiScripts.Length; i++)
+        {
+            if (aiScripts[i] != null && aiScriptWasEnabled[i])
+            {
+                aiScripts[i].enabled = true;
+                Debug.Log($"[StunEffect] Re-enabled AI script: {aiScripts[i].GetType().Name}");
+            }
+        }
+    }
+
+    private void ApplyStunTint()
+    {
+        renderers = GetComponentsInChildren<Renderer>();
+
+        foreach (var renderer in renderers)
+        {
+            if (renderer == null) continue;
+
+            Material[] materials = renderer.materials;
+            Color[] colors = new Color[materials.Length];
+
+            for (int i = 0; i < materials.Length; i++)
+            {
+                if (materials[i].HasProperty("_Color"))
+                {
+                    colors[i] = materials[i].color;
+                    Color tintedColor = Color.Lerp(colors[i], tintColor, tintStrength);
+                    materials[i].color = tintedColor;
+                }
+            }
+
+            originalColors[renderer] = colors;
+            renderer.materials = materials;
+        }
+
+        Debug.Log($"[StunEffect] Applied stun tint to {renderers.Length} renderers");
+    }
+
+    private void RemoveStunTint()
+    {
+        if (renderers == null) return;
+
+        foreach (var renderer in renderers)
+        {
+            if (renderer == null || !originalColors.ContainsKey(renderer)) continue;
+
+            Material[] materials = renderer.materials;
+            Color[] colors = originalColors[renderer];
+
+            for (int i = 0; i < materials.Length && i < colors.Length; i++)
+            {
+                if (materials[i].HasProperty("_Color"))
+                {
+                    materials[i].color = colors[i];
+                }
+            }
+
+            renderer.materials = materials;
+        }
+
+        Debug.Log($"[StunEffect] Removed stun tint");
+    }
+
+    private void Update()
+    {
+        timeRemaining -= Time.deltaTime;
+
+        if (timeRemaining <= 0f)
+        {
+            EndEffect();
+        }
+
+        // Debug visualization
+        if (showDebug)
+        {
+            Debug.DrawRay(transform.position, Vector3.up * 3f, Color.yellow, Time.deltaTime);
+        }
+    }
+
+    private void EndEffect()
+    {
+        Debug.Log($"[StunEffect] Ended on {gameObject.name}");
+
+        // NEW: Exit stun state if using NPCManager
+        if (hasNPCManager && npcManager != null)
+        {
+            npcManager.ExitStunnedState();
+        }
+        else
+        {
+            // Legacy system cleanup
+            if (hadNavAgent && navAgent != null)
+            {
+                navAgent.isStopped = false;
+
+                if (wasNavAgentOnNavMesh && navAgent.isOnNavMesh)
+                {
+                    Debug.Log($"[StunEffect] Resumed NavMeshAgent on {gameObject.name}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[StunEffect] NavMeshAgent not on NavMesh for {gameObject.name}");
+                }
+            }
+
+            if (hadCharacterController && characterController != null)
+            {
+                characterController.enabled = true;
+                Debug.Log($"[StunEffect] Re-enabled CharacterController on {gameObject.name}");
+            }
+
+            if (disableAI)
+            {
+                ReEnableAIScripts();
+            }
+        }
+
+        // Unfreeze animation (both systems)
+        if (hadAnimator && animator != null)
+        {
+            animator.speed = originalAnimatorSpeed;
+            Debug.Log($"[StunEffect] Unfroze Animator on {gameObject.name}");
+        }
+
+        // Remove visual effects
+        RemoveStunTint();
+
+        if (stunEffectInstance != null)
+        {
+            Destroy(stunEffectInstance);
+        }
+
+        Destroy(this);
+    }
+
+    private void OnDestroy()
+    {
+        // Restore components if destroyed prematurely
+        if (hasNPCManager && npcManager != null)
+        {
+            npcManager.ExitStunnedState();
+        }
+        else
+        {
+            if (hadNavAgent && navAgent != null)
+            {
+                navAgent.isStopped = false;
+            }
+
+            if (hadCharacterController && characterController != null)
+            {
+                characterController.enabled = true;
+            }
+
+            if (disableAI)
+            {
+                ReEnableAIScripts();
+            }
+        }
+
+        if (hadAnimator && animator != null)
+        {
+            animator.speed = originalAnimatorSpeed;
+        }
+
+        RemoveStunTint();
+
+        if (stunEffectInstance != null)
+        {
+            Destroy(stunEffectInstance);
         }
     }
 }

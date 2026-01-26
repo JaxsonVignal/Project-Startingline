@@ -67,7 +67,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,8 +80,21 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
+  - serializedVersion: 3
     buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -95,21 +108,348 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_0
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 1124
+        width: 498
+        height: 233
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ea867fc74697fc0428ad1894656d499a
+      internalID: 350749374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_1
+      rect:
+        serializedVersion: 2
+        x: 812
+        y: 1124
+        width: 497
+        height: 233
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e874348b20e4a484eae5baba8653574d
+      internalID: 597674986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_2
+      rect:
+        serializedVersion: 2
+        x: 1587
+        y: 1073
+        width: 202
+        height: 314
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 71609b561a56d7348a27a176424632c8
+      internalID: -233715194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_3
+      rect:
+        serializedVersion: 2
+        x: 2089
+        y: 1073
+        width: 203
+        height: 314
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4ba0d8dbc4b5e81438271ff4ea612cab
+      internalID: 222706017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_4
+      rect:
+        serializedVersion: 2
+        x: 219
+        y: 643
+        width: 211
+        height: 344
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d80bdb4c2bd84fc4ab1db140cdaa337b
+      internalID: -1384577155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_5
+      rect:
+        serializedVersion: 2
+        x: 693
+        y: 643
+        width: 210
+        height: 344
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 87a68d1d345697b4e957a4b62f1a644a
+      internalID: -1031388417
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_6
+      rect:
+        serializedVersion: 2
+        x: 1081
+        y: 747
+        width: 380
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 09a91f4ab32a238409481cd93137be76
+      internalID: 702943200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_7
+      rect:
+        serializedVersion: 2
+        x: 1591
+        y: 611
+        width: 170
+        height: 170
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 26315dec24ec65f48ac99fe58dc79a90
+      internalID: 416103912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_8
+      rect:
+        serializedVersion: 2
+        x: 1904
+        y: 658
+        width: 459
+        height: 300
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0525261ddcde1ac4ea89755b85f132b2
+      internalID: -1938578445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_9
+      rect:
+        serializedVersion: 2
+        x: 238
+        y: 53
+        width: 173
+        height: 461
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64104f112d26b7949863262558a80443
+      internalID: -283684124
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_10
+      rect:
+        serializedVersion: 2
+        x: 693
+        y: 59
+        width: 210
+        height: 455
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4af9994e412be9e4ea923477906a04d7
+      internalID: -1834795489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_11
+      rect:
+        serializedVersion: 2
+        x: 1118
+        y: 163
+        width: 188
+        height: 351
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 667fb48026463db4a88c9bbeca44944d
+      internalID: -1940494350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_12
+      rect:
+        serializedVersion: 2
+        x: 1510
+        y: 53
+        width: 172
+        height: 461
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9297badd082db95468cb3b5fb031c563
+      internalID: -1618800992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_13
+      rect:
+        serializedVersion: 2
+        x: 1876
+        y: 59
+        width: 210
+        height: 455
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7c23ab83988b5064e997132f9e75af10
+      internalID: -2099063795
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FrowardGrip_A_2_2K_14
+      rect:
+        serializedVersion: 2
+        x: 2267
+        y: 27
+        width: 136
+        height: 487
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1531612e62d82bd448e702c50a2db331
+      internalID: -499071969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
-    customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: ec78eb2894d75f241a0cf8727a173254
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      FrowardGrip_A_2_2K_0: 350749374
+      FrowardGrip_A_2_2K_1: 597674986
+      FrowardGrip_A_2_2K_10: -1834795489
+      FrowardGrip_A_2_2K_11: -1940494350
+      FrowardGrip_A_2_2K_12: -1618800992
+      FrowardGrip_A_2_2K_13: -2099063795
+      FrowardGrip_A_2_2K_14: -499071969
+      FrowardGrip_A_2_2K_2: -233715194
+      FrowardGrip_A_2_2K_3: 222706017
+      FrowardGrip_A_2_2K_4: -1384577155
+      FrowardGrip_A_2_2K_5: -1031388417
+      FrowardGrip_A_2_2K_6: 702943200
+      FrowardGrip_A_2_2K_7: 416103912
+      FrowardGrip_A_2_2K_8: -1938578445
+      FrowardGrip_A_2_2K_9: -283684124
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

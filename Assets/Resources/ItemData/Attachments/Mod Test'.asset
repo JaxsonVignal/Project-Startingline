@@ -43,7 +43,7 @@ MonoBehaviour:
   underbarrelShotgunData: {fileID: 0}
   flashlightData: {fileID: 0}
   modifierData:
-    antiGravityRounds: 0
+    antiGravityRounds: 1
     antiGravityForce: 5
     antiGravityDuration: 10
     disableGravity: 1
@@ -56,7 +56,7 @@ MonoBehaviour:
     freezeTintColor: {r: 0.5, g: 0.8, b: 1, a: 1}
     freezeTintStrength: 0.5
     iceEffectPrefab: {fileID: 0}
-    explosiveRounds: 0
+    explosiveRounds: 1
     explosionRadius: 10
     explosionDamageMultiplier: 1.5
     applyExplosionKnockback: 1
@@ -64,7 +64,7 @@ MonoBehaviour:
     explosionKnockbackDuration: 2
     explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
     showExplosionRadius: 0
-    tracerRounds: 1
+    tracerRounds: 0
     tracerColor: {r: 0, g: 1, b: 0.2879982, a: 1}
     tracerIntensity: 5.03
     tracerLightRange: 15.08
@@ -100,7 +100,7 @@ MonoBehaviour:
     teleportDepartureEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
     teleportArrivalEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
     showTeleportDebug: 0
-    incendiaryRounds: 1
+    incendiaryRounds: 0
     incendiaryDuration: 5
     incendiaryDamagePerSecond: 10
     incendiaryTickInterval: 0.5
@@ -117,3 +117,11 @@ MonoBehaviour:
     disorientationSpinSpeed: 1440
     disorientationEffectPrefab: {fileID: 0}
     showDisorientationDebug: 0
+    stunRounds: 1
+    stunDuration: 3
+    stunFreezeAnimation: 1
+    stunDisableAI: 1
+    stunTintColor: {r: 1, g: 1, b: 0.5, a: 1}
+    stunTintStrength: 0.3
+    stunEffectPrefab: {fileID: 0}
+    showStunDebug: 0
