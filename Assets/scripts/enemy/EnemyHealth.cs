@@ -42,15 +42,20 @@ public class EnemyHealth : MonoBehaviour
             return;
         }
 
+        // Handle GuardManager (old system)
         if (guardManager != null && !hasTriggeredAggro)
         {
             hasTriggeredAggro = true;
             guardManager.OnDamaged();
         }
 
-        if (npcManager != null)
+        // Handle NPCManager (new unified system)
+        // FIXED: Call OnDamaged() instead of RunAwayFromPlayer()
+        // OnDamaged() will check enableCombat and decide whether to fight or flee
+        if (npcManager != null && !hasTriggeredAggro)
         {
-            npcManager.RunAwayFromPlayer();
+            hasTriggeredAggro = true;
+            npcManager.OnDamaged();
         }
     }
 
