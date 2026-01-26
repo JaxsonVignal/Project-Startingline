@@ -772,6 +772,8 @@ MonoBehaviour:
   mainUIPanel: {fileID: 0}
   playerHotbar: {fileID: 0}
   minigameManager: {fileID: 0}
+  playerMovement: {fileID: 0}
+  playerInteractor: {fileID: 0}
   pauseGameWhenOpen: 1
   exitKey: 27
 --- !u!1001 &61782842
@@ -10320,6 +10322,8 @@ MonoBehaviour:
   mainUIPanel: {fileID: 1826773969}
   playerHotbar: {fileID: 0}
   minigameManager: {fileID: 0}
+  playerMovement: {fileID: 0}
+  playerInteractor: {fileID: 0}
   pauseGameWhenOpen: 1
   exitKey: 27
 --- !u!4 &933538831
@@ -21491,6 +21495,7 @@ GameObject:
   - component: {fileID: 1724234726}
   - component: {fileID: 1724234727}
   - component: {fileID: 1724234728}
+  - component: {fileID: 1724234729}
   m_Layer: 8
   m_Name: EnemyTest
   m_TagString: Untagged
@@ -21801,6 +21806,45 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1724234729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1724234717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb8236986402480488899042768bc0fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  npcName: Civilian
+  currentState: 0
+  weeklySchedule: []
+  bedLocation: {fileID: 0}
+  workLocation: {fileID: 0}
+  eatLocation: {fileID: 0}
+  idleLocation: {fileID: 0}
+  wakeUpTime: 6
+  workStartTime: 9
+  workEndTime: 17
+  sleepTime: 22
+  breakStartTime: 12
+  breakEndTime: 13
+  meetingWaitTime: 300
+  playerNearbyRange: 5
+  fleeDistance: 20
+  fleeDuration: 10
+  fleeFromDamage: 1
+  fleeFromGunshots: 1
+  gunshotHearingRange: 50
+  gunshotReactionCooldown: 2
+  enableCombat: 0
+  player: {fileID: 0}
+  sightRange: 20
+  attackRange: 10
+  loseAggroDistance: 30
+  canBeInteracted: 1
 --- !u!1 &1739233610
 GameObject:
   m_ObjectHideFlags: 0
@@ -24551,7 +24595,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2453543597627499877, guid: 83a3ee511eabd7f4f8c588dc3d83b09d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4.9290724
+      value: 6.637
       objectReference: {fileID: 0}
     - target: {fileID: 2453543597627499877, guid: 83a3ee511eabd7f4f8c588dc3d83b09d, type: 3}
       propertyPath: m_LocalPosition.y
