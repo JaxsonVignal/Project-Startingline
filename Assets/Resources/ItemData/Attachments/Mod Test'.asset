@@ -43,7 +43,7 @@ MonoBehaviour:
   underbarrelShotgunData: {fileID: 0}
   flashlightData: {fileID: 0}
   modifierData:
-    antiGravityRounds: 0
+    antiGravityRounds: 1
     antiGravityForce: 5
     antiGravityDuration: 10
     disableGravity: 1
@@ -56,7 +56,7 @@ MonoBehaviour:
     freezeTintColor: {r: 0.5, g: 0.8, b: 1, a: 1}
     freezeTintStrength: 0.5
     iceEffectPrefab: {fileID: 0}
-    explosiveRounds: 0
+    explosiveRounds: 1
     explosionRadius: 10
     explosionDamageMultiplier: 1.5
     applyExplosionKnockback: 1

@@ -12,6 +12,7 @@ public class WeaponBuilderStation : MonoBehaviour, IInteractable
     {
         if (builderController != null)
         {
+            Debug.Log("WeaponBuilderStation: Opening builder");
             builderController.OpenBuilder();
             interactSuccessful = true;
         }
@@ -24,8 +25,13 @@ public class WeaponBuilderStation : MonoBehaviour, IInteractable
 
     public void EndInteraction()
     {
-        if (builderController != null)
+        // This gets called when the player presses E to close the interaction
+        // OR when the Interactor.EndInteraction() is called from WeaponBuilderController
+        Debug.Log("WeaponBuilderStation: EndInteraction called");
+
+        if (builderController != null && builderController.IsBuilderOpen())
         {
+            Debug.Log("WeaponBuilderStation: Closing builder");
             builderController.CloseBuilder();
         }
 

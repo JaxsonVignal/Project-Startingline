@@ -1,8 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(Animator), typeof(CivilianMovementController))]
-public class NPCManager : MonoBehaviour
+public class NPCManager : MonoBehaviour, INPCInteractable
 {
     public enum NPCState
     {
@@ -16,7 +17,8 @@ public class NPCManager : MonoBehaviour
         Aggro,      // NEW
         Attack,     // NEW
         Patrol,     // NEW: For guards who patrol between waypoints
-        Stunned     // NEW: For stun effects from weapons
+        Stunned,    // NEW: For stun effects from weapons
+        Interacting // NEW: For player interactions
     }
 
     // NEW: Schedule entry for a specific time and location
@@ -99,6 +101,13 @@ public class NPCManager : MonoBehaviour
     public float attackRange = 10f;
     public float loseAggroDistance = 30f;
 
+    [Header("Interaction Settings")]
+    [Tooltip("Can this NPC be interacted with by the player?")]
+    public bool canBeInteracted = true;
+
+    // INPCInteractable implementation
+    public UnityAction<INPCInteractable> OnInteractionComplete { get; set; }
+
     private Animator animator;
     private CivilianMovementController movement;
 
@@ -143,6 +152,11 @@ public class NPCManager : MonoBehaviour
 
     // NEW: Initialization tracking to prevent premature state updates
     private bool isInitialized = false;
+
+    // NEW: Interaction state tracking
+    private bool isInteracting = false;
+    private NPCState stateBeforeInteraction;
+    private NPCInteractor currentInteractor;
 
     private void Awake()
     {
@@ -215,6 +229,16 @@ public class NPCManager : MonoBehaviour
             return;
         }
 
+        // PRIORITY 0.75: Interacting state - face player
+        if (isInteracting || currentState == NPCState.Interacting)
+        {
+            if (currentInteractor != null)
+            {
+                FaceTarget(currentInteractor.transform.position);
+            }
+            return; // Don't process any other logic while interacting
+        }
+
         // Check if NPC is transitioning to a new state and has arrived
         if (isTransitioning && currentState == NPCState.Walking)
         {
@@ -270,21 +294,35 @@ public class NPCManager : MonoBehaviour
     // NEW: Handle day changes
     private void HandleDayChanged(DayNightCycleManager.DayOfWeek newDay)
     {
+        DayNightCycleManager.DayOfWeek previousDay = currentDayOfWeek;
         currentDayOfWeek = newDay;
-        Debug.Log($"{npcName}: Day changed to {newDay}");
+        Debug.Log($"{npcName}: Day changed from {previousDay} to {newDay}");
 
         // If NPC was asleep, wake them up and spawn at first location of new day
         if (isAsleep)
         {
             WakeUpAndSpawnAtFirstLocation();
+            return; // Don't process further, wake-up handles everything
         }
 
-        // Force re-evaluation of schedule
+        // Day changed while NPC was awake - spawn at first location for new day
+        Transform spawnLocation = GetFirstScheduledLocation();
+        if (spawnLocation != null)
+        {
+            transform.position = spawnLocation.position;
+            transform.rotation = spawnLocation.rotation;
+            Debug.Log($"{npcName} day changed while awake, teleported to first location: {spawnLocation.name}");
+        }
+
+        // Determine and set state for current time (don't trigger walking transition)
         if (DayNightCycleManager.Instance != null)
         {
             float currentTime = DayNightCycleManager.Instance.currentTimeOfDay;
             NPCState newState = DetermineState(currentTime);
-            SwitchState(newState);
+
+            // Set state directly without walking transition
+            currentState = newState;
+            Debug.Log($"{npcName} set to {newState} state for new day");
         }
     }
 
@@ -343,8 +381,8 @@ public class NPCManager : MonoBehaviour
 
         Debug.Log($"{npcName} HandleTimeUpdate processing - hour: {hour}, currentState: {currentState}");
 
-        // Don't override combat or fleeing states with time-based updates
-        if (isFleeing || hasEnteredAggro)
+        // Don't override combat, fleeing, or interacting states with time-based updates
+        if (isFleeing || hasEnteredAggro || isInteracting)
             return;
 
         if (hasScheduledMeeting)
@@ -1206,6 +1244,133 @@ public class NPCManager : MonoBehaviour
     }
 
     // ===================================================================
+    // INTERACTION SYSTEM (INPCInteractable Implementation)
+    // ===================================================================
+
+    public bool CanBeInteractedWith()
+    {
+        // Can't interact if:
+        // - NPC is disabled
+        // - Already interacting
+        // - Asleep
+        // - Stunned
+        // - In combat
+        // - Fleeing
+        // - Interaction is disabled for this NPC
+
+        if (!gameObject.activeSelf || !canBeInteracted)
+            return false;
+
+        if (isAsleep || isStunned || isInteracting)
+            return false;
+
+        if (hasEnteredAggro || isFleeing)
+            return false;
+
+        return true;
+    }
+
+    public void Interact(NPCInteractor interactor, out bool interactSuccessful)
+    {
+        interactSuccessful = false;
+
+        // Check if NPC can be interacted with
+        if (!CanBeInteractedWith())
+        {
+            Debug.Log($"{npcName} cannot be interacted with right now");
+            return;
+        }
+
+        Debug.Log($"{npcName} starting interaction (was: {currentState})");
+
+        // Store current state to return to later
+        stateBeforeInteraction = currentState;
+        currentInteractor = interactor;
+
+        // Enter interaction state
+        isInteracting = true;
+        currentState = NPCState.Interacting;
+
+        // Stop all movement
+        if (movement != null)
+        {
+            movement.StopMovement();
+        }
+
+        // Trigger interaction animation if available
+        if (animator != null)
+        {
+            animator.SetTrigger("Interacting");
+        }
+
+        // Interaction was successful
+        interactSuccessful = true;
+
+        // Here you can trigger dialogue, shop UI, quest UI, etc.
+        // Example: DialogueManager.Instance.StartDialogue(this);
+        Debug.Log($"[INTERACTION] You are now talking to {npcName}");
+    }
+
+    public void EndInteraction()
+    {
+        if (!isInteracting)
+        {
+            Debug.Log($"{npcName} was not interacting");
+            return;
+        }
+
+        Debug.Log($"{npcName} ending interaction (was in: {currentState}, returning to: {stateBeforeInteraction})");
+
+        // Clear interaction flags FIRST before trying to switch states
+        isInteracting = false;
+        currentInteractor = null;
+
+        // Notify interaction complete
+        OnInteractionComplete?.Invoke(this);
+
+        // Return to previous state or determine current state based on time
+        if (DayNightCycleManager.Instance != null)
+        {
+            // Check if we should still be in that state, or if time has moved on
+            float currentTime = DayNightCycleManager.Instance.currentTimeOfDay;
+            NPCState timeBasedState = DetermineState(currentTime);
+
+            Debug.Log($"{npcName} current time: {currentTime}, time-based state: {timeBasedState}, previous state: {stateBeforeInteraction}");
+
+            // If in combat before interaction and combat is still relevant
+            if ((stateBeforeInteraction == NPCState.Aggro || stateBeforeInteraction == NPCState.Attack) && hasEnteredAggro)
+            {
+                currentState = stateBeforeInteraction;
+                Debug.Log($"{npcName} returning to combat state: {stateBeforeInteraction}");
+            }
+            // If fleeing before interaction and still in flee time window
+            else if (stateBeforeInteraction == NPCState.Fleeing && isFleeing)
+            {
+                currentState = NPCState.Fleeing;
+                Debug.Log($"{npcName} returning to fleeing state");
+            }
+            // If the time-based state is different from what we were doing before, use the new state
+            else if (timeBasedState != stateBeforeInteraction)
+            {
+                Debug.Log($"{npcName} time has changed, switching to current time state: {timeBasedState}");
+                SwitchState(timeBasedState);
+            }
+            // Otherwise, return to the state we were in before interaction
+            else
+            {
+                Debug.Log($"{npcName} returning to previous state: {stateBeforeInteraction}");
+                SwitchState(stateBeforeInteraction);
+            }
+        }
+        else
+        {
+            // No time manager - just return to previous state
+            Debug.Log($"{npcName} no time manager, returning to: {stateBeforeInteraction}");
+            SwitchState(stateBeforeInteraction);
+        }
+    }
+
+    // ===================================================================
     // STATIC GUNSHOT NOTIFICATION SYSTEM
     // ===================================================================
 
@@ -1444,9 +1609,11 @@ public class NPCManager : MonoBehaviour
         isAsleep = false;
         isGoingToBed = false;
         bedDestination = null;
-        isTransitioning = false; // NEW: Reset transition flag
-        targetState = NPCState.Idle; // NEW: Reset target state
-        targetDestination = null; // NEW: Reset target destination
+        isTransitioning = false;
+        targetState = NPCState.Idle;
+        targetDestination = null;
+        isInteracting = false;
+        currentInteractor = null;
 
         // Make sure NPC is enabled
         gameObject.SetActive(true);
