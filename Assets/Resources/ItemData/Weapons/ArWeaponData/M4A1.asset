@@ -52,6 +52,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4a0c7c777c7db9f42a3ec5d45ad496e6, type: 2}
   - {fileID: 11400000, guid: 939b62a4ad72f5a43ba3ab46804b68fa, type: 2}
   - {fileID: 11400000, guid: 48f1c564060115148bb44dbc4d2c9bd1, type: 2}
+  - {fileID: 11400000, guid: 20ec4550681e4894ab3ae8a07c8c3999, type: 2}
   scopeOffsets:
   - scope: {fileID: 11400000, guid: cabb8eed36020644b86ec90a06a6d25e, type: 2}
     positionOffset: {x: -0.451, y: 0.1, z: 0}
@@ -83,6 +84,7 @@ MonoBehaviour:
   partsToDisableWithSight:
   - BackSight
   - FrontSight
+  partsToDisableWithBarrel: []
   partToDisableWithSightPath: 
   weaponPrefab: {fileID: 5109640673244884216, guid: 99ed12a4e1b1e844293b80d2f75600a3, type: 3}
   shootSound: {fileID: 8300000, guid: 2f7f3e00e8c06d24fa20a985522f9674, type: 3}
@@ -90,3 +92,4 @@ MonoBehaviour:
   reloadSound: {fileID: 8300000, guid: 99b29339f399cdf42a854d1b510ef853, type: 3}
   muzzleFlashPrefab: {fileID: 0}
   ShootingSoundDelay: 0
+  partsToDisableWithMagazine: []
