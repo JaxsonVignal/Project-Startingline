@@ -15,19 +15,41 @@ public class WeaponBuilderController : MonoBehaviour
     [SerializeField] private GameObject mainUIPanel;
     [SerializeField] private HotbarDisplay playerHotbar;
     [SerializeField] private AttachmentMinigameManager minigameManager;
+    [SerializeField] private PlayerMovement playerMovement; // Reference to PlayerMovement
+    [SerializeField] private Interactor playerInteractor; // NEW: Reference to Interactor
 
     [Header("Settings")]
     [SerializeField] private bool pauseGameWhenOpen = true;
     [SerializeField] private KeyCode exitKey = KeyCode.Escape;
 
     private bool isBuilderOpen = false;
-    private Vector3 originalPreviewCameraPosition; // Store original position
-    private Quaternion originalPreviewCameraRotation; // Store original rotation
+    private Vector3 originalPreviewCameraPosition;
+    private Quaternion originalPreviewCameraRotation;
 
     private void Start()
     {
         // Ensure builder is closed on start
         CloseBuilder();
+
+        // Try to find PlayerMovement if not assigned
+        if (playerMovement == null)
+        {
+            playerMovement = FindObjectOfType<PlayerMovement>();
+            if (playerMovement == null)
+            {
+                Debug.LogWarning("WeaponBuilderController: PlayerMovement not found! Assign it manually.");
+            }
+        }
+
+        // NEW: Try to find Interactor if not assigned
+        if (playerInteractor == null)
+        {
+            playerInteractor = FindObjectOfType<Interactor>();
+            if (playerInteractor == null)
+            {
+                Debug.LogWarning("WeaponBuilderController: Interactor not found! Assign it manually.");
+            }
+        }
     }
 
     private void Update()
@@ -79,13 +101,17 @@ public class WeaponBuilderController : MonoBehaviour
         if (mainCamera != null && previewCamera != null)
             mainCamera.enabled = false;
 
-        // Pause game
-        // if (pauseGameWhenOpen)
-        //     Time.timeScale = 0f;
-
-        // Show cursor
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        // Enter UI mode
+        if (playerMovement != null)
+        {
+            playerMovement.EnableUIMode();
+        }
+        else
+        {
+            // Fallback: Just show cursor if PlayerMovement is missing
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
 
         Debug.Log("Weapon Builder opened");
     }
@@ -93,6 +119,8 @@ public class WeaponBuilderController : MonoBehaviour
     public void CloseBuilder()
     {
         if (!isBuilderOpen) return;
+
+        Debug.Log("=== CLOSING WEAPON BUILDER ===");
 
         // ALWAYS reset the preview camera position first, before anything else
         if (previewCamera != null)
@@ -109,7 +137,6 @@ public class WeaponBuilderController : MonoBehaviour
         {
             Debug.Log("Closing builder - cancelling active minigame");
             minigameManager.CancelCurrentMinigame();
-            // DON'T call CleanupPreviewContainer - let the minigame cleanup handle everything
         }
         else
         {
@@ -143,15 +170,28 @@ public class WeaponBuilderController : MonoBehaviour
         if (mainUIPanel != null)
             mainUIPanel.SetActive(true);
 
-        // Unpause game
-        // if (pauseGameWhenOpen)
-        //     Time.timeScale = 1f;
+        // NEW: End the interaction in the Interactor system
+        if (playerInteractor != null)
+        {
+            Debug.Log("Ending interaction via Interactor.EndInteraction()");
+            playerInteractor.EndInteraction();
+        }
 
-        // Hide cursor (adjust based on your game's needs)
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Return to gameplay mode
+        if (playerMovement != null)
+        {
+            Debug.Log("Calling EnableGameplayMode()");
+            playerMovement.EnableGameplayMode();
+        }
+        else
+        {
+            // Fallback: Just hide cursor if PlayerMovement is missing
+            Debug.LogWarning("PlayerMovement is null, using fallback cursor settings");
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
 
-        Debug.Log("Weapon Builder closed");
+        Debug.Log("Weapon Builder closed - gameplay mode should be restored");
     }
 
     public void ToggleBuilder()
