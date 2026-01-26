@@ -6,8 +6,8 @@ using System.Linq;
 public class WeaponAttachmentSystem : MonoBehaviour
 {
     public WeaponData weaponData;
-    public List<AttachmentData> equippedAttachments = new List<AttachmentData>();
-    private Dictionary<string, GameObject> spawned = new Dictionary<string, GameObject>();
+    public List<AttachmentData> equippedAttachments = new();
+    private Dictionary<string, GameObject> spawned = new();
 
     private AttachmentSlotMap slotMap;
 
@@ -30,93 +30,71 @@ public class WeaponAttachmentSystem : MonoBehaviour
     public float CurrentRecoilZ => cachedRecoilZ;
     public int CurrentMagazineSize => cachedMagazineSize;
 
-    void Awake()
+    private void Awake()
     {
         slotMap = GetComponent<AttachmentSlotMap>();
         RecalculateStats();
     }
 
-    void Start()
+    private void Start()
     {
         RecalculateStats();
     }
+
+    // --------------------------------------------------
+    // ATTACHMENT LOOKUP (IMPORTANT FIX)
+    // --------------------------------------------------
 
     public bool HasAttachment(string attachmentId)
     {
         return equippedAttachments.Any(a => a != null && a.id == attachmentId);
     }
 
+    public AttachmentData GetAttachmentById(string attachmentId)
+    {
+        return equippedAttachments.FirstOrDefault(a => a != null && a.id == attachmentId);
+    }
+
+    // --------------------------------------------------
+    // EQUIP / UNEQUIP
+    // --------------------------------------------------
 
     public void EquipAttachment(AttachmentData att, WeaponAttachmentEntry entry)
     {
         if (att == null || entry == null)
         {
-            Debug.LogError("[WeaponAttachmentSystem] EquipAttachment called with null attachment or entry!");
+            Debug.LogError("[WeaponAttachmentSystem] EquipAttachment called with null args");
             return;
         }
 
-        Debug.Log($"[WeaponAttachmentSystem] EquipAttachment called for: {att.name} (Type: {att.type}, ID: {att.id})");
+        Debug.Log($"[WeaponAttachmentSystem] Equipping: {att.name} (Type={att.type}, ID={att.id})");
 
-        // Check if it's a grenade launcher
-        if (att.type == AttachmentType.Underbarrel && att.grenadeLauncherData != null)
-        {
-            Debug.Log($"[WeaponAttachmentSystem] EQUIPPING GRENADE LAUNCHER: {att.grenadeLauncherData.launcherName}");
-            Debug.Log($"[WeaponAttachmentSystem]   - Launcher Name: {att.grenadeLauncherData.launcherName}");
-            Debug.Log($"[WeaponAttachmentSystem]   - Damage: {att.grenadeLauncherData.damage}");
-            Debug.Log($"[WeaponAttachmentSystem]   - Explosion Radius: {att.grenadeLauncherData.explosionRadius}");
-            Debug.Log($"[WeaponAttachmentSystem]   - Magazine Size: {att.grenadeLauncherData.magazineSize}");
-        }
+        // Remove existing attachment of same type
+        var existing = equippedAttachments.Where(a => a.type == att.type).ToList();
+        foreach (var e in existing)
+            DetachById(e.id);
 
-        // Remove any existing attachment of same type
-        var removed = equippedAttachments.Where(a => a.type == att.type).ToList();
-        foreach (var r in removed)
-        {
-            Debug.Log($"[WeaponAttachmentSystem] Removing existing {r.type} attachment: {r.name}");
-            DetachById(r.id);
-        }
-
-        Debug.Log($"[WeaponAttachmentSystem] Adding {att.name} to equippedAttachments list");
         equippedAttachments.Add(att);
 
+        // Spawn prefab if exists
         if (att.prefab != null)
         {
             Transform socket = slotMap.GetSocket(att.type);
-            Debug.Log($"[WeaponAttachmentSystem] Socket for {att.type}: {(socket != null ? socket.name : "NULL")}");
-
             var go = Instantiate(att.prefab, socket ? socket : transform);
             go.name = $"ATT_{att.id}";
 
-            // Apply the entry transforms
-            go.transform.localPosition = new Vector3(entry.posX, entry.posY, entry.posZ);
+            go.transform.localPosition = new(entry.posX, entry.posY, entry.posZ);
             go.transform.localRotation = Quaternion.Euler(entry.rotX, entry.rotY, entry.rotZ);
-            go.transform.localScale = new Vector3(entry.scaleX, entry.scaleY, entry.scaleZ);
+            go.transform.localScale = new(entry.scaleX, entry.scaleY, entry.scaleZ);
 
             spawned[att.id] = go;
-            Debug.Log($"[WeaponAttachmentSystem] Instantiated prefab for {att.name} at socket");
-        }
-        else
-        {
-            Debug.LogWarning($"[WeaponAttachmentSystem] No prefab assigned for {att.name}");
         }
 
-        // If this is a flashlight attachment, notify the FlashlightController
+        // Flashlight special handling
         if (att.type == AttachmentType.SideRail && att.flashlightData != null)
         {
-            Debug.Log($"[WeaponAttachmentSystem] This is a FLASHLIGHT attachment!");
             if (FlashlightController.Instance != null && spawned.ContainsKey(att.id))
-            {
                 FlashlightController.Instance.EquipFlashlight(att.flashlightData, spawned[att.id]);
-                Debug.Log($"[WeaponAttachmentSystem] Notified FlashlightController");
-            }
-        }
-
-        Debug.Log($"[WeaponAttachmentSystem] Current equipped attachments count: {equippedAttachments.Count}");
-
-        // List all equipped attachments
-        Debug.Log($"[WeaponAttachmentSystem] All equipped attachments:");
-        foreach (var a in equippedAttachments)
-        {
-            Debug.Log($"[WeaponAttachmentSystem]   - {a.name} (Type: {a.type}, HasGL: {(a.grenadeLauncherData != null)})");
         }
 
         RecalculateStats();
@@ -124,20 +102,14 @@ public class WeaponAttachmentSystem : MonoBehaviour
 
     public void DetachById(string attId)
     {
-        var att = equippedAttachments.FirstOrDefault(a => a.id == attId);
+        var att = GetAttachmentById(attId);
         if (att != null)
         {
             Debug.Log($"[WeaponAttachmentSystem] Detaching: {att.name}");
 
-            // If it's a flashlight, notify the controller
+            // Flashlight cleanup
             if (att.type == AttachmentType.SideRail && att.flashlightData != null)
-            {
-                if (FlashlightController.Instance != null)
-                {
-                    FlashlightController.Instance.UnequipFlashlight();
-                    Debug.Log($"[WeaponAttachmentSystem] Notified FlashlightController of removal");
-                }
-            }
+                FlashlightController.Instance?.UnequipFlashlight();
 
             equippedAttachments.Remove(att);
         }
@@ -154,29 +126,30 @@ public class WeaponAttachmentSystem : MonoBehaviour
     public void UnequipType(AttachmentType type)
     {
         var list = equippedAttachments.Where(a => a.type == type).ToList();
-        foreach (var a in list) DetachById(a.id);
+        foreach (var a in list)
+            DetachById(a.id);
     }
 
     public void ClearAll()
     {
-        Debug.Log($"[WeaponAttachmentSystem] ClearAll called - removing {equippedAttachments.Count} attachments");
+        foreach (var kv in spawned)
+            if (kv.Value != null)
+                Destroy(kv.Value);
 
-        // Unequip flashlight if present
-        var flashlightAtt = equippedAttachments.FirstOrDefault(a => a.type == AttachmentType.SideRail && a.flashlightData != null);
-        if (flashlightAtt != null && FlashlightController.Instance != null)
-        {
-            FlashlightController.Instance.UnequipFlashlight();
-        }
-
-        foreach (var kv in spawned) if (kv.Value != null) Destroy(kv.Value);
         spawned.Clear();
         equippedAttachments.Clear();
+
+        FlashlightController.Instance?.UnequipFlashlight();
+
         RecalculateStats();
     }
 
+    // --------------------------------------------------
+    // STATS
+    // --------------------------------------------------
+
     public void RecalculateStats()
     {
-        // Start with base weapon stats
         cachedDamage = weaponData.damage;
         cachedFireRate = weaponData.fireRate;
         cachedReloadTime = weaponData.reloadTime;
@@ -186,29 +159,17 @@ public class WeaponAttachmentSystem : MonoBehaviour
         cachedRecoilZ = weaponData.recoilZ;
         cachedMagazineSize = weaponData.magazineSize;
 
-        // Check if there's a magazine attachment - if so, it replaces the magazine size
-        bool hasMagazineAttachment = false;
-
-        // Apply modifiers from all equipped attachments
         foreach (var att in equippedAttachments)
         {
-            // Special handling for Magazine type - it REPLACES magazine size, not adds to it
+            if (att == null) continue;
+
+            // Magazine logic (replace size)
             if (att.type == AttachmentType.Magazine)
-            {
-                cachedMagazineSize = att.magazineBonus; // Replace, don't add
-                hasMagazineAttachment = true;
-                Debug.Log($"[WeaponAttachmentSystem] Magazine attachment found: {att.name}, setting capacity to {att.magazineBonus}");
-            }
+                cachedMagazineSize = att.magazineBonus;
             else
-            {
-                // For non-magazine attachments, add the bonus
                 cachedMagazineSize += att.magazineBonus;
-            }
 
-            // Additive modifiers
             cachedDamage += att.damageBonus;
-
-            // Multiplicative modifiers
             cachedFireRate *= att.fireRateMultiplier;
             cachedReloadTime *= att.reloadTimeMultiplier;
             cachedSpread *= att.spreadMultiplier;
@@ -217,6 +178,6 @@ public class WeaponAttachmentSystem : MonoBehaviour
             cachedRecoilZ *= att.recoilMultiplier;
         }
 
-        Debug.Log($"[WeaponAttachmentSystem] Stats recalculated - Damage: {cachedDamage}, FireRate: {cachedFireRate}, MagazineSize: {cachedMagazineSize}, Spread: {cachedSpread}, Recoil: ({cachedRecoilX}, {cachedRecoilY}, {cachedRecoilZ})");
+        Debug.Log($"[WeaponAttachmentSystem] Stats Updated ? DMG:{cachedDamage} FR:{cachedFireRate} MAG:{cachedMagazineSize}");
     }
 }

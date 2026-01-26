@@ -19,9 +19,6 @@ public class WeaponDeliveryInteraction : MonoBehaviour
     public float interactionRange = 3f;
     public KeyCode interactKey = KeyCode.E;
 
-    [Header("Weapon Storage")]
-    public Transform weaponHolder;
-
     [Header("Player Controls")]
     public MonoBehaviour playerMovementScript;
     public MonoBehaviour playerLookScript;
@@ -103,14 +100,14 @@ public class WeaponDeliveryInteraction : MonoBehaviour
     }
 
     // --------------------------------------------------
-    // DELIVERY LOGIC
+    // DELIVERY LOGIC (DATA-DRIVEN)
     // --------------------------------------------------
 
     private void DeliverWeapon()
     {
-        WeaponAttachmentSystem weapon = FindMatchingWeapon();
+        var slot = FindMatchingWeaponSlot();
 
-        if (weapon == null)
+        if (slot == null)
         {
             promptText.text =
                 "Delivery failed.\n\nYou don't have the required weapon.";
@@ -118,108 +115,72 @@ public class WeaponDeliveryInteraction : MonoBehaviour
             return;
         }
 
-        RemoveWeaponFromInventory(weapon);
+        // Remove weapon instance + inventory slot
+        WeaponInstanceStorage.RemoveInstance(slot.UniqueSlotID);
+        slot.ClearSlot();
+
         AddMoney(currentOrder.agreedPrice);
         TextingManager.Instance.CompleteWeaponDelivery(nearbyNPC.npcName);
 
         ClosePrompt();
     }
 
-    private WeaponAttachmentSystem FindMatchingWeapon()
+    private InventorySlot FindMatchingWeaponSlot()
     {
-        WeaponAttachmentSystem[] weapons = GetAllWeaponsInInventory();
+        var inventoryHolder = GetComponent<PlayerInventoryHolder>();
+        if (inventoryHolder == null)
+            return null;
 
-        foreach (var weapon in weapons)
+        var inventory = inventoryHolder.PrimaryInventorySystem;
+
+        foreach (var slot in inventory.InventorySlots)
         {
-            if (weapon == null || weapon.weaponData == null)
+            if (slot.ItemData is not WeaponData weaponData)
                 continue;
 
-            // Match weapon by ID
-            if (weapon.weaponData.weaponId != currentOrder.weaponRequested.weaponId)
+            // Match weapon ID
+            if (weaponData.weaponId != currentOrder.weaponRequested.weaponId)
                 continue;
 
-            // Match attachments
-            if (HasRequiredAttachments(weapon))
-                return weapon;
+            // Get weapon instance (attachment data)
+            var instance = WeaponInstanceStorage.GetInstance(slot.UniqueSlotID);
+            if (instance == null)
+                continue;
+
+            // Validate attachments
+            if (HasRequiredAttachments(instance))
+                return slot;
         }
 
         return null;
     }
 
-
-
     // --------------------------------------------------
-    // ATTACHMENT VALIDATION (FIX 1)
+    // ATTACHMENT VALIDATION (DATA-ONLY)
     // --------------------------------------------------
 
-    private bool HasRequiredAttachments(WeaponAttachmentSystem weapon)
+    private bool HasRequiredAttachments(WeaponInstance instance)
     {
         return
-            MatchAttachment(weapon, currentOrder.sightAttachment) &&
-            MatchAttachment(weapon, currentOrder.underbarrelAttachment) &&
-            MatchAttachment(weapon, currentOrder.barrelAttachment) &&
-            MatchAttachment(weapon, currentOrder.magazineAttachment) &&
-            MatchAttachment(weapon, currentOrder.sideRailAttachment);
+            MatchAttachment(instance, currentOrder.sightAttachment) &&
+            MatchAttachment(instance, currentOrder.underbarrelAttachment) &&
+            MatchAttachment(instance, currentOrder.barrelAttachment) &&
+            MatchAttachment(instance, currentOrder.magazineAttachment) &&
+            MatchAttachment(instance, currentOrder.sideRailAttachment);
     }
 
-    private bool MatchAttachment(
-        WeaponAttachmentSystem weapon,
-        AttachmentData required
-    )
+    private bool MatchAttachment(WeaponInstance instance, AttachmentData required)
     {
-        // Slot not required → allow anything
         if (required == null)
             return true;
 
-        // Match by ATTACHMENT ID
-        return weapon.HasAttachment(required.id);
-    }
+        if (instance.attachments == null)
+            return false;
 
-    // --------------------------------------------------
-    // INVENTORY
-    // --------------------------------------------------
-
-    private WeaponAttachmentSystem[] GetAllWeaponsInInventory()
-    {
-        if (weaponHolder != null)
-            return weaponHolder.GetComponentsInChildren<WeaponAttachmentSystem>(true);
-
-        return GetComponentsInChildren<WeaponAttachmentSystem>(true);
+        return instance.attachments.Any(e => e != null && e.attachmentId == required.id);
     }
 
 
-
-    private void RemoveWeaponFromInventory(WeaponAttachmentSystem weapon)
-    {
-        PlayerInventoryHolder inventoryHolder = GetComponent<PlayerInventoryHolder>();
-        if (inventoryHolder == null)
-        {
-            Debug.LogError("PlayerInventoryHolder not found!");
-            return;
-        }
-
-        var inventory = inventoryHolder.PrimaryInventorySystem;
-
-        var slot = inventory.InventorySlots.FirstOrDefault(s =>
-            s.ItemData is WeaponData wd &&
-            wd.weaponId == weapon.weaponData.weaponId);
-
-        if (slot == null)
-        {
-            Debug.LogWarning("Weapon not found in inventory!");
-        }
-        else
-        {
-            if (slot.StackSize > 1)
-                slot.RemoveFromStack(1);
-            else
-                slot.ClearSlot();
-
-            inventory.OnInventorySlotChanged?.Invoke(slot);
-        }
-
-        Destroy(weapon.gameObject);
-    }
 
 
     // --------------------------------------------------
