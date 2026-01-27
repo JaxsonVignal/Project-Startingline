@@ -875,6 +875,7 @@ MonoBehaviour:
   interactKey: 101
   playerMovementScript: {fileID: 61484989}
   playerLookScript: {fileID: 61484989}
+  itemDatabase: {fileID: 11400000, guid: 3fd3ff6c5f4ba5c4fa05cbb605d3f5d4, type: 2}
 --- !u!114 &61485000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11715,8 +11716,10 @@ MonoBehaviour:
   - {fileID: 1446155165}
   availableWeapons:
   - {fileID: 11400000, guid: c62b43e4cec9aac45b9b4940072e93f7, type: 2}
+  - {fileID: 11400000, guid: 1b6738f84dc58b64fa69bc0ee2fe4ffc, type: 2}
   sightAttachments:
   - {fileID: 11400000, guid: 90e8387b0737ef442951c93cff619a23, type: 2}
+  - {fileID: 11400000, guid: 20ec4550681e4894ab3ae8a07c8c3999, type: 2}
   underbarrelAttachments: []
   barrelAttachments: []
   magazineAttachments: []

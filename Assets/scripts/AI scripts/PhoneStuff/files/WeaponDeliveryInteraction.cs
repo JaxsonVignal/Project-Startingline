@@ -1,12 +1,8 @@
-using System.Linq;
+﻿using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Handles delivering weapons to NPCs.
-/// Attach this to the Player.
-/// </summary>
 public class WeaponDeliveryInteraction : MonoBehaviour
 {
     [Header("UI")]
@@ -22,6 +18,9 @@ public class WeaponDeliveryInteraction : MonoBehaviour
     [Header("Player Controls")]
     public MonoBehaviour playerMovementScript;
     public MonoBehaviour playerLookScript;
+
+    [Header("Database")]
+    [SerializeField] private Database itemDatabase;
 
     private NPCManager nearbyNPC;
     private WeaponOrder currentOrder;
@@ -100,7 +99,7 @@ public class WeaponDeliveryInteraction : MonoBehaviour
     }
 
     // --------------------------------------------------
-    // DELIVERY LOGIC (DATA-DRIVEN)
+    // DELIVERY LOGIC
     // --------------------------------------------------
 
     private void DeliverWeapon()
@@ -115,7 +114,6 @@ public class WeaponDeliveryInteraction : MonoBehaviour
             return;
         }
 
-        // Remove weapon instance + inventory slot
         WeaponInstanceStorage.RemoveInstance(slot.UniqueSlotID);
         slot.ClearSlot();
 
@@ -138,16 +136,13 @@ public class WeaponDeliveryInteraction : MonoBehaviour
             if (slot.ItemData is not WeaponData weaponData)
                 continue;
 
-            // Match weapon ID
+            // Match weapon
             if (weaponData.weaponId != currentOrder.weaponRequested.weaponId)
                 continue;
 
-            // Get weapon instance (attachment data)
+            // Get weapon instance (may be null → clean gun)
             var instance = WeaponInstanceStorage.GetInstance(slot.UniqueSlotID);
-            if (instance == null)
-                continue;
 
-            // Validate attachments
             if (HasRequiredAttachments(instance))
                 return slot;
         }
@@ -156,7 +151,7 @@ public class WeaponDeliveryInteraction : MonoBehaviour
     }
 
     // --------------------------------------------------
-    // ATTACHMENT VALIDATION (DATA-ONLY)
+    // ATTACHMENT VALIDATION
     // --------------------------------------------------
 
     private bool HasRequiredAttachments(WeaponInstance instance)
@@ -171,17 +166,40 @@ public class WeaponDeliveryInteraction : MonoBehaviour
 
     private bool MatchAttachment(WeaponInstance instance, AttachmentData required)
     {
-        if (required == null)
-            return true;
+        // No instance = no attachments installed
+        if (instance == null)
+            return required == null;
 
-        if (instance.attachments == null)
+        AttachmentData installed = GetInstalledAttachment(instance, required?.type);
+
+        // NPC wants no attachment
+        if (required == null)
+            return installed == null;
+
+        // NPC wants specific attachment
+        if (installed == null)
             return false;
 
-        return instance.attachments.Any(e => e != null && e.attachmentId == required.id);
+        return installed.id == required.id;
     }
 
+    private AttachmentData GetInstalledAttachment(WeaponInstance instance, AttachmentType? type)
+    {
+        if (instance.attachments == null || type == null || itemDatabase == null)
+            return null;
 
+        foreach (var entry in instance.attachments)
+        {
+            if (entry == null || string.IsNullOrWhiteSpace(entry.attachmentId))
+                continue;
 
+            AttachmentData attachment = itemDatabase.GetAttachment(entry.attachmentId);
+            if (attachment != null && attachment.type == type)
+                return attachment;
+        }
+
+        return null;
+    }
 
     // --------------------------------------------------
     // PLAYER
