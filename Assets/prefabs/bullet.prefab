@@ -150,6 +150,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponData: {fileID: 0}
   lifetime: 3
+  defaultHitEffectPrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
+  fleshHitEffectPrefab: {fileID: 4021103657954561961, guid: 5c755f9bc5253ea418e919994537dcc7, type: 3}
+  hitEffectLifetime: 2
 --- !u!114 &-5528962512642303082
 MonoBehaviour:
   m_ObjectHideFlags: 0
