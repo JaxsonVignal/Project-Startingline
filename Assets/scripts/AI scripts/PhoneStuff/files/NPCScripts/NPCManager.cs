@@ -83,11 +83,14 @@ public class NPCManager : MonoBehaviour, INPCInteractable
     public float fleeDistance = 20f;
     public float fleeDuration = 10f;
 
+    [Header("Courage System")]
+    [Tooltip("Courage stat (0-100). Higher = more likely to fight instead of flee")]
+    [Range(0, 100)]
+    public int courage = 50;
+    [Tooltip("If true, NPC will react to danger (gunshots/damage) based on courage")]
+    public bool reactToDanger = true;
+
     [Header("Combat Reaction Settings")]
-    [Tooltip("If true, NPC will flee when taking damage (only if enableCombat is false)")]
-    public bool fleeFromDamage = true;
-    [Tooltip("If true, NPC will flee when hearing gunshots")]
-    public bool fleeFromGunshots = true;
     [Tooltip("How far this NPC can hear gunshots (in units)")]
     public float gunshotHearingRange = 50f;
     [Tooltip("Minimum time between gunshot reactions (prevents spam)")]
@@ -158,6 +161,9 @@ public class NPCManager : MonoBehaviour, INPCInteractable
     private NPCState stateBeforeInteraction;
     private NPCInteractor currentInteractor;
 
+    // NEW: Courage system tracking
+    private bool hasRolledCourage = false;
+
     private void Awake()
     {
         // If NPC was disabled (sleeping) and is now being re-enabled, handle wake-up
@@ -187,7 +193,7 @@ public class NPCManager : MonoBehaviour, INPCInteractable
         // Explicitly initialize combat state
         hasEnteredAggro = false;
 
-        Debug.Log($"{npcName} Start() - enableCombat: {enableCombat}, hasEnteredAggro: {hasEnteredAggro}");
+        Debug.Log($"{npcName} Start() - enableCombat: {enableCombat}, hasEnteredAggro: {hasEnteredAggro}, courage: {courage}");
 
         // Get current day of week and initialize state
         if (DayNightCycleManager.Instance != null)
@@ -249,6 +255,7 @@ public class NPCManager : MonoBehaviour, INPCInteractable
         if (isFleeing && Time.time >= fleeEndTime)
         {
             isFleeing = false;
+            hasRolledCourage = false; // Reset courage roll when fleeing ends
 
             float now = DayNightCycleManager.Instance != null ?
                 DayNightCycleManager.Instance.currentTimeOfDay : 12f;
@@ -1008,6 +1015,53 @@ public class NPCManager : MonoBehaviour, INPCInteractable
     }
 
     // ===================================================================
+    // COURAGE SYSTEM
+    // ===================================================================
+
+    /// <summary>
+    /// Rolls courage to determine if NPC fights or flees
+    /// Returns true if NPC should fight (brave), false if should flee (coward)
+    /// </summary>
+    private bool RollCourage()
+    {
+        // Don't react to danger if reactToDanger is disabled
+        if (!reactToDanger)
+        {
+            Debug.Log($"{npcName} reactToDanger is disabled, ignoring danger");
+            return false;
+        }
+
+        // Only roll once per danger encounter
+        if (hasRolledCourage)
+        {
+            Debug.Log($"{npcName} has already rolled courage for this encounter");
+            return false;
+        }
+
+        hasRolledCourage = true;
+
+        // Roll a random number between 0-100
+        int roll = Random.Range(0, 101);
+
+        // If roll is LOWER than courage, NPC is brave and will fight
+        bool isBrave = roll <= courage;
+
+        Debug.Log($"{npcName} COURAGE ROLL: {roll} vs {courage} = {(isBrave ? "BRAVE (FIGHT)" : "COWARD (FLEE)")}");
+
+        return isBrave;
+    }
+
+    /// <summary>
+    /// Resets courage roll so NPC can react to danger again
+    /// Called when NPC dies or completes fleeing/combat
+    /// </summary>
+    private void ResetCourageRoll()
+    {
+        hasRolledCourage = false;
+        Debug.Log($"{npcName} courage roll has been reset");
+    }
+
+    // ===================================================================
     // COMBAT SYSTEM (from GuardManager)
     // ===================================================================
 
@@ -1038,6 +1092,7 @@ public class NPCManager : MonoBehaviour, INPCInteractable
         {
             Debug.Log($"{npcName} lost player, returning to routine.");
             hasEnteredAggro = false;
+            ResetCourageRoll(); // Reset courage when combat ends
             movement.StopMovement();
 
             if (DayNightCycleManager.Instance != null)
@@ -1112,48 +1167,66 @@ public class NPCManager : MonoBehaviour, INPCInteractable
         }
     }
 
-    // NEW: Called when NPC takes damage - enters aggro state or flees
+    // NEW: Called when NPC takes damage - rolls courage to determine fight or flee
     public void OnDamaged()
     {
-        // If combat is enabled, NPC will fight back
-        if (enableCombat)
+        Debug.Log($"{npcName} OnDamaged called! Current state: {currentState}, hasRolledCourage: {hasRolledCourage}");
+
+        // Don't roll courage again if already determined
+        if (hasRolledCourage)
         {
-            Debug.Log($"{npcName} OnDamaged called! Current state: {currentState}, hasEnteredAggro: {hasEnteredAggro}");
-
-            if (!hasEnteredAggro)
-            {
-                hasEnteredAggro = true;
-
-                // Clear any walking transitions
-                isTransitioning = false;
-                targetDestination = null;
-
-                // Store previous state for debugging
-                NPCState previousState = currentState;
-                currentState = NPCState.Aggro;
-
-                // Stop any current movement
-                movement?.StopMovement();
-
-                Debug.Log($"{npcName} entered AGGRO state! (was: {previousState}, now: {currentState})");
-            }
-            else
-            {
-                Debug.Log($"{npcName} already in aggro, current state: {currentState}");
-            }
+            Debug.Log($"{npcName} already rolled courage, maintaining current behavior");
             return;
         }
 
-        // If combat is disabled and fleeFromDamage is enabled, NPC will flee
-        if (fleeFromDamage)
+        // Roll courage to determine behavior
+        bool shouldFight = RollCourage();
+
+        if (shouldFight && enableCombat)
         {
-            Debug.Log($"{npcName} was damaged but combat is not enabled, fleeing...");
-            RunAwayFromPlayer();
+            // NPC is brave and combat is enabled - FIGHT!
+            Debug.Log($"{npcName} rolled BRAVE and combat is enabled - entering AGGRO!");
+
+            hasEnteredAggro = true;
+
+            // Clear any walking transitions
+            isTransitioning = false;
+            targetDestination = null;
+
+            // Store previous state for debugging
+            NPCState previousState = currentState;
+            currentState = NPCState.Aggro;
+
+            // Stop any current movement
+            movement?.StopMovement();
+
+            Debug.Log($"{npcName} entered AGGRO state! (was: {previousState}, now: {currentState})");
         }
         else
         {
-            Debug.Log($"{npcName} was damaged but fleeFromDamage is disabled, ignoring damage");
+            // NPC is cowardly OR combat is disabled - FLEE!
+            if (!shouldFight)
+            {
+                Debug.Log($"{npcName} rolled COWARD - fleeing from danger!");
+            }
+            else
+            {
+                Debug.Log($"{npcName} rolled BRAVE but combat is disabled - fleeing anyway!");
+            }
+
+            RunAwayFromPlayer();
         }
+    }
+
+    /// <summary>
+    /// Called when NPC dies - resets courage roll
+    /// </summary>
+    public void OnDeath()
+    {
+        Debug.Log($"{npcName} has died");
+        ResetCourageRoll();
+        hasEnteredAggro = false;
+        isFleeing = false;
     }
 
     // ===================================================================
@@ -1402,7 +1475,8 @@ public class NPCManager : MonoBehaviour, INPCInteractable
     /// </summary>
     private bool CanHearGunshot(Vector3 gunshotPosition)
     {
-        if (!fleeFromGunshots)
+        // Must have reactToDanger enabled to hear gunshots
+        if (!reactToDanger)
             return false;
 
         float distance = Vector3.Distance(transform.position, gunshotPosition);
@@ -1474,17 +1548,12 @@ public class NPCManager : MonoBehaviour, INPCInteractable
 
     /// <summary>
     /// Called by GunshotDetectionSystem when a gunshot is heard nearby.
-    /// NPC will flee if fleeFromGunshots is enabled and not in combat.
+    /// NPC will roll courage to determine if they flee or fight.
     /// </summary>
     /// <param name="gunshotPosition">World position where the gunshot occurred</param>
     public void OnGunshotHeard(Vector3 gunshotPosition)
     {
-        // Check if NPC should react to gunshots
-        if (!fleeFromGunshots)
-        {
-            Debug.Log($"{npcName} heard gunshot but fleeFromGunshots is disabled");
-            return;
-        }
+        Debug.Log($"{npcName} heard gunshot at {gunshotPosition}!");
 
         // Check cooldown to prevent spam
         if (Time.time - lastGunshotReactionTime < gunshotReactionCooldown)
@@ -1493,24 +1562,58 @@ public class NPCManager : MonoBehaviour, INPCInteractable
             return;
         }
 
-        // Don't interrupt combat
-        if (hasEnteredAggro)
+        // Don't interrupt combat or fleeing
+        if (hasEnteredAggro || isFleeing)
         {
-            Debug.Log($"{npcName} heard gunshot but is in combat");
+            Debug.Log($"{npcName} heard gunshot but is already in combat/fleeing");
             return;
         }
 
-        // Don't flee if already fleeing
-        if (isFleeing)
+        // Don't roll courage again if already determined
+        if (hasRolledCourage)
         {
-            Debug.Log($"{npcName} heard gunshot but is already fleeing");
+            Debug.Log($"{npcName} heard gunshot but already rolled courage");
             return;
         }
 
         lastGunshotReactionTime = Time.time;
-        Debug.Log($"{npcName} reacting to gunshot at {gunshotPosition}!");
 
-        RunAwayFromPosition(gunshotPosition);
+        // Roll courage to determine behavior
+        bool shouldFight = RollCourage();
+
+        if (shouldFight && enableCombat)
+        {
+            // NPC is brave and combat is enabled - investigate/prepare to fight
+            Debug.Log($"{npcName} rolled BRAVE - investigating gunshot!");
+
+            hasEnteredAggro = true;
+            currentState = NPCState.Aggro;
+
+            // Clear any walking transitions
+            isTransitioning = false;
+            targetDestination = null;
+
+            // Move toward gunshot position (or find player)
+            GameObject playerObj = FindPlayer();
+            if (playerObj != null)
+            {
+                movement?.MoveTo(playerObj.transform, true);
+            }
+        }
+        else
+        {
+            // NPC is cowardly OR combat is disabled - FLEE!
+            if (!shouldFight)
+            {
+                Debug.Log($"{npcName} rolled COWARD - fleeing from gunshot!");
+            }
+            else
+            {
+                Debug.Log($"{npcName} rolled BRAVE but combat is disabled - fleeing from gunshot!");
+            }
+
+            RunAwayFromPosition(gunshotPosition);
+        }
     }
 
     public void RunAwayFromPlayer()
@@ -1614,6 +1717,7 @@ public class NPCManager : MonoBehaviour, INPCInteractable
         targetDestination = null;
         isInteracting = false;
         currentInteractor = null;
+        ResetCourageRoll(); // Reset courage when resetting NPC
 
         // Make sure NPC is enabled
         gameObject.SetActive(true);

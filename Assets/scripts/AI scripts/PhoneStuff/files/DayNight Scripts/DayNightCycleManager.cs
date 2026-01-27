@@ -20,7 +20,7 @@ public class DayNightCycleManager : MonoBehaviour
     [Header("Time Settings")]
     public float dayLengthInMinutes = 24f;
     public float startHour = 6f;
-    public DayOfWeek startingDay = DayOfWeek.Monday; // NEW
+    public DayOfWeek startingDay = DayOfWeek.Monday;
 
     [Header("Midnight Pause Settings")]
     public bool pauseAtMidnight = true;
@@ -38,16 +38,18 @@ public class DayNightCycleManager : MonoBehaviour
     public static event Action<float> OnTimeChanged;
     public static event Action OnMidnightReached;
     public static event Action OnPlayerSlept;
-    public static event Action<DayOfWeek> OnDayChanged; // NEW
+    public static event Action<DayOfWeek> OnDayChanged;
+    public static event Action<int> OnDayCountChanged; // NEW: Event for day count changes
 
     private float timeScale;
     private bool isPausedAtMidnight = false;
     private bool hasReachedMidnightToday = false;
-    private int currentDay = 0;
-    private DayOfWeek currentDayOfWeek; // NEW
+    private int totalDaysPassed = 0; // NEW: Changed from currentDay to totalDaysPassed
+    private DayOfWeek currentDayOfWeek;
 
     public bool IsPausedAtMidnight => isPausedAtMidnight;
-    public DayOfWeek CurrentDayOfWeek => currentDayOfWeek; // NEW
+    public DayOfWeek CurrentDayOfWeek => currentDayOfWeek;
+    public int TotalDaysPassed => totalDaysPassed; // NEW: Public getter
 
     private void Awake()
     {
@@ -61,7 +63,8 @@ public class DayNightCycleManager : MonoBehaviour
     {
         timeScale = 24f / (dayLengthInMinutes * 60f);
         currentTimeOfDay = startHour;
-        currentDayOfWeek = startingDay; // NEW
+        currentDayOfWeek = startingDay;
+        totalDaysPassed = 0; // Start at day 0
     }
 
     void Update()
@@ -89,7 +92,7 @@ public class DayNightCycleManager : MonoBehaviour
         if (currentTimeOfDay >= 24f)
         {
             currentTimeOfDay -= 24f;
-            currentDay++;
+            IncrementDay(); // NEW: Use IncrementDay method
         }
 
         UpdateLighting();
@@ -114,19 +117,29 @@ public class DayNightCycleManager : MonoBehaviour
         currentTimeOfDay = wakeUpHour;
         isPausedAtMidnight = false;
         hasReachedMidnightToday = false;
-        currentDay++;
+
+        // Increment day counter
+        IncrementDay();
 
         // Advance to next day of week
-        AdvanceDayOfWeek(); // NEW
+        AdvanceDayOfWeek();
 
-        Debug.Log($"Player slept! New day started. Current time: {wakeUpHour:F2}, Day: {currentDay}, {currentDayOfWeek}");
+        Debug.Log($"Player slept! New day started. Current time: {wakeUpHour:F2}, Total Days: {totalDaysPassed}, {currentDayOfWeek}");
 
         UpdateLighting();
         OnTimeChanged?.Invoke(currentTimeOfDay);
         OnPlayerSlept?.Invoke();
     }
 
-    // NEW: Advance to next day of week
+    // NEW: Increment day counter and trigger event
+    private void IncrementDay()
+    {
+        totalDaysPassed++;
+        Debug.Log($"Day incremented to: {totalDaysPassed}");
+        OnDayCountChanged?.Invoke(totalDaysPassed);
+    }
+
+    // Advance to next day of week
     private void AdvanceDayOfWeek()
     {
         DayOfWeek previousDay = currentDayOfWeek;
@@ -136,7 +149,7 @@ public class DayNightCycleManager : MonoBehaviour
         OnDayChanged?.Invoke(currentDayOfWeek);
     }
 
-    // NEW: Set specific day of week
+    // Set specific day of week
     public void SetDayOfWeek(DayOfWeek day)
     {
         DayOfWeek previousDay = currentDayOfWeek;
@@ -144,6 +157,14 @@ public class DayNightCycleManager : MonoBehaviour
 
         Debug.Log($"Day manually set from {previousDay} to {currentDayOfWeek}");
         OnDayChanged?.Invoke(currentDayOfWeek);
+    }
+
+    // NEW: Set total days passed (for loading saves)
+    public void SetTotalDaysPassed(int days)
+    {
+        totalDaysPassed = days;
+        Debug.Log($"Total days set to: {totalDaysPassed}");
+        OnDayCountChanged?.Invoke(totalDaysPassed);
     }
 
     public void ResumeTime()
@@ -183,7 +204,7 @@ public class DayNightCycleManager : MonoBehaviour
 
     public int GetHour() => Mathf.FloorToInt(currentTimeOfDay);
     public int GetMinute() => Mathf.FloorToInt((currentTimeOfDay % 1f) * 60f);
-    public int GetCurrentDay() => currentDay;
+    public int GetCurrentDay() => totalDaysPassed; // Still works for compatibility
 
     public float GetGameTimeFromRealTime(float realTimeSeconds)
     {
