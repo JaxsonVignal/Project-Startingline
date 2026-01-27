@@ -18,11 +18,11 @@ MonoBehaviour:
   Icon: {fileID: 0}
   maxStackSize: 1
   weaponId: ARX
-  damage: 32.4
+  damage: 30
   fireRate: 0.1
   reloadTime: 2.5
   magazineSize: 30
-  bulletSpeed: 50
+  bulletSpeed: 100
   FOVChange: 40
   Value: 0
   requiredAmmoType: 4

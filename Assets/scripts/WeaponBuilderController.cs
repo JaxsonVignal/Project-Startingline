@@ -15,8 +15,12 @@ public class WeaponBuilderController : MonoBehaviour
     [SerializeField] private GameObject mainUIPanel;
     [SerializeField] private HotbarDisplay playerHotbar;
     [SerializeField] private AttachmentMinigameManager minigameManager;
-    [SerializeField] private PlayerMovement playerMovement; // Reference to PlayerMovement
-    [SerializeField] private Interactor playerInteractor; // NEW: Reference to Interactor
+    [SerializeField] private PlayerMovement playerMovement;
+    [SerializeField] private Interactor playerInteractor;
+
+    [Header("Player UI References")]
+    [SerializeField] private CanvasGroup playerUICanvasGroup; // NEW: Reference to your player UI
+    [SerializeField] private GameObject playerUI; // NEW: Alternative GameObject reference
 
     [Header("Settings")]
     [SerializeField] private bool pauseGameWhenOpen = true;
@@ -41,7 +45,7 @@ public class WeaponBuilderController : MonoBehaviour
             }
         }
 
-        // NEW: Try to find Interactor if not assigned
+        // Try to find Interactor if not assigned
         if (playerInteractor == null)
         {
             playerInteractor = FindObjectOfType<Interactor>();
@@ -49,6 +53,19 @@ public class WeaponBuilderController : MonoBehaviour
             {
                 Debug.LogWarning("WeaponBuilderController: Interactor not found! Assign it manually.");
             }
+        }
+
+        // NEW: Make sure player UI is visible at start
+        if (playerUICanvasGroup != null)
+        {
+            playerUICanvasGroup.alpha = 1f;
+            playerUICanvasGroup.interactable = true;
+            playerUICanvasGroup.blocksRaycasts = true;
+        }
+
+        if (playerUI != null)
+        {
+            playerUI.SetActive(true);
         }
     }
 
@@ -75,6 +92,9 @@ public class WeaponBuilderController : MonoBehaviour
         // Hide main UI
         if (mainUIPanel != null)
             mainUIPanel.SetActive(false);
+
+        // NEW: Hide player UI
+        HidePlayerUI();
 
         // Show builder UI
         if (builderUIPanel != null)
@@ -170,7 +190,10 @@ public class WeaponBuilderController : MonoBehaviour
         if (mainUIPanel != null)
             mainUIPanel.SetActive(true);
 
-        // NEW: End the interaction in the Interactor system
+        // NEW: Show player UI
+        ShowPlayerUI();
+
+        // End the interaction in the Interactor system
         if (playerInteractor != null)
         {
             Debug.Log("Ending interaction via Interactor.EndInteraction()");
@@ -205,5 +228,41 @@ public class WeaponBuilderController : MonoBehaviour
     public bool IsBuilderOpen()
     {
         return isBuilderOpen;
+    }
+
+    // NEW: Hide the player UI
+    private void HidePlayerUI()
+    {
+        // Option 1: Using CanvasGroup (recommended for fade effects)
+        if (playerUICanvasGroup != null)
+        {
+            playerUICanvasGroup.alpha = 0f;
+            playerUICanvasGroup.interactable = false;
+            playerUICanvasGroup.blocksRaycasts = false;
+        }
+
+        // Option 2: Using SetActive (complete disable)
+        if (playerUI != null)
+        {
+            playerUI.SetActive(false);
+        }
+    }
+
+    // NEW: Show the player UI
+    private void ShowPlayerUI()
+    {
+        // Option 1: Using CanvasGroup
+        if (playerUICanvasGroup != null)
+        {
+            playerUICanvasGroup.alpha = 1f;
+            playerUICanvasGroup.interactable = true;
+            playerUICanvasGroup.blocksRaycasts = true;
+        }
+
+        // Option 2: Using SetActive
+        if (playerUI != null)
+        {
+            playerUI.SetActive(true);
+        }
     }
 }

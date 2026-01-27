@@ -87,10 +87,16 @@ public class SaveData
     public SerializableDictionary<string, WeaponInstanceSaveData> weaponInstances;
     public SerializableDictionary<string, int> factionReputation;
 
-    // NEW: Day/Night cycle data
-    public int currentDayOfWeek; // Store as int (0-6)
-    public float currentTimeOfDay; // Store current hour
-    public int totalDaysPassed; // Optional: track total days
+    // Day/Night cycle data
+    public int currentDayOfWeek;
+    public float currentTimeOfDay;
+    public int totalDaysPassed;
+
+    // NEW: Player position data
+    public float playerPosX;
+    public float playerPosY;
+    public float playerPosZ;
+    public float playerRotY; // Store Y rotation (horizontal facing direction)
 
     public SaveData()
     {
@@ -102,9 +108,15 @@ public class SaveData
         weaponInstances = new SerializableDictionary<string, WeaponInstanceSaveData>();
         factionReputation = new SerializableDictionary<string, int>();
 
-        // NEW: Initialize time data
-        currentDayOfWeek = 0; // Monday
-        currentTimeOfDay = 6f; // 6 AM
+        // Initialize time data
+        currentDayOfWeek = 0;
+        currentTimeOfDay = 6f;
         totalDaysPassed = 0;
+
+        // NEW: Initialize player position (default spawn)
+        playerPosX = 0f;
+        playerPosY = 0f;
+        playerPosZ = 0f;
+        playerRotY = 0f;
     }
 }
