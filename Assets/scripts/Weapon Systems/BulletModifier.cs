@@ -929,37 +929,57 @@ public class BulletModifier : MonoBehaviour
     {
         Debug.Log($"[BulletModifier] Applying tracer effect to bullet");
 
-        // Add light component to bullet
+        // Add light component to bullet (main light)
         Light tracerLight = gameObject.GetComponent<Light>();
         if (tracerLight == null)
         {
             tracerLight = gameObject.AddComponent<Light>();
         }
-
         tracerLight.type = LightType.Point;
         tracerLight.color = modifierData.tracerColor;
         tracerLight.intensity = modifierData.tracerIntensity;
         tracerLight.range = modifierData.tracerLightRange;
         tracerLight.renderMode = LightRenderMode.ForcePixel;
-
         Debug.Log($"[BulletModifier] Added point light to bullet (Color: {modifierData.tracerColor}, Intensity: {modifierData.tracerIntensity})");
 
-        // Add emission to bullet material
+        // Optionally add smaller lights to each child object for better illumination
+        Renderer[] childRenderers = GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in childRenderers)
+        {
+            if (renderer.gameObject != gameObject) // Skip the parent
+            {
+                Light childLight = renderer.gameObject.GetComponent<Light>();
+                if (childLight == null)
+                {
+                    childLight = renderer.gameObject.AddComponent<Light>();
+                }
+                childLight.type = LightType.Point;
+                childLight.color = modifierData.tracerColor;
+                childLight.intensity = modifierData.tracerIntensity * 0.5f; // Slightly dimmer for children
+                childLight.range = modifierData.tracerLightRange * 0.7f; // Smaller range
+                childLight.renderMode = LightRenderMode.ForcePixel;
+                Debug.Log($"[BulletModifier] Added light to child: {renderer.gameObject.name}");
+            }
+        }
+
+        // Add emission to bullet material AND all child renderers
         if (modifierData.addEmission)
         {
-            Renderer bulletRenderer = GetComponent<Renderer>();
-            if (bulletRenderer != null && bulletRenderer.material != null)
+            // Get all renderers (parent and children)
+            Renderer[] allRenderers = GetComponentsInChildren<Renderer>();
+
+            foreach (Renderer renderer in allRenderers)
             {
-                Material mat = bulletRenderer.material;
-
-                // Enable emission keyword
-                mat.EnableKeyword("_EMISSION");
-
-                // Set emission color (color * intensity for HDR glow)
-                Color emissionColor = modifierData.tracerColor * modifierData.emissionIntensity;
-                mat.SetColor("_EmissionColor", emissionColor);
-
-                Debug.Log($"[BulletModifier] Enabled emission on bullet material");
+                if (renderer != null && renderer.material != null)
+                {
+                    Material mat = renderer.material;
+                    // Enable emission keyword
+                    mat.EnableKeyword("_EMISSION");
+                    // Set emission color (color * intensity for HDR glow)
+                    Color emissionColor = modifierData.tracerColor * modifierData.emissionIntensity;
+                    mat.SetColor("_EmissionColor", emissionColor);
+                    Debug.Log($"[BulletModifier] Enabled emission on {renderer.gameObject.name}");
+                }
             }
         }
 
@@ -967,7 +987,6 @@ public class BulletModifier : MonoBehaviour
         if (modifierData.trailEffectPrefab != null)
         {
             GameObject trailObj = Instantiate(modifierData.trailEffectPrefab, transform.position, Quaternion.identity, transform);
-
             // Configure trail renderer if it has one
             TrailRenderer trail = trailObj.GetComponent<TrailRenderer>();
             if (trail != null)

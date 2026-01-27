@@ -1186,17 +1186,37 @@ public class WeaponBuilderUI : MonoBehaviour
 
         Debug.Log($"FINALIZED: {selectedBase.name} with {previewInstance.attachments.Count} attachments");
 
+        // Find and properly close the builder
         WeaponBuilderController controller = FindObjectOfType<WeaponBuilderController>();
         if (controller != null)
         {
+            Debug.Log("Closing builder via WeaponBuilderController (this will handle gameplay mode)");
             controller.CloseBuilder();
         }
         else
         {
+            Debug.LogWarning("WeaponBuilderController not found! Closing builder manually and restoring gameplay mode");
+
+            // Fallback: manually close and restore gameplay mode
             if (previewContainer != null)
                 previewContainer.SetActive(false);
 
             gameObject.SetActive(false);
+
+            // NEW: Manually restore gameplay mode as fallback
+            PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
+            if (playerMovement != null)
+            {
+                playerMovement.EnableGameplayMode();
+                Debug.Log("Manually restored gameplay mode");
+            }
+            else
+            {
+                Debug.LogError("Could not find PlayerMovement to restore gameplay mode!");
+                // Ultimate fallback
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
     }
 

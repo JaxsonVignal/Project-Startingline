@@ -499,19 +499,8 @@ public class PlayerShooting : MonoBehaviour
         {
             GameObject grenadeObj = Instantiate(currentGrenadeLauncher.grenadePrefab, firePoint.position, Quaternion.identity);
 
-            Vector3 targetPoint;
-            Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-
-            if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
-            {
-                targetPoint = hit.point;
-            }
-            else
-            {
-                targetPoint = ray.GetPoint(1000f);
-            }
-
-            Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
+            // Use direct camera forward direction
+            Vector3 shootDirection = playerCamera.transform.forward;
             grenadeObj.transform.forward = shootDirection;
 
             GrenadeProjectile grenade = grenadeObj.GetComponent<GrenadeProjectile>();
@@ -578,20 +567,10 @@ public class PlayerShooting : MonoBehaviour
             {
                 GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
-                Vector3 targetPoint;
-                Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+                // Use direct camera forward direction
+                Vector3 shootDirection = playerCamera.transform.forward;
 
-                if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
-                {
-                    targetPoint = hit.point;
-                }
-                else
-                {
-                    targetPoint = ray.GetPoint(1000f);
-                }
-
-                Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
-
+                // Apply shotgun spread
                 float spreadX = Random.Range(-currentUnderbarrelShotgun.spreadAngle, currentUnderbarrelShotgun.spreadAngle);
                 float spreadY = Random.Range(-currentUnderbarrelShotgun.spreadAngle, currentUnderbarrelShotgun.spreadAngle);
                 Quaternion spreadRot = Quaternion.Euler(spreadY, spreadX, 0);
@@ -685,24 +664,10 @@ public class PlayerShooting : MonoBehaviour
             {
                 GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
-                Vector3 targetPoint;
-                Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+                // Use direct camera forward direction
+                Vector3 shootDirection = playerCamera.transform.forward;
 
-                if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
-                {
-                    targetPoint = hit.point;
-                }
-                else
-                {
-                    targetPoint = ray.GetPoint(1000f);
-                }
-
-                Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
-
-                float spread = currentAttachmentSystem != null
-                    ? currentAttachmentSystem.CurrentSpread
-                    : currentWeapon.spread;
-
+                // Apply spread based on fire mode
                 if (currentFireMode == FireMode.Shotgun)
                 {
                     float spreadX = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
@@ -712,8 +677,13 @@ public class PlayerShooting : MonoBehaviour
                 }
                 else
                 {
-                    float horizontalSpread = Random.Range(-spread, spread);
-                    shootDirection += playerCamera.transform.right * horizontalSpread;
+                    float spread = currentAttachmentSystem != null
+                        ? currentAttachmentSystem.CurrentSpread
+                        : currentWeapon.spread;
+
+                    float spreadX = Random.Range(-spread, spread);
+                    float spreadY = Random.Range(-spread, spread);
+                    shootDirection += playerCamera.transform.up * spreadY + playerCamera.transform.right * spreadX;
                 }
 
                 shootDirection.Normalize();
@@ -730,7 +700,7 @@ public class PlayerShooting : MonoBehaviour
                     }
                 }
 
-                // PASS MODIFIER TO BULLET - This is the key change!
+                // PASS MODIFIER TO BULLET
                 BulletModifier bulletModifier = bulletObj.GetComponent<BulletModifier>();
                 if (bulletModifier != null && currentModifier != null)
                 {
@@ -765,19 +735,8 @@ public class PlayerShooting : MonoBehaviour
 
         GameObject rocketObj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
 
-        Vector3 targetPoint;
-        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-
-        if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
-        {
-            targetPoint = hit.point;
-        }
-        else
-        {
-            targetPoint = ray.GetPoint(1000f);
-        }
-
-        Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
+        // Use direct camera forward direction
+        Vector3 shootDirection = playerCamera.transform.forward;
         rocketObj.transform.forward = shootDirection;
 
         RocketProjectile rocket = rocketObj.GetComponent<RocketProjectile>();

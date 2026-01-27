@@ -22,10 +22,22 @@ public class PlayerMovement : MonoBehaviour
     private float verticalLookRotation = 0f;
     private bool uiMode = false;
     public bool isWanted = false;
+
     private void Start()
     {
         cc = GetComponent<CharacterController>();
         SetGameplayMode();
+
+        // NEW: Subscribe to save/load events
+        SaveLoad.OnSaveGame += SavePlayerPosition;
+        SaveLoad.OnLoadGame += LoadPlayerPosition;
+    }
+
+    private void OnDestroy()
+    {
+        // NEW: Unsubscribe from events
+        SaveLoad.OnSaveGame -= SavePlayerPosition;
+        SaveLoad.OnLoadGame -= LoadPlayerPosition;
     }
 
     private void Update()
@@ -37,7 +49,7 @@ public class PlayerMovement : MonoBehaviour
             else SetGameplayMode();
             inputHandler.ResetToggleUI();
         }
-       
+
         if (interactor.isInteracting)
         {
             SetUIMode();
@@ -70,7 +82,9 @@ public class PlayerMovement : MonoBehaviour
     {
         float factor = 50f;
         Vector2 look = inputHandler.LookInput * mouseSensitivity * sensitivityModifier * Time.deltaTime * factor;
+
         transform.Rotate(Vector3.up * look.x);
+
         verticalLookRotation -= look.y;
         verticalLookRotation = Mathf.Clamp(verticalLookRotation, -90f, 90f);
         cameraHolder.localRotation = Quaternion.Euler(verticalLookRotation, 0f, 0f);
@@ -93,22 +107,23 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetUIMode()
     {
+        uiMode = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // NEW: Notify PlayerShooting that UI mode is active
-        PlayerShooting.Instance.SetUIMode(true);
+        if (PlayerShooting.Instance != null)
+            PlayerShooting.Instance.SetUIMode(true);
     }
 
     private void SetGameplayMode()
     {
+        uiMode = false;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // NEW: Notify PlayerShooting that UI mode is inactive
-        PlayerShooting.Instance.SetUIMode(false);
+        if (PlayerShooting.Instance != null)
+            PlayerShooting.Instance.SetUIMode(false);
     }
-
 
     public void EnableUIMode()
     {
@@ -116,10 +131,57 @@ public class PlayerMovement : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
+
     public void EnableGameplayMode()
     {
         uiMode = false;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    // NEW: Save player position to SaveData
+    private void SavePlayerPosition()
+    {
+        if (SaveGameManager.data != null)
+        {
+            SaveGameManager.data.playerPosX = transform.position.x;
+            SaveGameManager.data.playerPosY = transform.position.y;
+            SaveGameManager.data.playerPosZ = transform.position.z;
+            SaveGameManager.data.playerRotY = transform.eulerAngles.y;
+
+            Debug.Log($"Saved player position: ({transform.position.x:F2}, {transform.position.y:F2}, {transform.position.z:F2}), Rotation Y: {transform.eulerAngles.y:F2}");
+        }
+    }
+
+    // NEW: Load player position from SaveData
+    private void LoadPlayerPosition(SaveData data)
+    {
+        if (data != null)
+        {
+            Vector3 loadedPosition = new Vector3(data.playerPosX, data.playerPosY, data.playerPosZ);
+
+            // IMPORTANT: Disable CharacterController before teleporting
+            if (cc != null)
+            {
+                cc.enabled = false;
+                transform.position = loadedPosition;
+                transform.rotation = Quaternion.Euler(0f, data.playerRotY, 0f);
+                cc.enabled = true;
+            }
+            else
+            {
+                transform.position = loadedPosition;
+                transform.rotation = Quaternion.Euler(0f, data.playerRotY, 0f);
+            }
+
+            // Reset vertical look rotation
+            verticalLookRotation = 0f;
+            if (cameraHolder != null)
+            {
+                cameraHolder.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            }
+
+            Debug.Log($"Loaded player position: ({loadedPosition.x:F2}, {loadedPosition.y:F2}, {loadedPosition.z:F2}), Rotation Y: {data.playerRotY:F2}");
+        }
     }
 }

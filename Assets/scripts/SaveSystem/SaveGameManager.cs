@@ -12,14 +12,14 @@ public class SaveGameManager : MonoBehaviour
         data = new SaveData();
         SaveLoad.OnLoadGame += LoadData;
         SaveLoad.OnSaveGame += PrepareAmmoDataForSave;
-        SaveLoad.OnSaveGame += PrepareDayNightDataForSave; // NEW
+        SaveLoad.OnSaveGame += PrepareDayNightDataForSave;
     }
 
     private void OnDestroy()
     {
         SaveLoad.OnLoadGame -= LoadData;
         SaveLoad.OnSaveGame -= PrepareAmmoDataForSave;
-        SaveLoad.OnSaveGame -= PrepareDayNightDataForSave; // NEW
+        SaveLoad.OnSaveGame -= PrepareDayNightDataForSave;
     }
 
     public void DeleteData()
@@ -45,7 +45,7 @@ public class SaveGameManager : MonoBehaviour
             Debug.Log($"Loaded ammo data for {_data.weaponAmmoData.Count} weapons");
         }
 
-        // NEW: Load day/night cycle data
+        // Load day/night cycle data
         LoadDayNightData(_data);
     }
 
@@ -60,14 +60,14 @@ public class SaveGameManager : MonoBehaviour
         Debug.Log($"Preparing to save ammo data for {data.weaponAmmoData.Count} weapons");
     }
 
-    // NEW: Prepare day/night data before saving
+    // Prepare day/night data before saving
     private void PrepareDayNightDataForSave()
     {
         if (DayNightCycleManager.Instance != null)
         {
             data.currentDayOfWeek = (int)DayNightCycleManager.Instance.CurrentDayOfWeek;
             data.currentTimeOfDay = DayNightCycleManager.Instance.currentTimeOfDay;
-            data.totalDaysPassed = DayNightCycleManager.Instance.GetCurrentDay();
+            data.totalDaysPassed = DayNightCycleManager.Instance.TotalDaysPassed; // Uses new property
 
             Debug.Log($"Saving day/night data: {(DayNightCycleManager.DayOfWeek)data.currentDayOfWeek}, Time: {data.currentTimeOfDay:F2}, Total Days: {data.totalDaysPassed}");
         }
@@ -77,11 +77,14 @@ public class SaveGameManager : MonoBehaviour
         }
     }
 
-    // NEW: Load day/night data after loading save
+    // Load day/night data after loading save
     private static void LoadDayNightData(SaveData _data)
     {
         if (DayNightCycleManager.Instance != null)
         {
+            // Restore total days passed
+            DayNightCycleManager.Instance.SetTotalDaysPassed(_data.totalDaysPassed);
+
             // Restore day of week
             DayNightCycleManager.DayOfWeek loadedDay = (DayNightCycleManager.DayOfWeek)_data.currentDayOfWeek;
             DayNightCycleManager.Instance.SetDayOfWeek(loadedDay);

@@ -19,7 +19,7 @@ MonoBehaviour:
   maxStackSize: 5
   id: Red Dot G
   type: 0
-  prefab: {fileID: 0}
+  prefab: {fileID: 5658756491298159340, guid: 7e239dec8cc8ff54bbe744a5eae61299, type: 3}
   icon: {fileID: 1371019001, guid: 32e2f90553c281745a716e9a1820189c, type: 3}
   description: 
   Value: 130
