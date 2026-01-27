@@ -43,7 +43,7 @@ MonoBehaviour:
   underbarrelShotgunData: {fileID: 0}
   flashlightData: {fileID: 0}
   modifierData:
-    antiGravityRounds: 1
+    antiGravityRounds: 0
     antiGravityForce: 5
     antiGravityDuration: 10
     disableGravity: 1
@@ -56,7 +56,7 @@ MonoBehaviour:
     freezeTintColor: {r: 0.5, g: 0.8, b: 1, a: 1}
     freezeTintStrength: 0.5
     iceEffectPrefab: {fileID: 0}
-    explosiveRounds: 1
+    explosiveRounds: 0
     explosionRadius: 10
     explosionDamageMultiplier: 1.5
     applyExplosionKnockback: 1
@@ -64,12 +64,12 @@ MonoBehaviour:
     explosionKnockbackDuration: 2
     explosionEffectPrefab: {fileID: 448162269932703216, guid: f9a5031bb087fe84a80a36130aedb763, type: 3}
     showExplosionRadius: 0
-    tracerRounds: 0
+    tracerRounds: 1
     tracerColor: {r: 0, g: 1, b: 0.2879982, a: 1}
-    tracerIntensity: 5.03
-    tracerLightRange: 15.08
-    addEmission: 0
-    emissionIntensity: 2
+    tracerIntensity: 0.74
+    tracerLightRange: 4.66
+    addEmission: 1
+    emissionIntensity: 0.5
     trailEffectPrefab: {fileID: 0}
     trailDuration: 0.3
     ricochetRounds: 0
@@ -80,7 +80,7 @@ MonoBehaviour:
     ricochetSound: {fileID: 0}
     showRicochetDebug: 0
     phaseRounds: 0
-    makeTransparent: 1
+    makeTransparent: 0
     phaseTransparency: 0.4
     phaseGlowColor: {r: 0.5, g: 0.8, b: 1, a: 1}
     phaseEffectPrefab: {fileID: 0}
