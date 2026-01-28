@@ -88,10 +88,10 @@ MonoBehaviour:
   - AR_Q_Muzzle
   partToDisableWithSightPath: RearSight
   weaponPrefab: {fileID: 2769957187085557481, guid: 4e765fdcad1a56f4599c871843469053, type: 3}
-  shootSound: {fileID: 0}
-  shootSoundFullAuto: {fileID: 0}
+  shootSound: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
+  shootSoundFullAuto: {fileID: 8300000, guid: 181cf50bc73caa542a47eef7bbce4ddb, type: 3}
   reloadSound: {fileID: 0}
-  muzzleFlashPrefab: {fileID: 0}
+  muzzleFlashPrefab: {fileID: 8464769304469127210, guid: f756a738c8eca6c4ab36213a6de9467f, type: 3}
   ShootingSoundDelay: 0
   partsToDisableWithMagazine:
   - AR_Q_Mag

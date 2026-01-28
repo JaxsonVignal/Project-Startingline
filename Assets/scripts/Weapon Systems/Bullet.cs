@@ -108,6 +108,7 @@ public class Bullet : MonoBehaviour
 
         // Spawn the effect
         GameObject hitEffect = Instantiate(effectPrefab, hitPoint, hitRotation);
+        hitEffect.transform.localScale *= 0.25f;
 
         // Destroy the effect after a short time
         Destroy(hitEffect, hitEffectLifetime);
