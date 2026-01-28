@@ -518,7 +518,10 @@ public class PlayerShooting : MonoBehaviour
         }
 
         if (currentGrenadeLauncher.muzzleFlashPrefab)
-            Instantiate(currentGrenadeLauncher.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
+        {
+            GameObject muzzleFlash = Instantiate(currentGrenadeLauncher.muzzleFlashPrefab, firePoint.position, firePoint.rotation * Quaternion.Euler(0, 90, 0));
+            muzzleFlash.transform.localScale *= 0.4f;
+        }
 
         if (recoil != null)
         {
@@ -596,7 +599,10 @@ public class PlayerShooting : MonoBehaviour
         }
 
         if (currentUnderbarrelShotgun.muzzleFlashPrefab)
-            Instantiate(currentUnderbarrelShotgun.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
+        {
+            GameObject muzzleFlash = Instantiate(currentUnderbarrelShotgun.muzzleFlashPrefab, firePoint.position, firePoint.rotation * Quaternion.Euler(0, 90, 0));
+            muzzleFlash.transform.localScale *= 0.4f;
+        }
 
         if (recoil != null)
         {
@@ -715,9 +721,12 @@ public class PlayerShooting : MonoBehaviour
             }
         }
 
-       
+
         if (currentWeapon.muzzleFlashPrefab)
-            Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
+        {
+            GameObject muzzleFlash = Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation * Quaternion.Euler(0, 90, 0));
+            muzzleFlash.transform.localScale *= 0.4f;
+        }
 
         recoil.RecoilFire();
 
@@ -761,7 +770,10 @@ public class PlayerShooting : MonoBehaviour
         }
 
         if (currentWeapon.muzzleFlashPrefab)
-            Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
+        {
+            GameObject muzzleFlash = Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation * Quaternion.Euler(0, 90, 0));
+            muzzleFlash.transform.localScale *= 0.4f;
+        }
     }
 
     public void Reload()
