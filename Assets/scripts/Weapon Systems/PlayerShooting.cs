@@ -715,10 +715,14 @@ public class PlayerShooting : MonoBehaviour
             }
         }
 
+       
         if (currentWeapon.muzzleFlashPrefab)
             Instantiate(currentWeapon.muzzleFlashPrefab, firePoint.position, firePoint.rotation);
 
         recoil.RecoilFire();
+
+        
+
     }
 
     private void FireRocket()
