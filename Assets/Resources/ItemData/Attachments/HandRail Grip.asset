@@ -10,27 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a4c69fb769d40449b55bee7b8fa1d7c, type: 3}
-  m_Name: Fat Stubby grip
+  m_Name: HandRail Grip
   m_EditorClassIdentifier: 
-  ID: 49
-  Name: Fat Stubby Grip
+  ID: 52
+  Name: HandRail Grip
   Description: 
-  Icon: {fileID: -67048998, guid: c9d2c457e4fcc2a4d93f7c750a5b5cd5, type: 3}
+  Icon: {fileID: -1938578445, guid: 72ff8cd9bb30d16459821f1159739ed1, type: 3}
   maxStackSize: 5
-  id: Fat Stubby Grip
-  type: 2
-  prefab: {fileID: 9204616884796259490, guid: 6299a10da1de48747b1921a292a496e1, type: 3}
-  icon: {fileID: -67048998, guid: c9d2c457e4fcc2a4d93f7c750a5b5cd5, type: 3}
+  id: HandRail Grip
+  type: 0
+  prefab: {fileID: 8867899370426968446, guid: 0ea3b47aea2c7e247be591aa7b3cb9b2, type: 3}
+  icon: {fileID: -1938578445, guid: 72ff8cd9bb30d16459821f1159739ed1, type: 3}
   description: 
-  Value: 400
+  Value: 300
   localPosition: {x: 0, y: 0, z: 0}
   localEuler: {x: 0, y: 0, z: 0}
   localScale: {x: 1, y: 1, z: 1}
   damageBonus: 0
   fireRateMultiplier: 1
-  reloadTimeMultiplier: 1
-  spreadMultiplier: 0.3
-  recoilMultiplier: 1.5
+  reloadTimeMultiplier: 0.5
+  spreadMultiplier: 1
+  recoilMultiplier: 0.7
   magazineBonus: 0
   scopeFOVOverride: 0
   scopeReticle: {fileID: 0}
