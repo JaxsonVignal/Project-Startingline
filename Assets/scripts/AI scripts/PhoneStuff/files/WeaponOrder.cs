@@ -19,6 +19,10 @@ public class WeaponOrder
     public bool npcHasBeenSpawned; // NEW: Track if NPC has been sent to meeting
     public float pickupTimeGameHour;
 
+    // NEW: Track when NPC actually arrives at meeting location (for wait timer)
+    public float arrivalGameHour;
+    public bool hasArrived;
+
     public WeaponOrder(string npc, WeaponData weapon, Transform location)
     {
         npcName = npc;
@@ -28,5 +32,7 @@ public class WeaponOrder
         isAccepted = false;
         isCompleted = false;
         npcHasBeenSpawned = false; // Initialize to false
+        hasArrived = false; // NPC hasn't arrived yet
+        arrivalGameHour = 0f; // Will be set when NPC arrives
     }
 }
