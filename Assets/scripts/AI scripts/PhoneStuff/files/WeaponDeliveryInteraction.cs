@@ -60,6 +60,14 @@ public class WeaponDeliveryInteraction : MonoBehaviour
             var npc = col.GetComponent<NPCManager>();
             if (!npc) continue;
 
+            // Only allow interaction when NPC is WAITING at meeting location
+            // Block interaction while they're traveling (Walking state with targetState = GoingToMeeting)
+            if (npc.IsInMeetingProcess && npc.currentState != NPCManager.NPCState.WaitingAtMeeting)
+            {
+                // NPC is going to meeting but hasn't arrived yet - skip
+                continue;
+            }
+
             if (!TextingManager.Instance.IsNPCReadyForDelivery(npc.npcName))
                 continue;
 

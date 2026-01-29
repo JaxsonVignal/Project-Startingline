@@ -143,42 +143,103 @@ public class TaskNotificationUI : MonoBehaviour
             return;
 
         float currentTime = DayNightCycleManager.Instance.currentTimeOfDay;
-        float timeRemaining;
 
-        // Handle day rollover
-        if (order.pickupTimeGameHour >= currentTime)
+        // PHASE 1: Before NPC arrives - show time until meeting
+        if (!order.hasArrived)
         {
-            timeRemaining = order.pickupTimeGameHour - currentTime;
-        }
-        else
-        {
-            // Meeting is tomorrow
-            timeRemaining = (24f - currentTime) + order.pickupTimeGameHour;
-        }
+            float timeUntilMeeting;
 
-        int meetingHour = Mathf.FloorToInt(order.pickupTimeGameHour);
-        int meetingMinute = Mathf.FloorToInt((order.pickupTimeGameHour % 1f) * 60f);
-
-        // Check if meeting time has arrived or passed - keep showing NOW
-        if (timeRemaining <= 0f || currentTime >= order.pickupTimeGameHour)
-        {
-            timeText.color = Color.green;
-            timeText.text = $"Meet at {meetingHour:00}:{meetingMinute:00} (NOW!)";
-        }
-        else
-        {
-            int hours = Mathf.FloorToInt(timeRemaining);
-            int minutes = Mathf.FloorToInt((timeRemaining % 1f) * 60f);
-
-            // Color code based on urgency
-            if (timeRemaining < 0.5f)
-                timeText.color = Color.red;
-            else if (timeRemaining < 1f)
-                timeText.color = Color.yellow;
+            // Handle day rollover
+            if (order.pickupTimeGameHour >= currentTime)
+            {
+                timeUntilMeeting = order.pickupTimeGameHour - currentTime;
+            }
             else
-                timeText.color = Color.white;
+            {
+                // Meeting is tomorrow
+                timeUntilMeeting = (24f - currentTime) + order.pickupTimeGameHour;
+            }
 
-            timeText.text = $"Meet at {meetingHour:00}:{meetingMinute:00} ({hours}h {minutes}m)";
+            int meetingHour = Mathf.FloorToInt(order.pickupTimeGameHour);
+            int meetingMinute = Mathf.FloorToInt((order.pickupTimeGameHour % 1f) * 60f);
+
+            // Check if meeting time has arrived
+            if (timeUntilMeeting <= 0f || currentTime >= order.pickupTimeGameHour)
+            {
+                timeText.color = Color.yellow;
+                timeText.text = $"Meet at {meetingHour:00}:{meetingMinute:00} (En Route...)";
+            }
+            else
+            {
+                int hours = Mathf.FloorToInt(timeUntilMeeting);
+                int minutes = Mathf.FloorToInt((timeUntilMeeting % 1f) * 60f);
+
+                // Color code based on urgency
+                if (timeUntilMeeting < 0.5f)
+                    timeText.color = Color.red;
+                else if (timeUntilMeeting < 1f)
+                    timeText.color = Color.yellow;
+                else
+                    timeText.color = Color.white;
+
+                timeText.text = $"Meet at {meetingHour:00}:{meetingMinute:00} ({hours}h {minutes}m)";
+            }
+        }
+        // PHASE 2: After NPC arrives - show countdown until they leave
+        else
+        {
+            // Get wait duration from TextingManager
+            float waitDurationHours = 1f; // Default 1 hour
+            if (TextingManager.Instance != null)
+            {
+                waitDurationHours = TextingManager.Instance.meetingWindowDuration / 3600f;
+            }
+
+            // Calculate time waited
+            float timeWaited = currentTime - order.arrivalGameHour;
+            if (timeWaited < 0f)
+                timeWaited += 24f;
+
+            // Calculate time remaining until NPC leaves
+            float timeUntilLeaving = waitDurationHours - timeWaited;
+
+            if (timeUntilLeaving <= 0f)
+            {
+                // NPC should be leaving/has left
+                timeText.color = Color.red;
+                timeText.text = "EXPIRED - NPC Left!";
+            }
+            else
+            {
+                int hours = Mathf.FloorToInt(timeUntilLeaving);
+                int minutes = Mathf.FloorToInt((timeUntilLeaving % 1f) * 60f);
+                int seconds = Mathf.FloorToInt(((timeUntilLeaving % 1f) * 60f % 1f) * 60f);
+
+                // Color code based on urgency
+                if (timeUntilLeaving < 0.083f) // Less than 5 minutes
+                    timeText.color = Color.red;
+                else if (timeUntilLeaving < 0.25f) // Less than 15 minutes
+                    timeText.color = Color.yellow;
+                else
+                    timeText.color = Color.green;
+
+                // Show different formats based on time remaining
+                if (timeUntilLeaving >= 1f)
+                {
+                    // Show hours and minutes
+                    timeText.text = $"WAITING - Leaves in {hours}h {minutes}m";
+                }
+                else if (timeUntilLeaving >= 0.0166f) // More than 1 minute
+                {
+                    // Show minutes and seconds
+                    timeText.text = $"WAITING - Leaves in {minutes}m {seconds}s";
+                }
+                else
+                {
+                    // Show seconds only
+                    timeText.text = $"WAITING - Leaves in {seconds}s!";
+                }
+            }
         }
     }
 

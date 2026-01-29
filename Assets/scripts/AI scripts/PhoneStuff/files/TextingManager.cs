@@ -247,26 +247,32 @@ public class TextingManager : MonoBehaviour
 
         foreach (WeaponOrder order in activeOrders)
         {
-            // Only check accepted orders that have been spawned but not completed
-            if (order.isAccepted && order.npcHasBeenSpawned && !order.isCompleted)
+            // Only check accepted orders that have arrived at location but not completed
+            if (order.isAccepted && order.hasArrived && !order.isCompleted)
             {
                 float currentTime = DayNightCycleManager.Instance.currentTimeOfDay;
-                float meetingTime = order.pickupTimeGameHour;
+
+                // Calculate expiration time from ARRIVAL time, not scheduled time
+                float arrivalTime = order.arrivalGameHour;
 
                 // Convert meeting window duration from seconds to game hours
                 float meetingWindowHours = meetingWindowDuration / 3600f;
-                float meetingEndTime = meetingTime + meetingWindowHours;
+                float meetingEndTime = arrivalTime + meetingWindowHours;
 
                 if (meetingEndTime >= 24f)
                     meetingEndTime -= 24f;
 
+                // Calculate how long NPC has been waiting
+                float waitedHours = currentTime - arrivalTime;
+                if (waitedHours < 0f)
+                    waitedHours += 24f;
+
                 // Check if the meeting window has passed
-                bool hasExpired = !IsTimeBetween(currentTime, meetingTime, meetingEndTime) &&
-                                  HasTimePassedEnd(currentTime, meetingTime, meetingEndTime);
+                bool hasExpired = waitedHours >= meetingWindowHours;
 
                 if (hasExpired)
                 {
-                    Debug.Log($"Order with {order.npcName} has expired. Removing order.");
+                    Debug.Log($"Order with {order.npcName} has expired. NPC waited {waitedHours:F2} hours (limit: {meetingWindowHours:F2}). Removing order.");
 
                     // Send a message about missing the meeting
                     SendMessage(order.npcName, "Where were you? I couldn't wait any longer.", false, TextMessage.MessageType.General);
@@ -431,6 +437,18 @@ public class TextingManager : MonoBehaviour
                 TaskNotificationUI.Instance.RemoveTask(npcName);
 
             Debug.Log($"Completed delivery to {npcName}");
+        }
+    }
+
+    // NEW: Called by NPCManager when they arrive at the meeting location
+    public void NotifyNPCArrivedAtMeeting(string npcName, float arrivalGameHour)
+    {
+        WeaponOrder order = GetAcceptedOrderForNPC(npcName);
+        if (order != null)
+        {
+            order.arrivalGameHour = arrivalGameHour;
+            order.hasArrived = true;
+            Debug.Log($"{npcName} arrived at meeting location at game hour {arrivalGameHour:F2}");
         }
     }
 }

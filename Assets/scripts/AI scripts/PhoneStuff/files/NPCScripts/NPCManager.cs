@@ -13,6 +13,7 @@ public class NPCManager : MonoBehaviour, INPCInteractable
         Idle,
         Walking,    // NEW: For transitioning between locations
         GoingToMeeting,
+        WaitingAtMeeting,
         Fleeing,
         Aggro,      // NEW
         Attack,     // NEW
@@ -78,6 +79,10 @@ public class NPCManager : MonoBehaviour, INPCInteractable
     [Header("Weapon Deal Settings")]
     public float meetingWaitTime = 300f;
     public float playerNearbyRange = 5f;
+
+    private float meetingArrivedGameHour;
+    private float meetingWaitHours = 1f; // 1 hour in-game
+
 
     [Header("Flee Settings")]
     public float fleeDistance = 20f;
@@ -163,6 +168,12 @@ public class NPCManager : MonoBehaviour, INPCInteractable
 
     // NEW: Courage system tracking
     private bool hasRolledCourage = false;
+
+    // Public property to check if NPC is currently involved in a meeting (going to or waiting at)
+    public bool IsInMeetingProcess => hasScheduledMeeting && (
+        (isTransitioning && targetState == NPCState.GoingToMeeting) ||
+        currentState == NPCState.WaitingAtMeeting
+    );
 
     private void Awake()
     {
@@ -379,6 +390,26 @@ public class NPCManager : MonoBehaviour, INPCInteractable
 
     private void HandleTimeUpdate(float hour)
     {
+        if (currentState == NPCState.WaitingAtMeeting)
+        {
+            float elapsed = hour - meetingArrivedGameHour;
+            if (elapsed < 0f) elapsed += 24f; // handle midnight wrap
+
+            if (elapsed >= meetingWaitHours)
+            {
+                if (IsPlayerNearby())
+                {
+                    Debug.Log($"{npcName}: Meeting time over but player nearby, waiting...");
+                    return;
+                }
+
+                Debug.Log($"{npcName}: Meeting finished, leaving.");
+                CompleteMeeting();
+            }
+
+            return; // DO NOT let schedule logic run
+        }
+
         // Don't process time updates if asleep or not yet initialized
         if (isAsleep || !isInitialized)
         {
@@ -394,30 +425,46 @@ public class NPCManager : MonoBehaviour, INPCInteractable
 
         if (hasScheduledMeeting)
         {
-            if (currentState != NPCState.GoingToMeeting &&
+            if (currentState != NPCState.GoingToMeeting && currentState != NPCState.WaitingAtMeeting &&
                 IsTimeBetween(hour, arrivalTime, meetingTime))
             {
                 GoToMeeting();
                 return;
             }
 
-            float meetingEnd = meetingTime + (meetingWaitTime / 3600f);
-
-            if (IsTimePast(hour, meetingEnd))
+            // Check if meeting time has expired (only when waiting at meeting)
+            if (currentState == NPCState.WaitingAtMeeting)
             {
-                if (IsPlayerNearby())
+                float currentGameHour = DayNightCycleManager.Instance.currentTimeOfDay;
+                float waitedHours = currentGameHour - meetingArrivedGameHour;
+
+                // Handle time wrapping past midnight
+                if (waitedHours < 0f)
+                    waitedHours += 24f;
+
+                // Get wait duration from TextingManager (converted from seconds to game hours)
+                float maxWaitHours = meetingWaitHours;
+                if (TextingManager.Instance != null)
                 {
-                    Debug.Log($"{npcName}: Meeting time expired but player is nearby, waiting...");
-                    return;
+                    maxWaitHours = TextingManager.Instance.meetingWindowDuration / 3600f;
                 }
 
-                Debug.Log($"{npcName}: Meeting time expired, leaving meeting location");
-                CompleteMeeting();
-                return;
+                if (waitedHours >= maxWaitHours)
+                {
+                    if (IsPlayerNearby())
+                    {
+                        Debug.Log($"{npcName}: Meeting time expired but player is nearby, waiting...");
+                        return;
+                    }
+
+                    Debug.Log($"{npcName}: Meeting time expired (waited {waitedHours:F2} hours, limit {maxWaitHours:F2}), leaving meeting location");
+                    CompleteMeeting();
+                    return;
+                }
             }
         }
 
-        if (!hasScheduledMeeting || currentState != NPCState.GoingToMeeting)
+        if (!hasScheduledMeeting || (currentState != NPCState.GoingToMeeting && currentState != NPCState.WaitingAtMeeting))
         {
             NPCState newState = DetermineState(hour);
             if (newState != currentState)
@@ -740,19 +787,30 @@ public class NPCManager : MonoBehaviour, INPCInteractable
         // Arrived at destination (within 2.5 units)
         if (distance < 2.5f)
         {
-            Debug.Log($"{npcName} arrived at {targetState} location");
             isTransitioning = false;
             targetDestination = null;
 
-            // Switch to the target state
-            currentState = targetState;
-
-            // Special handling for sleeping state
-            if (currentState == NPCState.Sleeping)
+            if (targetState == NPCState.GoingToMeeting)
             {
-                GoToSleep();
+                currentState = NPCState.WaitingAtMeeting;
+                meetingArrivedGameHour = DayNightCycleManager.Instance.currentTimeOfDay;
+
+                // STOP movement completely
+                movement.StopMovement();
+
+                // Notify TextingManager that we've arrived - timer should start NOW
+                if (TextingManager.Instance != null)
+                {
+                    TextingManager.Instance.NotifyNPCArrivedAtMeeting(npcName, meetingArrivedGameHour);
+                }
+
+                Debug.Log($"{npcName} arrived at meeting location at {meetingArrivedGameHour:F2}, timer starts now");
+                return;
             }
+
+            currentState = targetState;
         }
+
     }
 
     // ===================================================================
@@ -1340,7 +1398,12 @@ public class NPCManager : MonoBehaviour, INPCInteractable
         if (hasEnteredAggro || isFleeing)
             return false;
 
+        // Only allow interaction when waiting at meeting
+        if (hasScheduledMeeting && currentState != NPCState.WaitingAtMeeting)
+            return false;
+
         return true;
+
     }
 
     public void Interact(NPCInteractor interactor, out bool interactSuccessful)
@@ -1515,7 +1578,11 @@ public class NPCManager : MonoBehaviour, INPCInteractable
         if (currentState == NPCState.GoingToMeeting)
             return;
 
-        currentState = NPCState.GoingToMeeting;
+        // Use transition system
+        isTransitioning = true;
+        targetState = NPCState.GoingToMeeting;
+        targetDestination = meetingLocation;
+        currentState = NPCState.Walking;
 
         movement?.MoveTo(meetingLocation);
         animator?.SetTrigger("Walking");
